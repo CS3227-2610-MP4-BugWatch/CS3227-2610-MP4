@@ -7,6 +7,7 @@
     <a slot="brand" href="{{baseUrl}}/index.html" title="Home" class="navbar-brand">ProjectEx</a>
     <li><a highlight-on="sibling-or-child" href="{{baseUrl}}/userGuide/UserGuide.html" class="nav-link">User Guide</a></li>
     <li><a highlight-on="sibling-or-child" href="{{baseUrl}}/developerGuide/DeveloperGuide.html" class="nav-link">Developer Guide</a></li>
+    <li><a href="{{baseUrl}}/docs/developerGuide/AgentWorkflow.html" class="nav-link">Agent Workflow</a></li>
     <li><a highlight-on="sibling-or-child" href="{{baseUrl}}/team/AboutUs.html" class="nav-link">About Us</a></li>
     <li><a href="https://github.com/se-edu" target="_blank" class="nav-link"><md>:fab-github:</md></a>
     </li>
@@ -25,6 +26,7 @@
 * [Home]({{ baseUrl }}/index.html)
 * [User Guide]({{ baseUrl }}/userGuide/UserGuide.html) :expanded:
 * [Developer Guide]({{ baseUrl }}/developerGuide/DeveloperGuide.html) :expanded:
+  * [Multi-Agent Workflow]({{ baseUrl }}/docs/developerGuide/AgentWorkflow.html)
       </site-nav>
     </div>
   </nav>

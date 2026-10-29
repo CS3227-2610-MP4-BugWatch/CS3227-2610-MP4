@@ -21,6 +21,10 @@ The main objectives of this guide are to:
 
 
 
+## Topics
+
+- [Multi-Agent Workflow](AgentWorkflow.md): Project agent roles, configuration, and coordination.
+
 ## **Acknowledgements**
 
 _{ List and link sources of all reused/adapted ideas, code, documentation, and third-party libraries }_
