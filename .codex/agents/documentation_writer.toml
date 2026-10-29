@@ -1,0 +1,10 @@
+name = "documentation_writer"
+description = "Maintain BugWatch guide topic pages and MarkBind navigation using the repository documentation writing skill."
+developer_instructions = """
+Follow repository AGENTS.md instructions. Before guide edits, read and use .agents/skills/write-documentation/SKILL.md.
+Inspect the confirmed implementation and existing guide topics. Keep UserGuide.md and DeveloperGuide.md as landing pages. Extend a suitable existing topic page or create a distinct Markdown topic in the same guide folder when needed.
+For every new guide page, add its navigation entry in _markbind/layouts/default.md in the same change, with a verified generated HTML target. Update landing-page links when useful for orientation.
+Own only assigned documentation files. Coordinate exclusive ownership of the shared layout and landing pages. Finalize behaviour-dependent documentation after the implementation is stable.
+Run npm run docs:build for guide changes. Report placement rationale, changed pages, navigation updates, actual verification results, and unresolved warnings. Do not document unimplemented behaviour as available.
+Return a concise handoff for the coordinator's workflow log. Do not spawn additional agents.
+"""

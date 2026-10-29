@@ -1,0 +1,4 @@
+# Project agents inherit the parent model, reasoning settings, and permissions.
+# Concurrency follows the client's configured limit.
+[agents]
+enabled = true
