@@ -1,0 +1,49 @@
+schema: spec-driven
+
+# Keep shared context short; detailed role and workflow instructions remain in the repository.
+context: |
+  Follow AGENTS.md and the relevant role definitions and instruction references it names.
+  The root agent coordinates delegated work using workflow/instructions/coordinator.md
+  and workflow/instructions/handoffs.md. Subagents do not spawn other agents.
+  Every implementer/tester completion, including fixes, requires explicit independent
+  reviewer approval; affected later edits invalidate approval. Passing checks or task
+  checkboxes alone do not authorize overall task completion.
+  OpenSpec artifacts are authoritative for the selected change's requirements, design,
+  and tasks. Keep the required coordinator-owned workflow/YYYY-MM-DD-<feature-name>.md
+  record, linking to exact artifact paths and revisions instead of conflicting copies.
+  Product proposals in BugWatch.md are not implementation authorization.
+
+rules:
+  proposal:
+    - State confirmed scope, acceptance goals, and exclusions; distinguish current behaviour from proposed behaviour and resolve material requirement ambiguities before implementation.
+    - Identify affected capabilities and integration boundaries without inventing product requirements or duplicating repository-wide instructions.
+  specs:
+    - Describe observable requirements and independently testable acceptance scenarios, including relevant boundary, invalid-input, error, and state conditions.
+    - Keep expected outcomes grounded in confirmed requirements; do not redefine correct behaviour to match a defective implementation or weaken existing requirements to make tests pass.
+  design:
+    - Define or reference the interfaces needed for parallel implementation and testing, including module paths, exports, types, inputs, outputs, errors, side effects, and observable boundary behaviour.
+    - Reference unchanged public interfaces rather than duplicating them, and avoid prescribing private implementation details unnecessarily.
+    - Identify dependencies between application and test work and shared files requiring serialized ownership; follow workflow/instructions/code-standards.md for architecture and dependency decisions.
+  tasks:
+    - Make each task's assigned role, observable outcome, and verification method explicit, with dependencies and exclusive file ownership sufficient for coordinator delegation.
+    - Include relevant Vitest tests under src/test/*.test.ts and required user/developer documentation within the task group that changes the behaviour; follow the repository testing and documentation references.
+    - Include required verification and explicit reviewer approval in completion criteria. Every implementer/tester completion and fix submission requires review; the final combined implementation and tests also require approval.
+    - Before affected tasks start, require agreed interface contracts in design.md or referenced existing public interfaces; if these are missing, update the planning artifacts before parallel delegation.
+
+# Operation guidance supplements generated skills and does not replace CLI-controlled state or prompts.
+operations:
+  apply:
+    guidance:
+      - Use the root agent as coordinator and read workflow/instructions/coordinator.md and workflow/instructions/handoffs.md before delegating; load specialist references required by AGENTS.md for the work assigned.
+      - Read CLI-returned contextFiles and preserve its selected root, schema, blocked states, task sourcePath, and line information; refresh task locations before changing checkboxes if planning files changed.
+      - In the coordinator-owned workflow record, link the resolved OpenSpec artifacts and agreed revisions for requirements, interfaces, tasks, and verification; record exclusive file ownership, submission identifiers, handoffs, findings, and approval decisions there.
+      - Only the coordinator updates shared OpenSpec planning artifacts and tracked task checkboxes. Give each subagent exact artifact paths, revisions, task assignments, owned files, and expected handoff; report proposed contract changes to the coordinator and notify affected agents after an agreed update.
+      - Once interfaces are ready, spawn implementer and tester before waiting for either when their work is independent. Tests derive expected outcomes from the specs and agreed contract; keep application and test edits in their assigned files and serialize shared-file changes.
+      - Collect every implementer/tester completion as awaiting review, including fixes. Run applicable repository checks and obtain explicit reviewer decisions for each submission and the final combined work; rereview affected work after later edits, including coordinator fixes.
+      - Mark each exact tracked task complete only after its specified work, required verification, and reviewer approval are satisfied. Keep blocked or unapproved work incomplete; never weaken tests, bypass CLI blockers, waive review, or treat all_done as evidence of approval.
+      - Finalize required documentation against actual behaviour and record verification and current approvals in the workflow record and the single overall logs/ interaction log before reporting task completion.
+  archive:
+    guidance:
+      - Before presenting the change as successfully completed, confirm all tracked tasks and required checks are satisfied and every latest implementer/tester submission and the final combined implementation and tests have current explicit reviewer approval; otherwise keep the task incomplete and report the blocker.
+      - Follow the standard archive and spec-sync workflow, preserving CLI-resolved paths, validation, prompts, and explicit user choices. Config guidance is not permission to bypass those steps or silently accept missing work; surface any conflict with the project's completion gate.
+      - Record the archive location, spec-sync outcome, verification evidence, and reviewer approvals in the coordinator's workflow record and overall interaction log without duplicating the archived requirements.
