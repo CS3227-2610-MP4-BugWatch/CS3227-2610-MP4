@@ -2,3 +2,5 @@
 # Concurrency follows the client's configured limit.
 [agents]
 enabled = true
+max_threads = 6
+max_depth = 1

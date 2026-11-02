@@ -38,7 +38,9 @@ public/                               Static assets served directly
 docs/userGuide/                        User Guide landing page and topic pages
 docs/developerGuide/                   Developer Guide landing page and topic pages
 .agents/skills/                       Repository-specific agent skills
+workflow/instructions/                Shared and coordinator instruction references
 .codex/agents/                        Project-scoped agent definitions
+workflow/                             Coordinator-owned feature plans and handoff summaries
 logs/                                 Agent interaction logs
 ```
 
@@ -79,124 +81,26 @@ Do not:
 
 If an unrelated problem is discovered, report it separately rather than fixing it as part of the current task unless it prevents completion of the requested work.
 
-## Architecture and Design
+## Further Instructions
 
-Follow the architecture already established in the repository. Before introducing a new architectural pattern, inspect how similar functionality is implemented.
+Read the applicable references before starting the corresponding work. Paths are relative to the repository root. These files contain mandatory instructions moved from this file; they are not automatically loaded merely because they exist. Do not read unrelated references solely because they are listed here.
 
-Maintain clear separation of responsibilities:
+| Work or role | Required instructions |
+| --- | --- |
+| Root agent coordinating any task | `workflow/instructions/coordinator.md`; relevant specialist references when planning, performing, or reviewing that work directly |
+| Writing or reviewing application code, tests, architecture, or dependencies | `workflow/instructions/code-standards.md` |
+| Planning, writing, or reviewing tests and coverage | `workflow/instructions/testing.md` |
+| Planning, writing, or reviewing guide documentation and its requirements | `workflow/instructions/documentation.md`; use `.agents/skills/write-documentation/SKILL.md` before guide edits |
+| Coordinating or carrying out delegated work | `workflow/instructions/handoffs.md`; the assigned feature plan and revision when provided |
+| Explorer investigating specialist conventions | The relevant standards above for the assigned investigation |
 
-- Components should primarily handle presentation and user interaction.
-- Business rules should not be embedded unnecessarily in presentation code.
-- Persistence and data access concerns should remain separate from presentation concerns.
-- Domain types and logic should represent application concepts and enforce appropriate invariants.
-- Authentication and authorization checks, when implemented, must not depend solely on UI visibility or navigation restrictions.
+Role-specific responsibilities also live in `.codex/agents/*.toml`. Applicable shared constraints continue to apply to every role. When the root agent handles specialist work directly, it must load and follow the same relevant standards.
 
-Avoid unnecessary layers, hooks, services, repositories, factories, or utility modules unless they solve a concrete design problem. Prefer simple designs that satisfy current requirements.
+## Testing and Documentation Requirements
 
-## TypeScript and React Coding Standards
+New behaviour should be accompanied by appropriate tests unless it cannot reasonably be tested automatically. Bug fixes should include a regression test when practical. Use Vitest in `src/test/*.test.ts`; follow `workflow/instructions/testing.md` for detailed test design, naming, environment, and quality requirements.
 
-The configured ESLint rules and TypeScript compiler settings are the executable source of truth for automatically enforceable requirements. Follow consistent conventions in existing code where these tools do not specify a rule.
-
-- Use descriptive component, function, type, and variable names.
-- Keep components and functions focused on a single responsibility.
-- Follow React's Rules of Hooks and the configured React Hooks lint rules.
-- Keep state updates immutable and follow existing state-management patterns.
-- Avoid excessive function length, deeply nested control flow, and duplicated logic.
-- Prefer clear code over unnecessarily clever code.
-- Avoid magic numbers and unexplained string literals where a named constant is appropriate.
-- Use appropriate types; do not bypass type checking merely to make verification pass.
-- Keep module exports limited to what consumers require.
-- Avoid mutable global state.
-- Do not leave commented-out code or temporary debugging output.
-- Remove unused imports and variables.
-- Handle errors deliberately rather than silently ignoring them.
-
-Do not suppress TypeScript or ESLint diagnostics simply to make verification pass.
-
-## Dependencies
-
-Before adding a dependency:
-
-1. Check whether the functionality can reasonably be implemented using browser APIs, JavaScript/TypeScript facilities, React, or an existing project dependency.
-2. Verify compatibility with the project's installed tooling and declared runtime requirements.
-3. Prefer actively maintained and established libraries.
-4. Add only the packages actually required.
-
-Do not introduce dependencies merely to avoid implementing trivial functionality. Do not remove or upgrade unrelated dependencies unless required by the task. Keep `package.json` and `package-lock.json` consistent.
-
-Mention significant new dependencies in the final task summary.
-
-## Documentation
-
-Before writing or updating user or developer guide documentation, read and use the documentation writing skill at `.agents/skills/write-documentation/SKILL.md`.
-
-`docs/userGuide/UserGuide.md` and `docs/developerGuide/DeveloperGuide.md` serve as landing pages. Detailed content belongs in topic Markdown files within the corresponding guide folder. Determine whether the information fits an existing topic page or needs a new page using the skill's placement criteria.
-
-Whenever creating a new guide Markdown page, add its navigation entry in `_markbind/layouts/default.md` in the same change. Follow the skill's navigation and verification instructions.
-
-### User Documentation
-
-Document all added user-facing features in the appropriate topic pages within `docs/userGuide/`. Include, where applicable:
-
-- An explanation of the feature.
-- Instructions for using it.
-- Example use cases and expected outcomes.
-- Relevant restrictions.
-- Warnings or important behaviour the user should know.
-
-Documentation must describe the actual current implementation. Do not document unimplemented functionality, describe planned behaviour as existing behaviour, invent screens or workflows, or claim testing that did not occur.
-
-When an existing user-facing feature changes, update its User Guide documentation as part of the same task.
-
-### Developer Documentation
-
-Reflect material changes to architecture, design, dependencies, setup, development workflows, or major implementation decisions in the appropriate topic pages within `docs/developerGuide/`.
-
-Do not update the Developer Guide for trivial implementation details that do not affect developers' understanding of the system.
-
-When external code, ideas, designs, or documentation are reused or adapted, record acknowledgements required by the project in the Developer Guide's acknowledgement section.
-
-## Testing
-
-Write all automated tests using Vitest in `src/test/*.test.ts`.
-
-New behaviour should be accompanied by appropriate tests unless it cannot reasonably be tested automatically. Bug fixes should include a regression test when practical.
-
-### Test Case Design
-
-Functions requiring testing should have tests covering relevant equivalence partitions. Consider more than explicit parameters:
-
-- Component or target-object state.
-- Relevant collaborating objects.
-- Persistent state.
-- Application state.
-- Global state accessed by the function.
-
-Use Boundary Value Analysis (BVA) where boundaries exist.
-
-Compatible positive conditions may be combined when this does not obscure the behaviour under test. Test negative conditions separately when this makes failures easier to diagnose. Do not combine unrelated failure conditions into one test.
-
-### Test Naming
-
-Use descriptive Vitest test titles identifying the operation, relevant input or state, and expected outcome. Preserve the source convention where applicable:
-
-```text
-<functionName>_<inputOrState>_<expectedOutcome>
-```
-
-### Test Quality
-
-Tests must:
-
-- Be deterministic and independent where practical.
-- Test observable behaviour rather than implementation details.
-- Contain meaningful assertions.
-- Avoid depending on execution order.
-- Avoid external services unless explicitly testing an integration.
-
-Do not modify a valid test simply because the implementation fails it. Determine whether the implementation or test is incorrect before making changes.
-
-Do not assume a browser-like test environment or component-testing library is installed or configured. Inspect the current setup before using environment-specific APIs.
+Document added or changed user-facing behaviour in the appropriate User Guide topic as part of the same task. Reflect material architecture, dependency, setup, or workflow changes in the Developer Guide. Documentation must describe actual implemented behaviour. Follow `workflow/instructions/documentation.md` and the documentation writing skill for detailed content, placement, navigation, and acknowledgement requirements.
 
 ## Build and Verification
 
@@ -222,39 +126,6 @@ If verification fails, inspect the failure, determine its cause, fix failures ca
 
 Do not disable tests, linting, type checking, or other verification mechanisms merely to make the build succeed.
 
-## Logging Agent Interactions
-
-At the end of every workflow task performed by an LLM, create a new Markdown file under `logs/`. Do not overwrite previous task logs.
-
-Use a descriptive filename, preferably `YYYY-MM-DD-<short-task-description>.md`. If multiple tasks with the same description occur on the same date, add a numeric suffix.
-
-Each log must contain:
-
-```markdown
-# Agent Interaction Log
-
-## User Prompt
-Record the user's original task prompt and relevant clarifications.
-
-## Steps Taken
-Summarize significant steps performed by the LLM.
-
-## Reasoning Summary
-Record concise, user-facing engineering justifications for significant decisions.
-Do not include hidden chain-of-thought or private internal reasoning.
-
-## Changes Made
-List important files created, modified, or deleted and explain why.
-
-## Verification
-Record commands or checks actually performed and their outcomes.
-
-## Final Output and Conclusion
-Summarize the result, including unresolved issues.
-```
-
-Logs must accurately reflect what occurred. Do not claim commands, tests, or manual checks that were not performed. Do not include passwords, tokens, credentials, personal data, or other secrets in logs.
-
 ## Handling Ambiguity
 
 When requirements are ambiguous, inspect existing behaviour and documentation for evidence, prefer behaviour consistent with the existing system, and avoid inventing product requirements.
@@ -279,49 +150,20 @@ Project agents are defined in `.codex/agents/`:
 
 Agents inherit the parent's model, reasoning settings, and permissions unless the user explicitly requests supported overrides. Instructions to avoid edits define role behaviour; they do not create a separate read-only sandbox.
 
-The coordinator must:
-
-1. Confirm scope and acceptance criteria from the user's request and existing evidence. Use the explorer when investigation would materially help.
-2. Give each delegated task a clear objective, relevant context, acceptance criteria, owned files, and expected handoff. Preserve unrelated user changes.
-3. Parallelize only independent work. Agree on interfaces before splitting implementation and tests. Give each file a single active writer; serialize shared configuration, lockfile, layout, and landing-page edits.
-4. Finalize behaviour-dependent documentation after implementation stabilizes. Use the documentation writing skill for guide changes.
-5. Collect delegated results and resolve integration issues. Request an independent reviewer pass for substantial changes after the relevant work is ready; route actionable fixes to the owning agent or apply them directly, then verify affected behaviour.
-6. Inspect the combined diff and confirm relevant verification results before responding. Clearly report missing checks or unavailable agent capabilities.
-7. Write one interaction log for the overall workflow, including delegated steps, significant decisions, changes, and actual verification. Subagents return their handoffs for this log rather than creating competing task logs.
+The root agent must read `workflow/instructions/coordinator.md` for delegation, feature planning, execution order, integration, review, definition of done, overall logging, and final reporting. Feature plans live at `workflow/YYYY-MM-DD-<feature-name>.md` and are owned by the coordinator.
 
 Subagents must return their findings, changed files, actual checks and results, and unresolved issues to the coordinator. The coordinator owns further delegation; subagents must not spawn additional agents.
 
+Each file has one active writer. Preserve unrelated user changes and follow assigned ownership. Subagents follow `workflow/instructions/handoffs.md`, report blockers promptly, and return completion reports to the coordinator. They must not edit the shared feature plan or create competing workflow logs.
+
+Every implementer or tester completion report, including completion of fixes, requires independent reviewer review and explicit approval before the coordinator may complete the overall task. A completion report alone is not approval. Follow `workflow/instructions/coordinator.md` and `workflow/instructions/handoffs.md` for approval tracking and mandatory re-review after changes.
+
 See `docs/developerGuide/AgentWorkflow.md` for configuration and usage details.
 
-## Definition of Done
+## Workflow Records
 
-A task is complete only when all applicable conditions are satisfied:
-
-- [ ] The requested functionality is implemented.
-- [ ] Changes remain within the requested scope.
-- [ ] Existing architecture and conventions have been respected.
-- [ ] Relevant Vitest tests have been added or updated in `src/test/*.test.ts`.
-- [ ] Existing relevant tests still pass.
-- [ ] Boundary and negative cases have been considered.
-- [ ] ESLint passes for modified application code.
-- [ ] Type checking and the production build succeed.
-- [ ] Documentation updates follow `.agents/skills/write-documentation/SKILL.md`.
-- [ ] User-facing changes are reflected in appropriate topic pages within `docs/userGuide/`.
-- [ ] Material design or development changes are reflected in appropriate topic pages within `docs/developerGuide/`.
-- [ ] Every new guide Markdown page has a navigation entry in `_markbind/layouts/default.md`.
-- [ ] Documentation changes pass the MarkBind build when applicable.
-- [ ] No credentials or sensitive information were introduced.
-- [ ] No temporary or debugging code remains.
-- [ ] The final diff has been inspected for unrelated changes.
-- [ ] The agent interaction has been recorded under `logs/`.
-- [ ] Verification that could not be performed is clearly reported.
+The coordinator writes one new overall interaction log under `logs/` for every workflow task, including delegated steps. It preserves handoff summaries and decisions in the feature plan when one exists. Follow `workflow/instructions/coordinator.md` for the complete log format, filename rules, definition of done, and final response requirements. Never include credentials, personal data, or other secrets in logs, or claim checks that did not occur.
 
 ## Git Conventions
 
 Follow the [SE-EDU Git Conventions](https://se-education.org/guides/conventions/git.html) when creating commits. A commit message must always have a subject, even when a body is unnecessary.
-
-## Final Response
-
-Provide a concise summary containing what changed, important implementation or design decisions, tests added or modified, verification and results, documentation updates, and any limitations or unresolved issues.
-
-Never report a test, build, lint check, type check, application run, or other verification as successful unless it was executed successfully.
