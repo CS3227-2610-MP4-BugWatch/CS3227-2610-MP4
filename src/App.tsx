@@ -1,11 +1,12 @@
+import { lazy, Suspense } from 'react'
 import './App.css'
 
+const AuthenticatedApp = lazy(() => import('./features/auth/AuthenticatedApp'))
+
 function App() {
-  return (
-    <main id="center">
-      <h1>BugWatch</h1>
-    </main>
-  )
+  return <Suspense fallback={<p role="status">Loading BugWatch...</p>}>
+    <AuthenticatedApp />
+  </Suspense>
 }
 
 export default App

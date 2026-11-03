@@ -25,4 +25,10 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+  {
+    files: ['src/features/auth/AuthProvider.tsx'],
+    rules: {
+      'react-refresh/only-export-components': ['error', { allowExportNames: ['useAuth'] }],
+    },
+  },
 ])
