@@ -14,6 +14,8 @@
     "*.md",
     "*.njk",
     ".git/*",
+    ".env",
+    ".env.*",
     "node_modules/*"
   ],
   "pagesExclude": ["node_modules/*"],
