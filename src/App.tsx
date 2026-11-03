@@ -4,7 +4,7 @@ import './App.css'
 const AuthenticatedApp = lazy(() => import('./features/auth/AuthenticatedApp'))
 
 function App() {
-  return <Suspense fallback={<p role="status">Loading BugWatch...</p>}>
+  return <Suspense fallback={<p role="status">Loading BugWatch…</p>}>
     <AuthenticatedApp />
   </Suspense>
 }

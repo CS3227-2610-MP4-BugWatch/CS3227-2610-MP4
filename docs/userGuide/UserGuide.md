@@ -20,3 +20,7 @@ This guide aims to:
 1. Equip users with the necessary knowledge.
 1. Offer step-by-step instructions for common tasks and operations.
 1. Provide tips and tricks to streamline the user experience.
+
+## Topics
+
+- [Authentication](Authentication.md): Log in, log out, and resolve account setup issues.

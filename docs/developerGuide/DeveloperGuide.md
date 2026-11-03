@@ -23,8 +23,11 @@ The main objectives of this guide are to:
 
 ## Topics
 
+- [Authentication and account setup](Authentication.md): Identity migration, manual provisioning, and permission checks.
 - [Multi-Agent Workflow](AgentWorkflow.md): Project agent roles, configuration, and coordination.
 
 ## **Acknowledgements**
 
 _{ List and link sources of all reused/adapted ideas, code, documentation, and third-party libraries }_
+
+- Shared client setup follows [Supabase JavaScript initialization](https://supabase.com/docs/reference/javascript/initializing), [Supabase API key guidance](https://supabase.com/docs/guides/getting-started/api-keys), and [Vite environment-variable documentation](https://vite.dev/guide/env-and-mode).
