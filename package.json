@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "docs:build": "markbind build",
     "docs:serve": "markbind serve",
-    "test": "vitest"
+    "test": "vitest",
+    "test:auth-db": "powershell -NoProfile -ExecutionPolicy Bypass -File ./run-auth-db-tests.ps1"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
