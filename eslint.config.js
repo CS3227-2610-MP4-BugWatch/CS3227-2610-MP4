@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', '_site']),
   {
     files: ['**/*.js'],
     extends: [js.configs.recommended],
@@ -23,6 +23,12 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
+    },
+  },
+  {
+    files: ['src/features/auth/AuthProvider.tsx'],
+    rules: {
+      'react-refresh/only-export-components': ['error', { allowExportNames: ['useAuth'] }],
     },
   },
 ])

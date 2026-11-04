@@ -25,7 +25,9 @@
       <site-nav>
 * [Home]({{ baseUrl }}/index.html)
 * [User Guide]({{ baseUrl }}/userGuide/UserGuide.html) :expanded:
+  * [Authentication]({{ baseUrl }}/docs/userGuide/Authentication.html)
 * [Developer Guide]({{ baseUrl }}/developerGuide/DeveloperGuide.html) :expanded:
+  * [Authentication and account setup]({{ baseUrl }}/docs/developerGuide/Authentication.html)
   * [Multi-Agent Workflow]({{ baseUrl }}/docs/developerGuide/AgentWorkflow.html)
       </site-nav>
     </div>
