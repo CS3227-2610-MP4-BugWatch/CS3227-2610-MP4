@@ -16,6 +16,8 @@ BugWatch uses accounts created by an administrator. Each account has a fixed use
 
 If the email or password is incorrect, check the details and try again. If authentication is unavailable, try again when the service is reachable. Your account remains signed in across a reload when the session is still valid; the app shows a loading message while it restores the identity.
 
+When the app renews your session in the background, your current account screen stays open. Signing out or losing the session still returns you to the login screen.
+
 ## Account setup and logout
 
 If the screen says **Account setup incomplete—contact the administrator.**, your account needs an administrator to complete or correct its profile before you can enter. Select **Log out** if you need to leave that screen.

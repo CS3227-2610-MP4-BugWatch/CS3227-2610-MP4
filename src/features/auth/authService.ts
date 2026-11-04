@@ -1,4 +1,4 @@
-import type { Session, SupabaseClient } from '@supabase/supabase-js'
+import type { AuthChangeEvent, Session, SupabaseClient } from '@supabase/supabase-js'
 import type { SessionUser } from '../../shared/types/session'
 
 type AuthErrorCode = 'invalid_credentials' | 'incomplete_profile' | 'unavailable' | 'session_lost'
@@ -24,7 +24,7 @@ export interface AuthService {
   signIn(email: string, password: string): Promise<void>
   signOut(): Promise<void>
   loadIdentity(authUserId: string): Promise<SessionUser>
-  onAuthStateChange(callback: (session: Session | null) => void): () => void
+  onAuthStateChange(callback: (event: AuthChangeEvent, session: Session | null) => void): () => void
 }
 
 function unavailable(error: unknown): never {
@@ -82,7 +82,7 @@ export function createAuthService(client: SupabaseClient): AuthService {
       }
     },
     onAuthStateChange(callback) {
-      const { data } = client.auth.onAuthStateChange((_event, session) => callback(session))
+      const { data } = client.auth.onAuthStateChange((event, session) => callback(event, session))
       return () => data.subscription.unsubscribe()
     },
   }

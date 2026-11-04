@@ -62,7 +62,9 @@ export function createAuthSession(service: AuthService) {
     start() {
       if (active) return
       active = true
-      unsubscribe = service.onAuthStateChange(session => {
+      unsubscribe = service.onAuthStateChange((event, session) => {
+        if (event === 'TOKEN_REFRESHED' && state.status === 'authenticated'
+          && session?.user.id === state.user.id) return
         const request = ++revision
         // Clear protected identity before deferring any Supabase profile call.
         publish({ status: session ? 'loading' : 'signed_out', user: null })

@@ -35,6 +35,8 @@ Provide the account credentials through your established secure process. The nor
 
 `src/features/auth/authService.ts` uses the shared Supabase client to restore sessions, sign in and out, subscribe to auth events, and read the matching profile. It validates the returned ID and fields before exposing a `SessionUser` from `src/shared/types/session.ts`. `AuthProvider` supplies loading, signed-out, authenticated, incomplete-profile, and unavailable states. A session loss removes the authenticated user and unmounts protected content; a temporary profile lookup failure offers a retry.
 
+The auth service forwards both the Supabase event type and session to the session controller. A `TOKEN_REFRESHED` event for the currently authenticated user preserves the existing identity and mounted content without repeating the profile lookup. A missing session still clears identity immediately, while a session for a different user must pass the trusted profile lookup before protected content is shown.
+
 The browser state is not the authorization boundary. Database operations for later features must derive the actor from `auth.uid()` and look up its role in protected `public.profiles`. Do not accept an actor ID or role supplied by the caller, or rely on editable Auth user metadata. Future project database operations must enforce this boundary independently.
 
 ## Verify an isolated setup

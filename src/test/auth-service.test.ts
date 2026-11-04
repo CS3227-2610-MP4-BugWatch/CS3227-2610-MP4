@@ -1,4 +1,4 @@
-import type { Session, SupabaseClient } from '@supabase/supabase-js'
+import type { AuthChangeEvent, Session, SupabaseClient } from '@supabase/supabase-js'
 import { describe, expect, it, vi } from 'vitest'
 import { createAuthService } from '../features/auth/authService'
 
@@ -8,7 +8,7 @@ function clientDouble() {
     getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
     signInWithPassword: vi.fn().mockResolvedValue({ data: {}, error: null }),
     signOut: vi.fn().mockResolvedValue({ error: null }),
-    onAuthStateChange: vi.fn<(callback: (event: string, session: Session | null) => void) => {
+    onAuthStateChange: vi.fn<(callback: (event: AuthChangeEvent, session: Session | null) => void) => {
       data: { subscription: { unsubscribe: typeof unsubscribe } }
     }>(() => ({ data: { subscription: { unsubscribe } } })),
   }
@@ -71,15 +71,18 @@ describe('authentication service', () => {
     await expect(service.signOut()).rejects.toMatchObject({ code: 'unavailable' })
   })
 
-  it('onAuthStateChange_sessionEvents_forwardSessionAndReleaseSubscription', () => {
+  it('onAuthStateChange_sessionEvents_forwardEventAndSessionAndReleaseSubscription', () => {
     const { service, auth, unsubscribe } = clientDouble()
     const callback = vi.fn()
     const cleanup = service.onAuthStateChange(callback)
-    const listener = auth.onAuthStateChange.mock.calls[0]?.[0] as unknown as (event: string, session: Session | null) => void
+    const listener = auth.onAuthStateChange.mock.calls[0]![0]
     const session = { user: { id: 'trusted-auth-id' } } as Session
     listener('SIGNED_IN', session)
+    listener('TOKEN_REFRESHED', session)
     listener('SIGNED_OUT', null)
-    expect(callback.mock.calls).toEqual([[session], [null]])
+    expect(callback.mock.calls).toEqual([
+      ['SIGNED_IN', session], ['TOKEN_REFRESHED', session], ['SIGNED_OUT', null],
+    ])
     cleanup()
     expect(unsubscribe).toHaveBeenCalledOnce()
   })

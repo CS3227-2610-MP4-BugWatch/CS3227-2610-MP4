@@ -1,4 +1,4 @@
-import type { Session } from '@supabase/supabase-js'
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { describe, expect, it, vi } from 'vitest'
 import { AuthError, type AuthService } from '../features/auth/authService'
 import { createAuthSession } from '../features/auth/authSession'
@@ -18,7 +18,7 @@ function deferred<T>() {
 }
 
 function setup(initialSession: Session | null = session) {
-  let emit: (session: Session | null) => void = () => undefined
+  let emit: (event: AuthChangeEvent, session: Session | null) => void = () => undefined
   const unsubscribe = vi.fn()
   const service = {
     getCurrentSession: vi.fn<AuthService['getCurrentSession']>().mockResolvedValue(initialSession),
@@ -31,7 +31,7 @@ function setup(initialSession: Session | null = session) {
     }),
   }
   const controller = createAuthSession(service)
-  return { controller, service, unsubscribe, emit: (value: Session | null) => emit(value) }
+  return { controller, service, unsubscribe, emit: (event: AuthChangeEvent, value: Session | null) => emit(event, value) }
 }
 
 async function expectState(controller: ReturnType<typeof createAuthSession>, status: string) {
@@ -147,7 +147,7 @@ describe('shared authentication lifecycle', () => {
 
     const otherUser: SessionUser = { ...user, id: 'bob-id', username: 'Bob', role: 'developer' }
     service.loadIdentity.mockResolvedValue(otherUser)
-    emit({ user: { id: otherUser.id } } as Session)
+    emit('SIGNED_IN', { user: { id: otherUser.id } } as Session)
     await expectState(controller, 'authenticated')
     expect(controller.getSnapshot()).toEqual({ status: 'authenticated', user: otherUser })
 
@@ -161,8 +161,79 @@ describe('shared authentication lifecycle', () => {
     const { controller, emit } = setup()
     controller.start()
     await expectState(controller, 'authenticated')
-    emit(null)
+    emit('SIGNED_OUT', null)
     expect(controller.getSnapshot()).toEqual({ status: 'signed_out', user: null })
+    controller.stop()
+  })
+
+  it('authEvent_sameUserTokenRefresh_preservesAuthenticatedSnapshotWithoutLookupOrNotifications', async () => {
+    const { controller, service, emit } = setup()
+    controller.start()
+    await expectState(controller, 'authenticated')
+    const snapshot = controller.getSnapshot()
+    const listener = vi.fn()
+    const unsubscribe = controller.subscribe(listener)
+    const refreshedSession = { ...session, access_token: 'renewed-token' }
+
+    emit('TOKEN_REFRESHED', refreshedSession)
+    expect(controller.getSnapshot()).toBe(snapshot)
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(controller.getSnapshot()).toBe(snapshot)
+    expect(service.loadIdentity).toHaveBeenCalledExactlyOnceWith(user.id)
+    expect(listener).not.toHaveBeenCalled()
+    unsubscribe()
+    controller.stop()
+  })
+
+  it('authEvent_tokenRefreshWithoutSession_removesIdentitySynchronouslyWithoutLookup', async () => {
+    const { controller, service, emit } = setup()
+    controller.start()
+    await expectState(controller, 'authenticated')
+
+    emit('TOKEN_REFRESHED', null)
+    expect(controller.getSnapshot()).toEqual({ status: 'signed_out', user: null })
+    await Promise.resolve()
+    expect(controller.getSnapshot()).toEqual({ status: 'signed_out', user: null })
+    expect(service.loadIdentity).toHaveBeenCalledExactlyOnceWith(user.id)
+    controller.stop()
+  })
+
+  it('authEvent_differentUserTokenRefresh_clearsOldIdentityAndLoadsNewTrustedProfile', async () => {
+    const { controller, service, emit } = setup()
+    controller.start()
+    await expectState(controller, 'authenticated')
+    const pending = deferred<SessionUser>()
+    const otherUser: SessionUser = { ...user, id: 'bob-id', username: 'Bob', role: 'developer' }
+    service.loadIdentity.mockReturnValue(pending.promise)
+
+    emit('TOKEN_REFRESHED', { user: { id: otherUser.id } } as Session)
+    expect(controller.getSnapshot()).toEqual({ status: 'loading', user: null })
+    await vi.waitFor(() => expect(service.loadIdentity).toHaveBeenLastCalledWith(otherUser.id))
+    expect(controller.getSnapshot()).toEqual({ status: 'loading', user: null })
+
+    pending.resolve(otherUser)
+    await expectState(controller, 'authenticated')
+    expect(controller.getSnapshot()).toEqual({ status: 'authenticated', user: otherUser })
+    controller.stop()
+  })
+
+  it('authEvent_tokenRefreshWhileSignedOut_loadsTrustedProfileBeforeAuthenticating', async () => {
+    const { controller, service, emit } = setup(null)
+    controller.start()
+    await expectState(controller, 'signed_out')
+    const pending = deferred<SessionUser>()
+    service.loadIdentity.mockReturnValue(pending.promise)
+
+    emit('TOKEN_REFRESHED', session)
+    expect(controller.getSnapshot()).toEqual({ status: 'loading', user: null })
+    await vi.waitFor(() => expect(service.loadIdentity).toHaveBeenCalledExactlyOnceWith(user.id))
+    expect(controller.getSnapshot().user).toBeNull()
+
+    pending.resolve(user)
+    await expectState(controller, 'authenticated')
+    expect(controller.getSnapshot()).toEqual({ status: 'authenticated', user })
     controller.stop()
   })
 
@@ -196,7 +267,7 @@ describe('shared authentication lifecycle', () => {
     service.loadIdentity.mockReturnValueOnce(pending.promise).mockResolvedValue(otherUser)
     controller.start()
     await vi.waitFor(() => expect(service.loadIdentity).toHaveBeenCalledOnce())
-    emit({ user: { id: otherUser.id } } as Session)
+    emit('SIGNED_IN', { user: { id: otherUser.id } } as Session)
     await expectState(controller, 'authenticated')
     pending.reject(new AuthError('session_lost'))
     await Promise.resolve()
@@ -211,7 +282,7 @@ describe('shared authentication lifecycle', () => {
     service.loadIdentity.mockReturnValue(pending.promise)
     controller.start()
     await vi.waitFor(() => expect(service.loadIdentity).toHaveBeenCalledOnce())
-    emit(null)
+    emit('SIGNED_OUT', null)
     pending.resolve(user)
     await Promise.resolve()
     await Promise.resolve()
@@ -226,7 +297,7 @@ describe('shared authentication lifecycle', () => {
     service.loadIdentity.mockReturnValueOnce(pending.promise).mockResolvedValue(otherUser)
     controller.start()
     await vi.waitFor(() => expect(service.loadIdentity).toHaveBeenCalledOnce())
-    emit({ user: { id: otherUser.id } } as Session)
+    emit('SIGNED_IN', { user: { id: otherUser.id } } as Session)
     await expectState(controller, 'authenticated')
     pending.resolve(user)
     await Promise.resolve()
@@ -240,7 +311,7 @@ describe('shared authentication lifecycle', () => {
     const pending = deferred<Session | null>()
     service.getCurrentSession.mockReturnValue(pending.promise)
     controller.start()
-    emit(null)
+    emit('SIGNED_OUT', null)
     pending.resolve(session)
     await Promise.resolve()
     await Promise.resolve()
