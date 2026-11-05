@@ -116,3 +116,62 @@ describe('report repository', () => {
     expect(rpc).not.toHaveBeenCalled()
   })
 })
+
+function summaryRow(sequence: number, createdAt = '2026-11-05T09:30:00.000012+00:00') {
+  return {
+    id: `50000000-0000-4000-8000-${String(sequence).padStart(12, '0')}`,
+    project_id: projectId, title: `Report ${sequence}`, project_name: 'Project',
+    severity: 'low', state: 'Open', assigned_developer_id: null, reporter_display_name: 'Reporter',
+    created_at: createdAt,
+  }
+}
+
+const fullPage = Array.from({ length: 100 }, (_, index) => summaryRow(100 - index))
+
+describe('project report listing repository', () => {
+  it('listProjectReports_fullPage_usesRawTimestampAndUuidCursorAndMapsAllRows', async () => {
+    const last = summaryRow(101, '2026-11-05T09:30:00.000011+00:00')
+    const { rpc, repository } = setup(fullPage)
+    rpc.mockResolvedValueOnce({ data: fullPage, error: null })
+      .mockResolvedValueOnce({ data: [last], error: null })
+    const results = await repository.listProjectReports(projectId)
+    expect(results.map(result => result.id)).toEqual([...fullPage, last].map(item => item.id))
+    expect(results.at(-1)).toEqual({
+      id: last.id, projectId, title: last.title, projectName: 'Project', severity: 'low',
+      state: 'Open', assignedDeveloperId: null, reporterDisplayName: 'Reporter',
+    })
+    expect(rpc).toHaveBeenNthCalledWith(1, 'list_project_reports', { p_project_id: projectId })
+    expect(rpc).toHaveBeenNthCalledWith(2, 'list_project_reports', {
+      p_project_id: projectId, p_before_created_at: fullPage.at(-1)!.created_at, p_before_id: fullPage.at(-1)!.id,
+    })
+    expect(rpc).toHaveBeenCalledTimes(2)
+  })
+
+  it('listProjectReports_repeatedFullPage_rejectsInsteadOfLooping', async () => {
+    const { rpc, repository } = setup(null, { code: 'unexpected_third_call' })
+    rpc.mockResolvedValueOnce({ data: fullPage, error: null })
+      .mockResolvedValueOnce({ data: fullPage, error: null })
+    await expect(repository.listProjectReports(projectId)).rejects.toMatchObject({ code: 'unavailable' })
+    expect(rpc).toHaveBeenCalledTimes(2)
+  })
+
+  it.each([
+    ['wrong project', { project_id: reporterId }],
+    ['invalid timestamp', { created_at: 'bad-date' }],
+    ['invalid severity', { severity: 'critical' }],
+    ['invalid reporter', { reporter_display_name: null }],
+  ] as const)('listProjectReports_%s_rejectsInvalidSummary', async (_label, override) => {
+    await expect(setup([{ ...summaryRow(1), ...override }]).repository.listProjectReports(projectId))
+      .rejects.toMatchObject({ code: 'unavailable' })
+  })
+
+  it('listProjectReports_invalidProjectId_rejectsWithoutRequest', async () => {
+    const { rpc, repository } = setup()
+    await expect(repository.listProjectReports('not-a-uuid')).rejects.toMatchObject({ code: 'not_found' })
+    expect(rpc).not.toHaveBeenCalled()
+  })
+
+  it('listProjectReports_emptyPage_returnsEmptyList', async () => {
+    await expect(setup([]).repository.listProjectReports(projectId)).resolves.toEqual([])
+  })
+})

@@ -6,7 +6,7 @@
 
 # Projects
 
-After the project migration has been applied in your environment, log in with your real account to browse active projects at `/projects`. Developers can create and edit any active project; testers can browse metadata/history. The application uses shared Supabase storage, so successful saves persist after reload. Your environment needs the project migrations described in the [developer guide](../developerGuide/Projects.md).
+After the project migrations have been applied in your environment, log in with your real account to browse active projects at `/projects`. Developers can create and edit any active project; Testers and Developers can browse project metadata, history, and submitted reports. The application uses shared Supabase storage, so successful saves persist after reload. Your environment needs the project migrations described in the [developer guide](../developerGuide/Projects.md) and the [report migrations](../developerGuide/Reports.md).
 
 ## Real project workflow
 
@@ -20,7 +20,9 @@ Names allow 1-100 characters after trimming, descriptions 1-5,000, URLs at most 
 
 Logout or session loss removes the protected workspace and unsaved form text. If storage is unavailable, retry when the service is available.
 
-Testers can open **Report bug** from an active project's details page. See [Bug reports](Reports.md) for the submission workflow and its database prerequisite.
+Each project has an **Overview** tab for its metadata and history and a **Reports** tab for that project's submitted reports. Both roles can open a report by selecting its title. The list shows the newest reports first and distinguishes an empty list from a loading error; select **Retry** if loading fails. A history error on **Overview** does not prevent you from opening **Reports**, and a reports error does not prevent you from opening **Overview**.
+
+Testers can open **Report bug** from an active project's details page. See [Bug reports](Reports.md) for the submission workflow and its database prerequisites.
 
 ## Browser verification checklist (test project)
 
@@ -31,4 +33,5 @@ Use the separate test environment configured by your administrator, not producti
 3. Attempt an equivalent project name on create and rename; confirm duplicate feedback without partial changes.
 4. Open the same project's edit page in two independent browser sessions. Save one, then save the stale second form; confirm conflict, explicit reload and successful re-save using latest values.
 5. As a tester, browse details/history and try a direct new/edit route; confirm write controls/access are denied.
-6. Check invalid inputs, cancellation, keyboard navigation, logout with an unsaved form, and a storage failure/retry if practical. Report actual results; database security is also checked separately by the hosted test suite.
+6. Open **Reports** as both roles; check empty and populated states, title links, newest-first ordering, and retry after a listing failure if practical. Check that **Overview** remains usable if reports fail to load.
+7. Check invalid inputs, cancellation, keyboard navigation, logout with an unsaved form, and a storage failure/retry if practical. Report actual results; database security is also checked separately by the hosted test suite.

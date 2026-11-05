@@ -45,6 +45,7 @@ function AuthenticatedContent() {
         createReport: input => withSession(() => reports.createReport(input)),
         getReport: id => withSession(() => reports.getReport(id)),
         listReportHistory: id => withSession(() => reports.listReportHistory(id)),
+        listProjectReports: id => withSession(() => reports.listProjectReports(id)),
       },
     }
   }, [retryAuth])

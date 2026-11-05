@@ -39,6 +39,7 @@ function setup() {
     getProject: vi.fn(), listProjectHistory: vi.fn(), createProject: vi.fn(), updateProject: vi.fn(),
   }
   const reportRepository = {
+    listProjectReports: vi.fn(),
     createReport: vi.fn().mockResolvedValue(saved), getReport: vi.fn().mockResolvedValue(saved),
     listReportHistory: vi.fn().mockResolvedValue([{
       id: 'history', reportId, actorId: user.id, actorDisplayName: 'Named history actor', occurredAt: time,

@@ -1,7 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { ReportError } from './types'
-import type { Report, ReportFieldErrors, ReportHistoryEntry, ReportInput, ReportRepository } from './types'
-import { REPORT_UUID, validateReportInput } from './validation'
+import type { ProjectReportSummary, Report, ReportFieldErrors, ReportHistoryEntry, ReportInput, ReportRepository, ReportSeverity } from './types'
+import { REPORT_SEVERITIES, REPORT_TEXT_FIELDS, REPORT_UUID, validateReportInput } from './validation'
+
+const PROJECT_REPORT_PAGE_SIZE = 100
 
 const reportFields = {
   project_id: 'projectId',
@@ -105,6 +107,35 @@ function historyRow(value: unknown): ReportHistoryEntry {
   }
 }
 
+function summaryRow(value: unknown, expectedProjectId: string) {
+  const row = record(value)
+  const projectId = uuid(row.project_id)
+  const title = text(row.title)
+  const severity = text(row.severity)
+  if (projectId.toLowerCase() !== expectedProjectId.toLowerCase()
+    || !title || title !== title.trim() || Array.from(title).length > REPORT_TEXT_FIELDS.title.limit
+    || !Object.hasOwn(REPORT_SEVERITIES, severity)
+    || row.state !== 'Open' || row.assigned_developer_id !== null) fail(null)
+  const summary: ProjectReportSummary = {
+    id: uuid(row.id),
+    projectId,
+    title,
+    projectName: text(row.project_name),
+    severity: severity as ReportSeverity,
+    state: row.state,
+    assignedDeveloperId: row.assigned_developer_id,
+    reporterDisplayName: text(row.reporter_display_name),
+  }
+  return { summary, createdAt: timestamp(row.created_at) }
+}
+
+function cursorKey(createdAt: string, id: string) {
+  // Date.parse gives milliseconds; retain the extra precision PostgreSQL uses to order ties.
+  const fraction = /:\d{2}\.(\d{1,6})(?:Z|[+-]\d{2}:\d{2})$/i.exec(createdAt)?.[1] ?? ''
+  const microseconds = BigInt(Date.parse(createdAt)) * 1000n + BigInt(fraction.padEnd(6, '0').slice(3))
+  return { microseconds, id: id.toLowerCase() }
+}
+
 export function createReportRepository(client: SupabaseClient): ReportRepository {
   async function rpc(operation: string, parameters: Record<string, unknown>): Promise<unknown> {
     try {
@@ -133,6 +164,28 @@ export function createReportRepository(client: SupabaseClient): ReportRepository
       const data = await rpc('get_report_history', { p_report_id: id })
       if (!Array.isArray(data)) fail(null)
       return data.map(historyRow)
+    },
+    async listProjectReports(projectId) {
+      if (!REPORT_UUID.test(projectId)) throw new ReportError('not_found', 'The project could not be found.')
+      const summaries: ProjectReportSummary[] = []
+      const seen = new Set<string>()
+      let previous: ReturnType<typeof cursorKey> | undefined
+      let parameters: Record<string, unknown> = { p_project_id: projectId }
+      for (;;) {
+        const page = await rpc('list_project_reports', parameters)
+        if (!Array.isArray(page) || page.length > PROJECT_REPORT_PAGE_SIZE) fail(null)
+        for (const value of page) {
+          const { summary, createdAt } = summaryRow(value, projectId)
+          const key = cursorKey(createdAt, summary.id)
+          if (seen.has(key.id) || (previous && (key.microseconds > previous.microseconds
+            || (key.microseconds === previous.microseconds && key.id >= previous.id)))) fail(null)
+          seen.add(key.id)
+          previous = key
+          summaries.push(summary)
+          parameters = { p_project_id: projectId, p_before_created_at: createdAt, p_before_id: summary.id }
+        }
+        if (page.length < PROJECT_REPORT_PAGE_SIZE) return summaries
+      }
     },
   }
 }

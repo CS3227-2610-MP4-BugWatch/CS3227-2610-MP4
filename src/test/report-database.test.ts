@@ -269,4 +269,82 @@ describe.skipIf(!configured)('isolated Supabase report integration (requires PRO
     expect(stored.error).toBeNull()
     expect(stored.data).toEqual([{ actor_id: testerId }])
   })
+
+  it.each(['tester', 'developer'] as const)('listProjectReports_%s_readsOnlyRequestedProjectSummariesNewestFirst', async actor => {
+    const id = await project()
+    const other = await saved(await project())
+    const older = await saved(id)
+    const newer = await saved(id)
+    const setTimestamp = (reportId: string, createdAt: string) =>
+      admin.from('reports').update({ created_at: createdAt, updated_at: createdAt }).eq('id', reportId)
+    expect((await setTimestamp(older.id, '2026-11-05T09:30:00.000011+00:00')).error).toBeNull()
+    expect((await setTimestamp(newer.id, '2026-11-05T09:30:00.000012+00:00')).error).toBeNull()
+
+    const client = { tester, developer }[actor]
+    const result = await client.rpc('list_project_reports', { p_project_id: id })
+    expect(result.error).toBeNull()
+    expect(result.data.map((item: { id: string }) => item.id)).toEqual([newer.id, older.id])
+    expect(result.data[0]).toMatchObject({
+      id: newer.id, project_id: id, title: newer.title, project_name: newer.project_name,
+      severity: 'high', state: 'Open', assigned_developer_id: null, reporter_display_name: reporterName,
+    })
+    expect(result.data[0]).not.toHaveProperty('email')
+    expect(result.data[0]).not.toHaveProperty('description')
+    expect(result.data).not.toContainEqual(expect.objectContaining({ id: other.id }))
+
+    const continuation = await client.rpc('list_project_reports', {
+      p_project_id: id, p_before_created_at: result.data[0].created_at, p_before_id: newer.id,
+    })
+    expect(continuation.error).toBeNull()
+    expect(continuation.data.map((item: { id: string }) => item.id)).toEqual([older.id])
+  })
+
+  it.each(['anonymous', 'unprofiled'] as const)('listProjectReports_%s_deniesDiscovery', async actor => {
+    const id = await project()
+    await saved(id)
+    const client = { anonymous, unprofiled }[actor]
+    const result = await client.rpc('list_project_reports', { p_project_id: id })
+    expect(result.error).not.toBeNull()
+    expect(result.data).toBeNull()
+  })
+
+  it('listProjectReports_missingProject_returnsNotFound', async () => {
+    const result = await tester.rpc('list_project_reports', { p_project_id: crypto.randomUUID() })
+    expect(result.error?.code).toBe('P2005')
+    expect(result.data).toBeNull()
+  })
+
+  it('listProjectReports_partialCursor_rejectsInvalidRequest', async () => {
+    const id = await project()
+    const result = await tester.rpc('list_project_reports', {
+      p_project_id: id, p_before_created_at: '2026-11-05T09:30:00Z',
+    })
+    expect(result.error?.code).toBe('P2003')
+    expect(result.data).toBeNull()
+  })
+
+  it('listProjectReports_equalTimestamps_capsPageAndUsesUuidTieBreaker', async () => {
+    const projectId = await project()
+    const createdAt = '2026-11-05T09:30:00.000012+00:00'
+    const rows = Array.from({ length: 101 }, (_, index) => ({
+      id: crypto.randomUUID(), project_id: projectId, reporter_id: testerId,
+      title: `Pagination fixture ${index}`, description: 'Description', version: '1',
+      reproduction_steps: 'Open page', expected_results: 'Opens', actual_results: 'Fails',
+      severity: 'low', created_at: createdAt, updated_at: createdAt,
+    }))
+    const insert = await admin.from('reports').insert(rows)
+    expect(insert.error).toBeNull()
+    for (const row of rows) reportIds.add(row.id)
+    const expected = rows.map(row => row.id).sort().reverse()
+
+    const first = await developer.rpc('list_project_reports', { p_project_id: projectId })
+    expect(first.error).toBeNull()
+    expect(first.data.map((item: { id: string }) => item.id)).toEqual(expected.slice(0, 100))
+    const cursor = first.data.at(-1)
+    const second = await developer.rpc('list_project_reports', {
+      p_project_id: projectId, p_before_created_at: cursor.created_at, p_before_id: cursor.id,
+    })
+    expect(second.error).toBeNull()
+    expect(second.data.map((item: { id: string }) => item.id)).toEqual(expected.slice(100))
+  })
 })

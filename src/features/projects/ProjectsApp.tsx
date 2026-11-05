@@ -16,7 +16,7 @@ export function ProjectsApp({ repository, reportRepository, user }: {
     <Route path="/" element={<Navigate replace to="/projects" />} />
     <Route path="/projects" element={<ProjectListPage key={pageKey} repository={repository} user={user} />} />
     <Route path="/projects/new" element={<ProjectEditorPage key={pageKey} repository={repository} user={user} />} />
-    <Route path="/projects/:projectId" element={<ProjectDetailsPage key={pageKey} repository={repository} user={user} />} />
+    <Route path="/projects/:projectId" element={<ProjectDetailsPage key={pageKey} repository={repository} reportRepository={reportRepository} user={user} />} />
     <Route path="/projects/:projectId/edit" element={<ProjectEditorPage key={pageKey} repository={repository} user={user} />} />
     <Route path="/reports/new" element={<ReportCreatePage key={pageKey} projectRepository={repository} reportRepository={reportRepository} user={user} />} />
     <Route path="/reports/:reportId" element={<ReportDetailsPage key={pageKey} reportRepository={reportRepository} />} />

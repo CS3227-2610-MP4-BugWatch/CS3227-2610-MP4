@@ -40,6 +40,9 @@ export interface ReportHistoryEntry {
   changes: Partial<Record<keyof ReportInput, { before: null; after: string }>>
 }
 
+export type ProjectReportSummary = Pick<Report,
+  'id' | 'projectId' | 'title' | 'projectName' | 'severity' | 'state' | 'assignedDeveloperId' | 'reporterDisplayName'>
+
 type ReportErrorCode = 'validation' | 'unauthenticated' | 'forbidden' | 'archived' | 'not_found' | 'unavailable'
 export type ReportFieldErrors = Partial<Record<keyof ReportInput, string>>
 
@@ -59,4 +62,5 @@ export interface ReportRepository {
   createReport(input: ReportInput): Promise<Report>
   getReport(id: string): Promise<Report | null>
   listReportHistory(id: string): Promise<ReportHistoryEntry[]>
+  listProjectReports(projectId: string): Promise<ProjectReportSummary[]>
 }

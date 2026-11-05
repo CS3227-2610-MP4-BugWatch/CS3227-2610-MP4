@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useParams, useSearchParams } from 'react-router'
+import { ProjectReportsPanel } from '../reports/ProjectReportsPanel'
+import type { ReportRepository } from '../reports/types'
 import type { Project, ProjectHistoryEntry, ProjectRepository, SessionUser } from './types'
 
-export function ProjectDetailsPage({ repository, user }: { repository: ProjectRepository; user: SessionUser }) {
+export function ProjectDetailsPage({ repository, reportRepository, user }: {
+  repository: ProjectRepository; reportRepository: ReportRepository; user: SessionUser
+}) {
   const { projectId = '' } = useParams()
+  const [params] = useSearchParams()
+  const showReports = params.get('tab') === 'reports'
   const [project, setProject] = useState<Project | null>(null)
-  const [history, setHistory] = useState<ProjectHistoryEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [attempt, setAttempt] = useState(0)
@@ -15,8 +20,7 @@ export function ProjectDetailsPage({ repository, user }: { repository: ProjectRe
     async function load() {
       try {
         const current = await repository.getProject(projectId)
-        const entries = current ? await repository.listProjectHistory(projectId) : []
-        if (active) { setProject(current); setHistory(entries); setLoading(false); setError('') }
+        if (active) { setProject(current); setLoading(false); setError('') }
       } catch (reason) {
         if (active) { setError(reason instanceof Error ? reason.message : 'Project could not be loaded.'); setLoading(false) }
       }
@@ -24,14 +28,6 @@ export function ProjectDetailsPage({ repository, user }: { repository: ProjectRe
     void load()
     return () => { active = false }
   }, [repository, projectId, attempt])
-
-  function actorLabel(id: string) { return id === user.id ? user.displayName : id }
-
-  function historyActorLabel(entry: ProjectHistoryEntry) {
-    return entry.actorDisplayName?.trim()
-      || (entry.actorId === user.id ? user.displayName.trim() : '')
-      || 'Unknown user'
-  }
 
   return <section className="project-panel">
     <div className="project-toolbar"><Link to="/projects">Back to projects</Link>
@@ -46,11 +42,46 @@ export function ProjectDetailsPage({ repository, user }: { repository: ProjectRe
         : <>
           <h2>{project.name}</h2>
           {project.archivedAt !== null && <p role="status">This project is archived and read-only.</p>}
-          <p className="project-description">{project.description}</p>
-          <p><a href={project.repositoryUrl} target="_blank" rel="noreferrer">{project.repositoryUrl}</a></p>
-          <p className="project-metadata">Created by {actorLabel(project.createdBy)} · Revision {project.revision}</p>
-          <h3>Project history</h3>
-          {history.length === 0 ? <p>No project history is available.</p> : <ol className="project-history">
+          <nav className="project-tabs" aria-label="Project sections">
+            <Link to={`/projects/${project.id}`} aria-current={!showReports ? 'page' : undefined}>Overview</Link>
+            <Link to={`/projects/${project.id}?tab=reports`} aria-current={showReports ? 'page' : undefined}>Reports</Link>
+          </nav>
+          {showReports
+            ? <ProjectReportsPanel key={project.id} projectId={project.id} repository={reportRepository} />
+            : <ProjectOverview key={project.id} project={project} repository={repository} user={user} />}
+        </>}
+  </section>
+}
+
+function ProjectOverview({ project, repository, user }: { project: Project; repository: ProjectRepository; user: SessionUser }) {
+  const [history, setHistory] = useState<ProjectHistoryEntry[] | null>(null)
+  const [error, setError] = useState(false)
+  const [attempt, setAttempt] = useState(0)
+  useEffect(() => {
+    let active = true
+    repository.listProjectHistory(project.id).then(entries => {
+      if (active) setHistory(entries)
+    }).catch(() => {
+      if (active) setError(true)
+    })
+    return () => { active = false }
+  }, [repository, project.id, attempt])
+
+  function historyActorLabel(entry: ProjectHistoryEntry) {
+    return entry.actorDisplayName?.trim()
+      || (entry.actorId === user.id ? user.displayName.trim() : '')
+      || 'Unknown user'
+  }
+
+  return <>
+    <p className="project-description">{project.description}</p>
+    <p><a href={project.repositoryUrl} target="_blank" rel="noreferrer">{project.repositoryUrl}</a></p>
+    <p className="project-metadata">Created by {project.createdBy === user.id ? user.displayName : project.createdBy} · Revision {project.revision}</p>
+    <h3>Project history</h3>
+    {error ? <div role="alert"><p>Project history could not be loaded.</p>
+      <button type="button" onClick={() => { setError(false); setAttempt(value => value + 1) }}>Retry</button></div>
+      : history === null ? <p role="status">Loading project history…</p>
+        : history.length === 0 ? <p>No project history is available.</p> : <ol className="project-history">
             {history.map(entry => <li key={entry.id}>
               <p><strong>{historyActorLabel(entry)}</strong> {entry.event === 'created' ? 'created this project' : 'edited this project'} · <time dateTime={entry.occurredAt}>{new Date(entry.occurredAt).toLocaleString()}</time></p>
               <dl>{Object.entries(entry.changes).map(([name, change]) => change && <div key={name}>
@@ -59,6 +90,5 @@ export function ProjectDetailsPage({ repository, user }: { repository: ProjectRe
               </div>)}</dl>
             </li>)}
           </ol>}
-        </>}
-  </section>
+  </>
 }

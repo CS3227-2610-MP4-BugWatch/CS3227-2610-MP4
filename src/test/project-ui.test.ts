@@ -12,6 +12,7 @@ const reportRepository: ReportRepository = {
   createReport: vi.fn(),
   getReport: vi.fn(),
   listReportHistory: vi.fn(),
+  listProjectReports: vi.fn(),
 }
 
 const developer: SessionUser = {
@@ -108,7 +109,7 @@ describe('project browser and detail interactions', () => {
     await screen.findByRole('heading', { name: project.name })
     expect(screen.getByText(markup)).not.toBeNull()
     expect(view.container.querySelector('img')).toBeNull()
-    expect(screen.getByText('Another Developer', { selector: 'strong' })).not.toBeNull()
+    expect(await screen.findByText('Another Developer', { selector: 'strong' })).not.toBeNull()
     expect(screen.queryByText(project.createdBy, { selector: 'strong' })).toBeNull()
     expect(screen.queryByRole('link', { name: 'Edit project' })).toBeNull()
     expect(screen.getByText(/Previously: Previous/)).not.toBeNull()

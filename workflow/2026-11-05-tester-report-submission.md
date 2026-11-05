@@ -1,6 +1,6 @@
 # Tester report submission
 
-Status: implementation and local verification approved; hosted preview and final close-out pending. Current implementation revision: 2.
+Status: revision 3 implementation and local verification approved; hosted preview and final close-out pending.
 
 ## Authority and confirmed scope
 
@@ -80,8 +80,16 @@ User reviewed the normal flow, failure cases, design and checklist. Scope is the
 
 Commit 1: R3-IMPL-1 owns ReportCreatePage.tsx, ReportForm.tsx and ReportDetailsPage.tsx only. R3-TEST-1 owns report-ui.test.ts only. ReportForm internal prop may change; existing route page props remain unchanged. Archive feedback is inline, retains text, says not submitted, offers Discard report and contact guidance. A connection failure message says save could not be confirmed, with explicit retry. Saved report breadcrumb links Reports and Back to project reports to /projects/:projectId?tab=reports.
 
-Commit 2: listProjectReports(projectId: string): Promise<ProjectReportSummary[]> on ReportRepository. Summary fields: id, projectId, title, projectName, severity, state, assignedDeveloperId, reporterDisplayName. Use list_project_reports(p_project_id uuid, p_before_created_at timestamptz default null, p_before_id uuid default null) in 006_project_report_listing.sql, RETURNS TABLE with matching snake_case columns plus created_at for keyset pagination, max 100 rows per call, ordered created_at/id descending. Only valid-profile authenticated users; missing project P2005; invalid cursor P2003. Keep precise timestamp strings in cursor. Project route tab query defaults Overview. Root owns shared shell/route and docs navigation. Implementer and tester file ownership for commit 2 will be reassigned only after first checkpoint.
+Commit 2: listProjectReports(projectId: string): Promise<ProjectReportSummary[]> on ReportRepository. Summary fields: id, projectId, title, projectName, severity, state, assignedDeveloperId, reporterDisplayName. Use list_project_reports(p_project_id uuid, p_before_created_at timestamptz default null, p_before_id uuid default null) in 006_project_report_listing.sql, returns a single JSONB array with matching snake_case fields plus created_at for keyset pagination, max 100 rows per call, ordered created_at/id descending. Only valid-profile authenticated users; missing project P2005; invalid cursor P2003. Keep precise timestamp strings in cursor. Project route tab query defaults Overview. Root owns shared shell/route and docs navigation. Implementer and tester file ownership for commit 2 will be reassigned only after first checkpoint.
 
 The coordinator will verify actual checks, submit revisions for independent review and stage only this feature and its workflow records. Earlier unrelated local logs remain untouched. No hosted migration without an isolated target.
 
 R3 checkpoint: R3-IMPL-1 and R3-TEST-1 approved by report_review for archive handling, explicit saved-report navigation and submission tests. Focused Vitest: 16 passed; lint and production build passed. The reports-link landing is completed by the second commit. Migration 006 was separately reviewed and passed local 205-row SQL verification; it belongs in commit 2.
+
+### Revision 3 final local verification
+
+- Commit 1 checkpoint: 6a307bc. R3-IMPL-2 (repository/types) and R3-TEST-2 (handoff, repository and hosted fixtures) independently approved. R3-ROOT-2 and combined code/tests/guides independently approved after migration 006 changed to one bounded JSON array per page to avoid API row-cap truncation. Earlier approvals remain current.
+- Full Vitest: 287 passed, 109 hosted skipped; lint, TypeScript/Vite build, MarkBind build (119 pages, existing warnings), strict OpenSpec validation and whitespace checks passed.
+- Ephemeral local PostgreSQL verified both roles, anonymous and missing-profile denial, project isolation, scoped reporter labels, invalid cursor, and all 205 tied-timestamp reports in 100/100/5 pages. Real Supabase Auth/PostgREST and the Vercel walkthrough were not run.
+- The user chose one development PR with two commits. The handoff test follows a Tester through submission and return navigation, then signs in as a Developer and finds the report from the project page. This is test-environment evidence, not an authenticated deployed demo.
+- Tasks 4.3–4.4 remain open for isolated hosted/preview verification and close-out. Apply 005 and 006 after 001–004 to the isolated environment before checking the preview. Production remains untouched.

@@ -16,6 +16,13 @@
 .project-header h1 { margin: 0 0 8px; font-size: 36px; }
 .project-panel { border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
 .project-toolbar { margin-bottom: 24px; }
+.project-tabs { display: flex; gap: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+.project-tabs a { padding: 8px 0; }
+.project-tabs a[aria-current="page"] { font-weight: 600; border-bottom: 2px solid var(--accent); }
+.project-report-table { overflow-x: auto; }
+.project-report-table table { width: 100%; border-collapse: collapse; }
+.project-report-table th, .project-report-table td { padding: 8px; text-align: left; border-bottom: 1px solid var(--border); }
+.project-report-table td { overflow-wrap: anywhere; }
 .project-panel h2 { margin-bottom: 16px; }
 .project-workspace button, .project-workspace select, .project-workspace input, .project-workspace textarea {
   font: inherit;
