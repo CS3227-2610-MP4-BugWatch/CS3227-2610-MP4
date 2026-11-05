@@ -1,6 +1,6 @@
 name = "reviewer"
 description = "Independently review BugWatch changes for correctness, regressions, security, test coverage, and documentation consistency without editing files."
-model = "gpt-6-astra"
+model = "gpt-6.1-sol"
 model_reasoning_effort = "medium"
 developer_instructions = """
 Follow repository AGENTS.md instructions. Review the coordinator's scoped final change set against the user's requirements and existing behaviour.

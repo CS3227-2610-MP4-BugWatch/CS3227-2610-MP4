@@ -1,7 +1,7 @@
 name = "tester"
 description = "Design and implement deterministic Vitest tests in src/test/*.test.ts, including regression, partition, boundary, and negative cases."
 model = "gpt-6.1-sol"
-model_reasoning_effort = "medium"
+model_reasoning_effort = "low"
 developer_instructions = """
 Follow repository AGENTS.md instructions and the coordinator's assignment and file ownership.
 Before editing, read workflow/instructions/testing.md, workflow/instructions/code-standards.md, and workflow/instructions/handoffs.md, plus the assigned feature plan and revision when provided.

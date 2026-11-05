@@ -14,7 +14,7 @@ The migration is supplied in the repository. The user reported that the isolated
 
 1. In the Supabase dashboard, disable public signup in the Auth settings. Hiding the registration screen alone does not disable the public signup endpoint.
 2. Once Supabase Auth is available, apply `src/features/auth/database/001_profiles.sql` using the dashboard SQL editor or your reviewed migration process. Apply it before any future project migration that references `public.profiles`.
-3. Copy `.env.example` to an ignored `.env` file and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` for the target project. Restart Vite after changing environment variables. Never place a secret or service-role key in browser configuration.
+3. Configure the existing shared browser client with the project URL and a publishable key as described in the [project development guide](Projects.md). Restart Vite after changing environment variables. Never place a secret or service-role key in browser configuration.
 
 The migration creates `public.profiles` with an `id` referencing `auth.users.id`, nonblank `username` and `display_name`, and a role of `tester` or `developer`. A unique index compares usernames using `lower(username)`. Row-level security and grants permit authenticated users to read only their own profile; ordinary clients receive no insert, update, or delete grant. Account and profile provisioning requires an administrator with appropriate dashboard access.
 
@@ -35,9 +35,9 @@ Provide the account credentials through your established secure process. The nor
 
 `src/features/auth/authService.ts` uses the shared Supabase client to restore sessions, sign in and out, subscribe to auth events, and read the matching profile. It validates the returned ID and fields before exposing a `SessionUser` from `src/shared/types/session.ts`. `AuthProvider` supplies loading, signed-out, authenticated, incomplete-profile, and unavailable states. A session loss removes the authenticated user and unmounts protected content; a temporary profile lookup failure offers a retry.
 
-The auth service forwards both the Supabase event type and session to the session controller. A `TOKEN_REFRESHED` event for the currently authenticated user preserves the existing identity and mounted content without repeating the profile lookup. A missing session still clears identity immediately, while a session for a different user must pass the trusted profile lookup before protected content is shown.
+The auth service forwards both the Supabase event type and session to the session controller. `TOKEN_REFRESHED` and `SIGNED_IN` events for the currently authenticated user preserve the existing identity and mounted content without repeating the profile lookup. Supabase can emit `SIGNED_IN` when a tab regains focus. A missing session still clears identity immediately, while a session for a different user must pass the trusted profile lookup before protected content is shown.
 
-The browser state is not the authorization boundary. Database operations for later features must derive the actor from `auth.uid()` and look up its role in protected `public.profiles`. Do not accept an actor ID or role supplied by the caller, or rely on editable Auth user metadata. Future project database operations must enforce this boundary independently.
+The browser state is not the authorization boundary. Database operations for later features must derive the actor from `auth.uid()` and look up its role in protected `public.profiles`. Do not accept an actor ID or role supplied by the caller, or rely on editable Auth user metadata. See the [project handoff](Projects.md) for the pending project database contract.
 
 ## Verify an isolated setup
 
@@ -60,6 +60,7 @@ Add these settings to `.env.auth-test.local` after creating the three Auth accou
 ```dotenv
 VITE_SUPABASE_URL=https://your-isolated-project.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=your-isolated-project-publishable-key
+VITE_ENABLE_SIMULATION=false
 AUTH_TEST_ISOLATED=true
 AUTH_TEST_UNASSIGNED_USER_ID=uuid-of-auth-user-with-no-profile
 AUTH_TEST_TESTER_EMAIL=tester-account@example.com

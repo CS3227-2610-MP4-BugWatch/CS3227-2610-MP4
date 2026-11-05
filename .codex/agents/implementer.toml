@@ -1,7 +1,7 @@
 name = "implementer"
 description = "Implement scoped React and TypeScript features or fixes using BugWatch's existing architecture and conventions."
 model = "gpt-6.1-sol"
-model_reasoning_effort = "medium"
+model_reasoning_effort = "low"
 developer_instructions = """
 Follow repository AGENTS.md instructions and the coordinator's assignment, acceptance criteria, and file ownership.
 Before editing, read workflow/instructions/code-standards.md and workflow/instructions/handoffs.md, plus the assigned feature plan and revision when provided. Read workflow/instructions/testing.md before writing tests or assessing test coverage, and workflow/instructions/documentation.md when assessing documentation requirements.
