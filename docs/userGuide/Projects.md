@@ -16,9 +16,11 @@ After the project migration has been applied in your environment, log in with yo
 4. Any developer can edit another developer's active project. Testers receive no create/edit actions, including through direct edit routes.
 5. Duplicate names are compared ignoring surrounding whitespace and case. Save errors keep your text; stale-save conflicts require **Reload latest project**, which replaces unsaved values before you can save again.
 
-Names allow 1-100 characters after trimming, descriptions 1-5,000, URLs at most 2,048. Repository URLs allow standard URL punctuation, percent signs, fragments and IPv6 brackets; double quotes, backticks, control characters and Unicode noncharacters are rejected. Repository existence is not checked. Descriptions are escaped plain text. History records initial values or previous/new changed fields. History actor labels show current display names, including other users, after the history-name migration is applied. Names are plain text; a missing label shows `Unknown user`. Actor IDs remain stable in audit data. Creator/list metadata may still show other users by UUID. No-op saves add no event. Archive/restore, project deletion, teams, reports and saved project drafts are outside this feature.
+Names allow 1-100 characters after trimming, descriptions 1-5,000, URLs at most 2,048. Repository URLs allow standard URL punctuation, percent signs, fragments and IPv6 brackets; double quotes, backticks, control characters and Unicode noncharacters are rejected. Repository existence is not checked. Descriptions are escaped plain text. History records initial values or previous/new changed fields. History actor labels show current display names, including other users, after the history-name migration is applied. Names are plain text; a missing label shows `Unknown user`. Actor IDs remain stable in audit data. Creator/list metadata may still show other users by UUID. No-op saves add no event. Archive/restore, project deletion, teams and saved project drafts are outside this feature.
 
 Logout or session loss removes the protected workspace and unsaved form text. If storage is unavailable, retry when the service is available.
+
+Testers can open **Report bug** from an active project's details page. See [Bug reports](Reports.md) for the submission workflow and its database prerequisite.
 
 ## Browser verification checklist (test project)
 

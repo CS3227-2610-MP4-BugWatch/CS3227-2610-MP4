@@ -12,7 +12,8 @@
     "docs:serve": "markbind serve",
     "test": "vitest",
     "test:auth-db": "powershell -NoProfile -ExecutionPolicy Bypass -File ./run-auth-db-tests.ps1",
-    "test:project-db": "powershell -NoProfile -ExecutionPolicy Bypass -File ./run-project-db-tests.ps1"
+    "test:project-db": "powershell -NoProfile -ExecutionPolicy Bypass -File ./run-project-db-tests.ps1",
+    "test:report-db": "powershell -NoProfile -ExecutionPolicy Bypass -File ./run-project-db-tests.ps1 -Suite report"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",

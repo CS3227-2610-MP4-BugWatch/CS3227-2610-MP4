@@ -8,6 +8,7 @@ export type AuthContextValue = AuthState & {
   signIn(email: string, password: string): Promise<void>
   signOut(): Promise<void>
   retry(): Promise<void>
+  retryIfCurrent(): void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -24,6 +25,12 @@ export function AuthProvider({ service, children }: { service: AuthService; chil
     signIn: controller.signIn,
     signOut: controller.signOut,
     retry: controller.retry,
+    retryIfCurrent: () => {
+      // A request from a previous authenticated snapshot cannot reset a later session.
+      if (state.status === 'authenticated' && controller.getSnapshot() === state) {
+        void controller.retry()
+      }
+    },
   }), [state, controller])
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

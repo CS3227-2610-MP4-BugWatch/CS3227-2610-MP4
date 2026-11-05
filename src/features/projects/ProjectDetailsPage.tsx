@@ -37,6 +37,8 @@ export function ProjectDetailsPage({ repository, user }: { repository: ProjectRe
     <div className="project-toolbar"><Link to="/projects">Back to projects</Link>
       {!loading && !error && project && project.archivedAt === null && user.role === 'developer'
         && <Link to={`/projects/${project.id}/edit`}>Edit project</Link>}
+      {!loading && !error && project && project.archivedAt === null && user.role === 'tester'
+        && <Link to={`/reports/new?projectId=${encodeURIComponent(project.id)}`}>Report bug</Link>}
     </div>
     {loading ? <p role="status">Loading project…</p> : error ? <div role="alert"><p>{error}</p>
       <button onClick={() => { setLoading(true); setError(''); setAttempt(value => value + 1) }}>Retry</button></div>

@@ -1,3 +1,5 @@
+param([ValidateSet('project', 'report')][string] $Suite = 'project')
+
 $ErrorActionPreference = 'Stop'
 Set-Location -LiteralPath $PSScriptRoot
 
@@ -135,8 +137,8 @@ try {
   Set-ProcessVariable 'PROJECT_TEST_DEVELOPER_TOKEN' (Get-AccessToken 'Developer' $developerEmail)
   Set-ProcessVariable 'PROJECT_TEST_SECOND_DEVELOPER_TOKEN' (Get-AccessToken 'Second developer' $secondDeveloperEmail)
 
-  Write-Host 'Running isolated Supabase project integration tests...'
-  & (Join-Path $PSScriptRoot 'node_modules/.bin/vitest.cmd') --run src/test/project-database.test.ts
+  Write-Host "Running isolated Supabase $Suite integration tests..."
+  & (Join-Path $PSScriptRoot 'node_modules/.bin/vitest.cmd') --run "src/test/$Suite-database.test.ts"
   $exitCode = $LASTEXITCODE
 }
 finally {
