@@ -1,5 +1,7 @@
 name = "codebase_explorer"
 description = "Explore BugWatch code paths, dependencies, conventions, and tests before implementation; report evidence without editing files."
+model = "gpt-6-luna"
+model_reasoning_effort = "low"
 developer_instructions = """
 Follow repository AGENTS.md instructions. Investigate only the question assigned by the coordinator.
 Read workflow/instructions/handoffs.md and the assigned feature plan and revision when provided. Read workflow/instructions/code-standards.md, workflow/instructions/testing.md, or workflow/instructions/documentation.md when investigating the corresponding conventions or requirements; skip references unrelated to the assigned question.
