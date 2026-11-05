@@ -31,6 +31,7 @@
   * [Authentication and account setup]({{ baseUrl }}/docs/developerGuide/Authentication.html)
   * [Multi-Agent Workflow]({{ baseUrl }}/docs/developerGuide/AgentWorkflow.html)
   * [Project development and Supabase handoff]({{ baseUrl }}/docs/developerGuide/Projects.html)
+  * [Continuous integration]({{ baseUrl }}/docs/developerGuide/ContinuousIntegration.html)
       </site-nav>
     </div>
   </nav>
