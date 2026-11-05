@@ -92,6 +92,9 @@ describe('validateProjectInput', () => {
     'http://example.com/repo',
     'https://git.example.org/Team/Repo?ref=Main#readme',
     'HTTPS://example.com/CasePreserved',
+    "https://example.com/repo!$&'()*+,-./:;=?@_~%#[]",
+    'https://example.com/repo\u00a1',
+    'https://example.com/repo\u{10fffd}',
   ])('validateProjectInput_absoluteHttpUrl%s_acceptsWithoutRewriting', (repositoryUrl) => {
     expect(validateProjectInput({ ...validInput, repositoryUrl })).toEqual({
       valid: true, value: { ...validInput, repositoryUrl },
@@ -104,6 +107,11 @@ describe('validateProjectInput', () => {
     'ssh://git@example.com/repo', 'git@example.com:team/repo.git',
     'javascript:alert(1)', 'https://example.com/a b',
     'https://example.com/a\nb', 'https://example.com/a\tb',
+    'https://example.com/repo"', 'https://example.com/repo^',
+    'https://example.com/repo\u0085', 'https://example.com/repo\u007f',
+    'https://example.com/repo\ufdd0', 'https://example.com/repo\u{1fffe}',
+    'https://example.com/repo\u{10fffe}', 'https://example.com/repo\ud800',
+    'https://xn--\u2665.com/repo',
   ])('validateProjectInput_invalidRepositoryUrl%j_returnsUrlError', (repositoryUrl) => {
     expectFieldError('repositoryUrl', repositoryUrl)
   })

@@ -13,8 +13,9 @@ Project routes use authentication and `src/features/projects/projectRepository.t
 1. Verify `src/features/auth/database/001_profiles.sql` is already applied. Do not rerun its create-table migration over an existing profile schema.
 2. In the **test project SQL editor**, apply `src/features/projects/database/002_projects.sql` once, after the auth migration. It creates project/history tables, constraints, validation helpers, read policies and transactional `create_project`/`update_project` functions. No users are provisioned and the own-profile read policy is unchanged.
 3. Apply `src/features/projects/database/003_project_history_names.sql` once after migration 002. It adds the scoped history display-name lookup. Do not rerun any migration already applied to that environment.
-4. Create a tester and two distinct developer Auth accounts with matching profiles, using real Auth UUIDs. The existing authentication suite's account-without-profile can remain separate.
-5. Run the hosted suite and rollback script below, then the browser checklist. Apply reviewed migrations to production through your release process before deploying the frontend. No hosted migration/deployment is performed automatically.
+4. Apply `src/features/projects/database/004_project_url_codepoints.sql` once after migration 003. It replaces the URL validator and adds a constraint for new writes. Check and correct existing invalid URLs, then validate the constraint as described below.
+5. Create a tester and two distinct developer Auth accounts with matching profiles, using real Auth UUIDs. The existing authentication suite's account-without-profile can remain separate.
+6. Run the hosted suite and rollback script below, then the browser checklist. Apply reviewed migrations to production through your release process before deploying the frontend. No hosted migration/deployment is performed automatically.
 
 The authenticated shell supplies BrowserRouter and routes `/projects`, `/projects/new`, `/projects/:projectId`, `/projects/:projectId/edit`. Logout/session loss unmounts protected content. An unauthenticated repository response requests auth re-resolution; ordinary storage failures retain the session and entered values. Hosting must serve the SPA entry on direct routes.
 
@@ -27,6 +28,22 @@ After migrations 001 and 002, apply `src/features/projects/database/003_project_
 Names are resolved from current profiles at read time, including entries created before this migration. History actor IDs and changed values are not rewritten; names are not immutable snapshots. Creator/list metadata is outside this correction.
 
 Run `npm run test:project-db` after applying migration 003. Hosted assertions check other users' display names, project-scoped results, tester/developer access, anonymous rejection, missing targets and unchanged own-profile restrictions. View a project edited by a second developer as a tester and a developer; verify the history shows that actor's display name. The user reported the post-003 hosted suite and display-name check passing in the test environment.
+
+## Repository URL code-point migration
+
+Apply `src/features/projects/database/004_project_url_codepoints.sql` after migration 003 in each environment. The validator permits URL code points plus `%`, `#`, `[` and `]` for percent escapes, fragments and IPv6 syntax. It excludes surrogates and Unicode noncharacters, and rejects malformed `xn--` hostname labels containing non-ASCII characters; the existing HTTP/HTTPS, host, whitespace and length checks still apply. The browser validator uses the same character rule and its URL parser rejects that malformed hostname. These checks narrow accepted input but do not establish full browser/PostgreSQL URL-parser parity.
+
+The new check constraint is initially `NOT VALID`: it applies to new writes, while allowing existing rows to be reviewed. After applying the migration, find stored URLs that fail the new validator and correct them through the administrator's reviewed data process before validating the constraint:
+
+```sql
+select id, repository_url from public.projects
+where not public.project_repository_url_valid(repository_url);
+
+alter table public.projects
+  validate constraint projects_repository_url_codepoints_check;
+```
+
+The query must return no rows before validation. A previously stored invalid URL must be replaced with a valid repository URL; the form will not save that project with the invalid value unchanged. The hosted project suite includes the new code-point cases and must be rerun after this migration. It remains skipped by the ordinary local test command.
 
 ## Shared Supabase client setup
 
@@ -90,7 +107,7 @@ The authentication migration enables RLS for profiles, permits authenticated use
 | `revision` | Positive integer, initially 1; advance on changed saves | `revision` |
 | `archived_at` | Nullable timestamp with time zone, initially null | `archivedAt` |
 
-The unique index is named `projects_normalized_name_key`, on lowercase names after surrounding-whitespace trimming, covering **all rows**, including archived ones. There is no additional normalized-name column in the row. Preserve capitalization for display; do not fold accents, collapse internal whitespace, or add repository URL uniqueness. SQL uses the project trimming helper; Unicode and URL parity are covered by hosted fixtures, although full parity across all Unicode versions is not established.
+The unique index is named `projects_normalized_name_key`, on lowercase names after surrounding-whitespace trimming, covering **all rows**, including archived ones. There is no additional normalized-name column in the row. Preserve capitalization for display; do not fold accents, collapse internal whitespace, or add repository URL uniqueness. SQL uses the project trimming helper; Unicode and URL cases are covered by hosted fixtures, although full browser/PostgreSQL parsing parity is not established.
 
 Archive/restore remains a later feature. The state field supports active-edit checks and archived-name fixture tests only; the application exposes no archive, restore, or delete operation.
 

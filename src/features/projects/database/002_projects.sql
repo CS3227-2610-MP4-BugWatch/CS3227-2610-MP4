@@ -70,6 +70,8 @@ declare
   digit_index integer;
   host_index integer;
   host_bytes bytea;
+  character_index integer;
+  code_point integer;
 begin
   if char_length(value) > 2048 or value !~* '^https?://[^/\\?#]'
     or value ~ '[[:space:][:cntrl:]\\]' or value ~ ('['||chr(160)||chr(5760)||chr(8192)||chr(8193)||chr(8194)
@@ -77,6 +79,23 @@ begin
       ||chr(8232)||chr(8233)||chr(8239)||chr(8287)||chr(12288)||chr(65279)||']') then
     return false;
   end if;
+  -- URL code points plus percent escapes, fragments and IPv6 brackets.
+  -- The URL/host checks below still decide whether those characters are valid in context.
+  for character_index in 1..char_length(value) loop
+    code_point := ascii(substring(value from character_index for 1));
+    if code_point < 128 then
+      if not (code_point between 48 and 57 or code_point between 65 and 90
+        or code_point between 97 and 122
+        or strpos('!$&''()*+,-./:;=?@_~%#[]', substring(value from character_index for 1)) > 0) then
+        return false;
+      end if;
+    elsif code_point < 160 or code_point > 1114109
+      or code_point between 55296 and 57343
+      or code_point between 64976 and 65007
+      or mod(code_point, 65536) in (65534, 65535) then
+      return false;
+    end if;
+  end loop;
   authority := split_part(regexp_replace(value, '^https?://', '', 'i'), '/', 1);
   authority := split_part(split_part(authority, '?', 1), '#', 1);
   -- Userinfo is permitted by URL parsing but never used as credentials by BugWatch.
@@ -120,6 +139,10 @@ begin
     -- WHATWG treats hosts ending in a numeric label as IPv4, including
     -- shortened, hexadecimal and octal forms; do not accept invalid numeric hosts.
     parts := string_to_array(rtrim(lower(host), '.'), '.');
+    -- An ACE label cannot contain a raw non-ASCII character.
+    foreach part in array parts loop
+      if left(part, 4) = 'xn--' and char_length(part) <> octet_length(part) then return false; end if;
+    end loop;
     if parts[array_length(parts, 1)] ~ '^(0x[0-9a-f]*|[0-9]+)$' then
       if array_length(parts, 1) > 4 then return false; end if;
       for part_index in 1..array_length(parts, 1) loop

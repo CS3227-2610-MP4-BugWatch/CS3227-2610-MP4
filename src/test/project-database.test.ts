@@ -313,6 +313,44 @@ describe.skipIf(!configured)('isolated Supabase project integration (requires PR
     expect(result.data).toBeNull()
   })
 
+  it.each([
+    ['quote', 'https://example.test/repo"'],
+    ['caret', 'https://example.test/repo^'],
+    ['DEL', 'https://example.test/repo\u007f'],
+    ['C1 control', 'https://example.test/repo\u0085'],
+    ['BMP noncharacter', 'https://example.test/repo\ufdd0'],
+    ['plane-end noncharacter', 'https://example.test/repo\u{1fffe}'],
+    ['above upper boundary', 'https://example.test/repo\u{10fffe}'],
+    ['malformed ACE hostname', 'https://xn--\u2665.com/repo'],
+  ])('createProject_urlCodePoint%s_databaseRejects', async (_label, url) => {
+    const result = await create(developer, { p_repository_url: url })
+    expect(result.error?.code).toBe('P1003')
+    expect(result.data).toBeNull()
+  })
+
+  it.each([
+    'https://example.test/repo\u00a1',
+    'https://example.test/repo\u{10fffd}',
+    "https://example.test/repo!$&'()*+,-./:;=?@_~%#[]",
+    'https://xn--foo_bar.com/repo',
+  ])('createProject_allowedUrlCodePoints%s_databaseAccepts', async url => {
+    const result = await create(developer, { p_repository_url: url })
+    expect(result.error).toBeNull()
+    expect(result.data.repository_url).toBe(url)
+  })
+
+  it('projectsTable_forbiddenUrlCodePoint_rejectsDirectInsert', async () => {
+    const result = await admin.from('projects').insert({
+      name: `${prefix}-${crypto.randomUUID()}`,
+      description: 'Hosted project integration fixture',
+      repository_url: 'https://example.test/repo^',
+      created_by: developerId,
+    }).select('id')
+    if (result.data?.[0]?.id) createdIds.add(result.data[0].id)
+    expect(result.error?.code).toBe('23514')
+    expect(result.data).toBeNull()
+  })
+
   it('projectMetadata_unicodeTrimAndCodePointBoundaries_matchApprovedValidation', async () => {
     const name = `${prefix}-${'😀'.repeat(100 - Array.from(prefix).length - 1)}`
     const result = await create(developer, { p_name: `\u00a0${name}\u3000`, p_description: `\t${'😀'.repeat(5000)}\n` })

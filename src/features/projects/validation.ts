@@ -3,6 +3,7 @@ import type { ProjectInput } from './types'
 const NAME_MAX_LENGTH = 100
 const DESCRIPTION_MAX_LENGTH = 5_000
 const REPOSITORY_URL_MAX_LENGTH = 2_048
+const URL_ASCII_PUNCTUATION = "!$&'()*+,-./:;=?@_~%#[]"
 
 type ValidationResult =
   | { valid: true; value: ProjectInput }
@@ -19,6 +20,18 @@ export function normalizeProjectName(name: string): string {
 function isRepositoryUrl(value: string): boolean {
   if (!/^https?:\/\/[^/\\?#]/i.test(value) || /[\s\p{Cc}\\]/u.test(value)) {
     return false
+  }
+
+  for (const character of value) {
+    const codePoint = character.codePointAt(0) ?? 0
+    if (codePoint < 0x80) {
+      if (!(/[A-Za-z0-9]/.test(character) || URL_ASCII_PUNCTUATION.includes(character))) return false
+    } else if (codePoint < 0xA0 || codePoint > 0x10FFFD
+      || (codePoint >= 0xD800 && codePoint <= 0xDFFF)
+      || (codePoint >= 0xFDD0 && codePoint <= 0xFDEF)
+      || (codePoint & 0xFFFF) >= 0xFFFE) {
+      return false
+    }
   }
 
   try {
