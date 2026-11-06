@@ -139,6 +139,7 @@ it('draftSave_firstSaveWithReadUnavailable_keepsSavedFormOpenWithoutReading', as
   await openForm()
   fireEvent.change(await screen.findByLabelText(/^Project\b/i), { target: { value: projectId } })
   fireEvent.click(screen.getByRole('button', { name: 'Save draft' }))
+  await screen.findByRole('heading', { name: 'Edit draft' })
   await screen.findByText('Draft saved')
   expect(window.location.pathname).toBe(`/drafts/${reportId}`)
   expect((await screen.findByLabelText(/^Title\b/i) as HTMLInputElement).value).toBe(title)
@@ -146,7 +147,7 @@ it('draftSave_firstSaveWithReadUnavailable_keepsSavedFormOpenWithoutReading', as
   await waitFor(() => expect((screen.getByRole('button', { name: 'Save draft' }) as HTMLButtonElement).disabled).toBe(false))
   fireEvent.change(screen.getByLabelText(/^Title\b/i), { target: { value: 'Next edit' } })
   fireEvent.click(screen.getByRole('button', { name: 'Save draft' }))
-  expect(reports.saveDraft).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Next edit' }), reportId)
+  await waitFor(() => expect(reports.saveDraft).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Next edit' }), reportId))
 })
 
 it('authenticatedRouter_strictMode_mountsAndHandlesNavigation', async () => {

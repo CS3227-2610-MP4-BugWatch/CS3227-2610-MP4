@@ -327,6 +327,7 @@ it('draftEdit_archivedProject_preservesTextAndAllowsReassignment', async () => {
   expect(await screen.findByRole('option', { name: 'Old project (Archived)' })).toBeTruthy()
   expect((screen.getByRole('button', { name: 'Save draft' }) as HTMLButtonElement).disabled).toBe(true)
   expect((screen.getByLabelText(/^Title\b/i) as HTMLInputElement).value).toBe(input.title)
+  await screen.findByRole('option', { name: 'Test project' })
   fireEvent.change(screen.getByLabelText(/^Project\b/i), { target: { value: projectId } })
   fireEvent.click(screen.getByRole('button', { name: 'Save draft' }))
   await screen.findByText('Draft saved')
