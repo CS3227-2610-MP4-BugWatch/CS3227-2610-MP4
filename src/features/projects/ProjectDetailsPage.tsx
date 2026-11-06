@@ -75,7 +75,7 @@ function ProjectOverview({ project, repository, user }: { project: Project; repo
 
   return <>
     <p className="project-description">{project.description}</p>
-    <p><a href={project.repositoryUrl} target="_blank" rel="noreferrer">{project.repositoryUrl}</a></p>
+    <p className="project-repository"><strong>Repository</strong><br /><a href={project.repositoryUrl} target="_blank" rel="noreferrer">{project.repositoryUrl}</a></p>
     <p className="project-metadata">Created by {project.createdBy === user.id ? user.displayName : project.createdBy} · Revision {project.revision}</p>
     <h3>Project history</h3>
     {error ? <div role="alert"><p>Project history could not be loaded.</p>

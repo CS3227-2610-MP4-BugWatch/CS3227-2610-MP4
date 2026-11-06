@@ -1,11 +1,22 @@
 // @vitest-environment jsdom
+import { MantineProvider } from '@mantine/core'
+import type { ReactElement } from 'react'
 import { createElement } from 'react'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, render as testingRender, screen, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, expect, it, vi } from 'vitest'
 import { ProjectsApp } from '../features/projects/ProjectsApp'
 import type { Project, ProjectRepository, SessionUser } from '../features/projects/types'
 import type { Report, ReportInput } from '../features/reports/types'
+
+Object.defineProperty(window, 'matchMedia', { configurable: true, writable: true, value: (query: string) => ({
+  matches: false, media: query, onchange: null, addListener: () => undefined, removeListener: () => undefined,
+  addEventListener: () => undefined, removeEventListener: () => undefined, dispatchEvent: () => false,
+}) })
+
+function render(element: ReactElement) {
+  return testingRender(createElement(MantineProvider, { env: 'test' }, element))
+}
 
 const projectId = '10000000-0000-4000-8000-000000000001'
 const otherProjectId = '10000000-0000-4000-8000-000000000002'
@@ -82,12 +93,38 @@ it.each([['tester', tester], ['developer', developer]] as const)('projectReports
   show(`/projects/${projectId}?tab=reports`, user)
   const link = await screen.findByRole('link', { name: saved.title })
   const row = within(link.closest('tr')!)
+  const table = screen.getByRole('table', { name: 'Submitted bug reports' })
+  expect(within(table).getAllByRole('columnheader').map(header => header.textContent)).toEqual([
+    'Title', 'Project', 'Severity', 'Status', 'Assignee', 'Reporter',
+  ])
   for (const label of [project.name, 'High', 'Open', 'Unassigned', tester.displayName]) {
     expect(row.getByText(label)).toBeTruthy()
   }
   expect(screen.queryByRole('link', { name: otherSaved.title })).toBeNull()
   expect(reportRepository.listProjectReports).toHaveBeenCalledExactlyOnceWith(projectId)
   expect(Boolean(screen.queryByRole('link', { name: 'Report bug' }))).toBe(user.role === 'tester')
+  expect(Boolean(screen.queryByRole('link', { name: 'Edit project' }))).toBe(user.role === 'developer')
+  expect(screen.getByRole('link', { name: 'Reports' }).getAttribute('aria-current')).toBe('page')
+  expect(screen.getByRole('link', { name: 'Overview' }).getAttribute('aria-current')).toBeNull()
+})
+
+it('projectSections_switchingViews_preservesShareableUrlsAndSelectedView', async () => {
+  const { show } = setup()
+  show()
+  await screen.findByRole('heading', { name: project.name })
+  const overview = screen.getByRole('link', { name: 'Overview' })
+  const reports = screen.getByRole('link', { name: 'Reports' })
+  expect(overview.getAttribute('href')).toBe(`/projects/${projectId}`)
+  expect(overview.getAttribute('aria-current')).toBe('page')
+  expect(reports.getAttribute('href')).toBe(`/projects/${projectId}?tab=reports`)
+  fireEvent.click(reports)
+  await screen.findByRole('link', { name: saved.title })
+  expect(reports.getAttribute('aria-current')).toBe('page')
+  expect(overview.getAttribute('aria-current')).toBeNull()
+  fireEvent.click(overview)
+  await screen.findByRole('heading', { name: 'Project history' })
+  expect(overview.getAttribute('aria-current')).toBe('page')
+  expect(reports.getAttribute('aria-current')).toBeNull()
 })
 
 it('projectReports_emptyList_isDistinctFromFailureAndOverviewRemainsAvailable', async () => {

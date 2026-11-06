@@ -1,12 +1,23 @@
 // @vitest-environment jsdom
+import { MantineProvider } from '@mantine/core'
+import type { ReactElement } from 'react'
 import { createElement } from 'react'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render as testingRender, screen, waitFor } from '@testing-library/react'
 import { Link, MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ProjectsApp } from '../features/projects/ProjectsApp'
 import type { ReportRepository } from '../features/reports/types'
 import { ProjectError } from '../features/projects/types'
 import type { Project, ProjectHistoryEntry, ProjectInput, ProjectRepository, SessionUser } from '../features/projects/types'
+
+Object.defineProperty(window, 'matchMedia', { configurable: true, writable: true, value: (query: string) => ({
+  matches: false, media: query, onchange: null, addListener: () => undefined, removeListener: () => undefined,
+  addEventListener: () => undefined, removeEventListener: () => undefined, dispatchEvent: () => false,
+}) })
+
+function render(element: ReactElement) {
+  return testingRender(createElement(MantineProvider, { env: 'test' }, element))
+}
 
 const reportRepository: ReportRepository = {
   createReport: vi.fn(),

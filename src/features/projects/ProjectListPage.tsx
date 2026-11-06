@@ -26,9 +26,9 @@ export function ProjectListPage({ repository, user }: { repository: ProjectRepos
 
   return <section className="project-panel">
     <div className="project-toolbar"><h2>Active projects</h2>
-      {user.role === 'tester' && <Link to="/drafts">My drafts</Link>}
       {user.role === 'developer' && <Link to="/projects/new">Create project</Link>}
     </div>
+    <p className="page-intro">Browse active projects and follow their bug reports.</p>
     {loading && <p role="status">Loading projects…</p>}
     {!loading && error && <div role="alert"><p>{error}</p><button onClick={retry}>Retry</button></div>}
     {!loading && !error && (projects.length === 0

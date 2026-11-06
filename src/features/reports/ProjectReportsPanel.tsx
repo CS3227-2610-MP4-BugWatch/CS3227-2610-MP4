@@ -1,3 +1,4 @@
+import { Badge } from '@mantine/core'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import type { ProjectReportSummary, ReportRepository } from './types'
@@ -38,9 +39,9 @@ export function ProjectReportsPanel({ projectId, repository }: { projectId: stri
             <th scope="col">Status</th><th scope="col">Assignee</th><th scope="col">Reporter</th>
           </tr></thead>
           <tbody>{state.reports.map(report => <tr key={report.id}>
-            <td><Link to={`/reports/${report.id}`}>{report.title}</Link></td>
-            <td>{report.projectName}</td><td>{REPORT_SEVERITIES[report.severity]}</td>
-            <td>{report.state}</td><td>Unassigned</td><td>{report.reporterDisplayName}</td>
+            <td data-label="Title"><Link to={`/reports/${report.id}`}>{report.title}</Link></td>
+            <td data-label="Project">{report.projectName}</td><td data-label="Severity"><Badge variant="light" color={report.severity === 'high' ? 'red' : 'gray'}>{REPORT_SEVERITIES[report.severity]}</Badge></td>
+            <td data-label="Status"><Badge variant="light">{report.state}</Badge></td><td data-label="Assignee">Unassigned</td><td data-label="Reporter">{report.reporterDisplayName}</td>
           </tr>)}</tbody>
         </table>
       </div>)}

@@ -58,7 +58,7 @@ export function ReportCreatePage({ projectRepository, reportRepository, user, dr
   const selected = searchParams.get('projectId') ?? ''
   const projects = projectsState.status === 'ready' ? projectsState.projects : []
   return <section className="project-panel">
-    <h2>{draft ? 'Edit draft' : 'Report a bug'}</h2><Link to="/projects">Back to projects</Link>{' '}<Link to="/drafts">My drafts</Link>
+    <h2>{draft ? 'Edit draft' : 'Report a bug'}</h2><p className="page-intro">{draft ? 'Continue your private draft, then submit it when ready.' : 'Describe what happened so a developer can reproduce the problem.'}</p><Link to="/projects">Back to projects</Link>
     {projectsState.status === 'loading' && <p role="status">Loading projects…</p>}
     {projectsState.status === 'error' && <><p role="alert">Projects could not be loaded. Please try again.</p><button type="button" onClick={() => { setProjectsState({ status: 'loading' }); setAttempt(value => value + 1) }}>Retry</button></>}
     {projectsState.status === 'ready' && !projects.length && <p>No active projects are available.</p>}
