@@ -8,29 +8,45 @@ import { createProjectRepository } from '../projects/projectRepository'
 import { ProjectsApp } from '../projects/ProjectsApp'
 import { ProjectError } from '../projects/types'
 import type { ProjectRepository } from '../projects/types'
+import { createReportRepository } from '../reports/reportRepository'
+import { ReportError } from '../reports/types'
+import type { ReportRepository } from '../reports/types'
 
 const service = createAuthService(supabase)
 const projectRepository = createProjectRepository(supabase)
+const reports = createReportRepository(supabase)
 
 function AuthenticatedContent() {
   const auth = useAuth()
-  const retryAuth = auth.retry
+  const retryAuth = auth.retryIfCurrent
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
-  const repository = useMemo<ProjectRepository>(() => {
+  const { repository, reportRepository } = useMemo<{
+    repository: ProjectRepository
+    reportRepository: ReportRepository
+  }>(() => {
     async function withSession<T>(operation: () => Promise<T>): Promise<T> {
       try { return await operation() }
       catch (reason) {
-        if (reason instanceof ProjectError && reason.code === 'unauthenticated') void retryAuth()
+        if ((reason instanceof ProjectError || reason instanceof ReportError)
+          && reason.code === 'unauthenticated') retryAuth()
         throw reason
       }
     }
     return {
-      listActiveProjects: () => withSession(() => projectRepository.listActiveProjects()),
-      getProject: id => withSession(() => projectRepository.getProject(id)),
-      listProjectHistory: id => withSession(() => projectRepository.listProjectHistory(id)),
-      createProject: input => withSession(() => projectRepository.createProject(input)),
-      updateProject: (id, revision, input) => withSession(() => projectRepository.updateProject(id, revision, input)),
+      repository: {
+        listActiveProjects: () => withSession(() => projectRepository.listActiveProjects()),
+        getProject: id => withSession(() => projectRepository.getProject(id)),
+        listProjectHistory: id => withSession(() => projectRepository.listProjectHistory(id)),
+        createProject: input => withSession(() => projectRepository.createProject(input)),
+        updateProject: (id, revision, input) => withSession(() => projectRepository.updateProject(id, revision, input)),
+      },
+      reportRepository: {
+        createReport: input => withSession(() => reports.createReport(input)),
+        getReport: id => withSession(() => reports.getReport(id)),
+        listReportHistory: id => withSession(() => reports.listReportHistory(id)),
+        listProjectReports: id => withSession(() => reports.listProjectReports(id)),
+      },
     }
   }, [retryAuth])
 
@@ -55,7 +71,7 @@ function AuthenticatedContent() {
       {auth.status === 'authenticated' ? (
         <BrowserRouter key={auth.user.id}>
           <p>Signed in as {auth.user.displayName} ({auth.user.role})</p>
-          <ProjectsApp repository={repository} user={auth.user} />
+          <ProjectsApp repository={repository} reportRepository={reportRepository} user={auth.user} />
         </BrowserRouter>
       ) : auth.status === 'incomplete_profile' ? (
         <p role="alert">Account setup incomplete—contact the administrator.</p>

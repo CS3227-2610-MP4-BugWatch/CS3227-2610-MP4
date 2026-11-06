@@ -4,8 +4,16 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { Link, MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ProjectsApp } from '../features/projects/ProjectsApp'
+import type { ReportRepository } from '../features/reports/types'
 import { ProjectError } from '../features/projects/types'
 import type { Project, ProjectHistoryEntry, ProjectInput, ProjectRepository, SessionUser } from '../features/projects/types'
+
+const reportRepository: ReportRepository = {
+  createReport: vi.fn(),
+  getReport: vi.fn(),
+  listReportHistory: vi.fn(),
+  listProjectReports: vi.fn(),
+}
 
 const developer: SessionUser = {
   id: '00000000-0000-4000-8000-000000000001', username: 'developer', displayName: 'Developer One', role: 'developer',
@@ -35,7 +43,7 @@ function deferred<T>() {
 
 function show(repo: ProjectRepository, route = '/projects', user = developer) {
   return render(createElement(MemoryRouter, { initialEntries: [route] },
-    createElement(ProjectsApp, { repository: repo, user })))
+    createElement(ProjectsApp, { repository: repo, reportRepository, user })))
 }
 
 function fill(input: ProjectInput = project) {
@@ -101,7 +109,7 @@ describe('project browser and detail interactions', () => {
     await screen.findByRole('heading', { name: project.name })
     expect(screen.getByText(markup)).not.toBeNull()
     expect(view.container.querySelector('img')).toBeNull()
-    expect(screen.getByText('Another Developer', { selector: 'strong' })).not.toBeNull()
+    expect(await screen.findByText('Another Developer', { selector: 'strong' })).not.toBeNull()
     expect(screen.queryByText(project.createdBy, { selector: 'strong' })).toBeNull()
     expect(screen.queryByRole('link', { name: 'Edit project' })).toBeNull()
     expect(screen.getByText(/Previously: Previous/)).not.toBeNull()
@@ -268,7 +276,7 @@ describe('project create and edit forms', () => {
     const repo = repository()
     render(createElement(MemoryRouter, { initialEntries: [`/projects/${project.id}/edit`] },
       createElement(Link, { to: '/projects/new' }, 'Open new project'),
-      createElement(ProjectsApp, { repository: repo, user: developer })))
+      createElement(ProjectsApp, { repository: repo, reportRepository, user: developer })))
     await screen.findByLabelText(/^Name /)
     expect((screen.getByLabelText(/^Name /) as HTMLInputElement).value).toBe(project.name)
     fireEvent.click(screen.getByRole('link', { name: 'Open new project' }))

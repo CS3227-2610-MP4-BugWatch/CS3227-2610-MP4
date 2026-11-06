@@ -26,6 +26,7 @@ The main objectives of this guide are to:
 - [Authentication and account setup](Authentication.md): Identity migration, manual provisioning, and permission checks.
 - [Multi-Agent Workflow](AgentWorkflow.md): Project agent roles, configuration, and coordination.
 - [Project development and Supabase handoff](Projects.md): Project migrations, application contracts, isolated hosted tests, and integration status.
+- [Bug report development](Reports.md): Report migration, permissions, and verification.
 - [Continuous integration](ContinuousIntegration.md): Unit test workflow for pushes to development and master.
 
 ## **Acknowledgements**
