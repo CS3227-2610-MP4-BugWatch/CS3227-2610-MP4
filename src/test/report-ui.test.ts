@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { createElement } from 'react'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
+import { createMemoryRouter, RouterProvider, useLocation } from 'react-router'
 import { afterEach, expect, it, vi } from 'vitest'
+import { DraftEditPage } from '../features/reports/DraftEditPage'
 import { ReportCreatePage } from '../features/reports/ReportCreatePage'
 import { ReportDetailsPage } from '../features/reports/ReportDetailsPage'
 import { ReportError, type Report } from '../features/reports/types'
@@ -39,6 +40,7 @@ function setup() {
     getProject: vi.fn(), listProjectHistory: vi.fn(), createProject: vi.fn(), updateProject: vi.fn(),
   }
   const reportRepository = {
+    listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn().mockResolvedValue(saved),
     listProjectReports: vi.fn(),
     createReport: vi.fn().mockResolvedValue(saved), getReport: vi.fn().mockResolvedValue(saved),
     listReportHistory: vi.fn().mockResolvedValue([{
@@ -47,12 +49,13 @@ function setup() {
     }]),
   }
   function show(path = '/reports/new', actor = user) {
-    return render(createElement(MemoryRouter, { initialEntries: [path] },
-      createElement(Routes, null,
-        createElement(Route, { path: '/reports/new', element: createElement(ReportCreatePage, { projectRepository, reportRepository, user: actor }) }),
-        createElement(Route, { path: '/reports/:reportId', element: createElement(ReportDetailsPage, { reportRepository }) }),
-        createElement(Route, { path: '/projects/:projectId', element: createElement(ProjectDestination) }),
-      )))
+    const router = createMemoryRouter([
+      { path: '/drafts/:draftId', element: createElement(DraftEditPage, { projectRepository, reportRepository, user: actor }) },
+      { path: '/reports/new', element: createElement(ReportCreatePage, { projectRepository, reportRepository, user: actor }) },
+      { path: '/reports/:reportId', element: createElement(ReportDetailsPage, { reportRepository }) },
+      { path: '/projects/:projectId', element: createElement(ProjectDestination) },
+    ], { initialEntries: [path] })
+    return render(createElement(RouterProvider, { router }))
   }
   return { show, projectRepository, reportRepository }
 }
@@ -150,6 +153,7 @@ it('reportCreate_archivedProject_explainsRejectionAndDiscardsOnlyOnExplicitActio
   expect(projectRepository.updateProject).not.toHaveBeenCalled()
   expect(reportRepository.createReport).toHaveBeenCalledOnce()
   fireEvent.click(screen.getByRole('button', { name: 'Discard report' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Leave without saving' }))
   await screen.findByRole('heading', { name: 'Selected project details' })
   expect(screen.queryByLabelText(/^Title\b/i)).toBeNull()
   expect(reportRepository.createReport).toHaveBeenCalledOnce()
@@ -196,6 +200,11 @@ it('reportCreate_cancel_returnsToSelectedProjectWithoutWriting', async () => {
   show()
   await enterReport()
   fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+  expect(screen.getByRole('dialog', { name: 'Unsaved changes' })).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Keep editing' }))
+  expect((screen.getByLabelText(/^Title\b/i) as HTMLInputElement).value).toBe(input.title)
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Leave without saving' }))
   expect(await screen.findByRole('heading', { name: 'Selected project details' })).toBeTruthy()
   expect(reportRepository.createReport).not.toHaveBeenCalled()
 })
@@ -259,4 +268,94 @@ it('reportDetails_failedHistoryLoad_retriesWithoutShowingMissingReport', async (
   expect(screen.queryByText(/report not found/i)).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: /retry/i }))
   await waitFor(() => expect(screen.getByText(/Named history actor/i)).toBeTruthy())
+})
+
+
+
+
+
+
+it('draftSave_missingProject_preservesInputAndDoesNotWrite', async () => {
+  const { show, reportRepository } = setup()
+  show()
+  fireEvent.change(await screen.findByLabelText(/^Title\b/i), { target: { value: 'Unfinished' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Save draft' }))
+  expect(screen.getByText(/choose an active project/i)).toBeTruthy()
+  expect((screen.getByLabelText(/^Title\b/i) as HTMLInputElement).value).toBe('Unfinished')
+  expect(reportRepository.saveDraft).not.toHaveBeenCalled()
+})
+it('draftSave_incompleteInput_opensStableDraftAndShowsConfirmation', async () => {
+  const { show, reportRepository } = setup()
+  const draft = { ...input, title: '', description: '', version: '', expectedResults: '', actualResults: '', severity: '' as const, id: reportId, projectName: 'Test project', projectArchivedAt: null, updatedAt: time }
+  reportRepository.saveDraft.mockResolvedValue(draft)
+  reportRepository.getDraft.mockResolvedValue(draft)
+  show()
+  fireEvent.change(await screen.findByLabelText(/^Project\b/i), { target: { value: projectId } })
+  fireEvent.change(screen.getByLabelText(/^Reproduction steps\b/i), { target: { value: input.reproductionSteps } })
+  fireEvent.click(screen.getByRole('button', { name: 'Save draft' }))
+  expect((await screen.findByLabelText(/^Reproduction steps\b/i) as HTMLTextAreaElement).value).toBe(input.reproductionSteps)
+  expect(screen.getByText('Draft saved')).toBeTruthy()
+  expect(reportRepository.saveDraft).toHaveBeenCalledOnce()
+})
+it('draftSave_failure_retainsInputWithoutConfirmation', async () => {
+  const { show, reportRepository } = setup()
+  reportRepository.saveDraft.mockRejectedValue(new ReportError('unavailable', 'Offline'))
+  show()
+  fireEvent.change(await screen.findByLabelText(/^Project\b/i), { target: { value: projectId } })
+  fireEvent.change(screen.getByLabelText(/^Title\b/i), { target: { value: 'Unfinished' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Save draft' }))
+  await screen.findByRole('alert')
+  expect(screen.queryByText('Draft saved')).toBeNull()
+  expect((screen.getByLabelText(/^Title\b/i) as HTMLInputElement).value).toBe('Unfinished')
+})
+it('draftSubmit_currentEdits_sendsDraftIdAndOpensReport', async () => {
+  const { show, reportRepository } = setup()
+  reportRepository.getDraft.mockResolvedValue({ ...input, id: reportId, title: 'Saved title', projectName: 'Test project', projectArchivedAt: null, updatedAt: time })
+  show(`/drafts/${reportId}`)
+  fireEvent.change(await screen.findByLabelText(/^Title\b/i), { target: { value: input.title } })
+  submit()
+  await screen.findByRole('heading', { name: saved.title })
+  expect(reportRepository.submitDraft).toHaveBeenCalledExactlyOnceWith(reportId, input)
+})
+
+it('draftEdit_archivedProject_preservesTextAndAllowsReassignment', async () => {
+  const { show, reportRepository } = setup()
+  const draft = { ...input, id: reportId, projectId: '20000000-0000-4000-8000-000000000003', projectName: 'Old project', projectArchivedAt: time, updatedAt: time }
+  reportRepository.getDraft.mockResolvedValue(draft)
+  reportRepository.saveDraft.mockResolvedValue({ ...draft, projectId })
+  show(`/drafts/${reportId}`)
+  expect(await screen.findByRole('option', { name: 'Old project (Archived)' })).toBeTruthy()
+  expect((screen.getByRole('button', { name: 'Save draft' }) as HTMLButtonElement).disabled).toBe(true)
+  expect((screen.getByLabelText(/^Title\b/i) as HTMLInputElement).value).toBe(input.title)
+  await screen.findByRole('option', { name: 'Test project' })
+  fireEvent.change(screen.getByLabelText(/^Project\b/i), { target: { value: projectId } })
+  fireEvent.click(screen.getByRole('button', { name: 'Save draft' }))
+  await screen.findByText('Draft saved')
+  expect(reportRepository.saveDraft).toHaveBeenCalledExactlyOnceWith(input, reportId)
+})
+it('draftSubmit_rejected_preservesCurrentValues', async () => {
+  const { show, reportRepository } = setup()
+  reportRepository.getDraft.mockResolvedValue({ ...input, id: reportId, projectName: 'Test project', projectArchivedAt: null, updatedAt: time })
+  reportRepository.submitDraft.mockRejectedValue(new ReportError('unavailable', 'Offline'))
+  show(`/drafts/${reportId}`)
+  fireEvent.change(await screen.findByLabelText(/^Title\b/i), { target: { value: 'Edited title' } })
+  submit()
+  await screen.findByRole('alert')
+  expect((screen.getByLabelText(/^Title\b/i) as HTMLInputElement).value).toBe('Edited title')
+  expect(reportRepository.getReport).not.toHaveBeenCalled()
+})
+
+it('draftSave_normalizedSavedValues_leavesWithoutFalseUnsavedWarning', async () => {
+  const { show, reportRepository } = setup()
+  const draft = { ...input, id: reportId, projectName: 'Test project', projectArchivedAt: null, updatedAt: time }
+  reportRepository.getDraft.mockResolvedValue(draft)
+  reportRepository.saveDraft.mockResolvedValue({ ...draft, title: 'Edited title' })
+  show(`/drafts/${reportId}`)
+  fireEvent.change(await screen.findByLabelText(/^Title\b/i), { target: { value: '  Edited title  ' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Save draft' }))
+  await screen.findByText('Draft saved')
+  expect((screen.getByLabelText(/^Title\b/i) as HTMLInputElement).value).toBe('Edited title')
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+  expect(await screen.findByRole('heading', { name: 'Selected project details' })).toBeTruthy()
+  expect(screen.queryByRole('dialog', { name: 'Unsaved changes' })).toBeNull()
 })

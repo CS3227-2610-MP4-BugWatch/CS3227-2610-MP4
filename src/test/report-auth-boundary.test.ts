@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { createElement } from 'react'
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { createElement, StrictMode } from 'react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { ReportError, type Report } from '../features/reports/types'
@@ -14,7 +14,7 @@ const { service, projects, reports } = vi.hoisted(() => ({
     listActiveProjects: vi.fn(), getProject: vi.fn(), listProjectHistory: vi.fn(),
     createProject: vi.fn(), updateProject: vi.fn(),
   },
-  reports: { createReport: vi.fn(), getReport: vi.fn(), listReportHistory: vi.fn() },
+  reports: { createReport: vi.fn(), getReport: vi.fn(), listReportHistory: vi.fn(), saveDraft: vi.fn(), getDraft: vi.fn() },
 }))
 
 vi.mock('../shared/lib/supabaseClient.js', () => ({ supabase: {} }))
@@ -127,3 +127,60 @@ it.each(['different user', 'same user after logout'] as const)(
     expect((screen.getByLabelText(/^Title\b/i) as HTMLInputElement).value).toBe(replacementTitle)
   },
 )
+
+it('draftSave_firstSaveWithReadUnavailable_keepsSavedFormOpenWithoutReading', async () => {
+  const draft = {
+    id: reportId, projectId, projectName: 'Project', projectArchivedAt: null,
+    title, description: '', version: '', reproductionSteps: '', expectedResults: '',
+    actualResults: '', severity: '' as const, testEnvironment: '', updatedAt: '2026-11-05T09:30:00Z',
+  }
+  reports.saveDraft.mockResolvedValue(draft)
+  reports.getDraft.mockRejectedValue(new ReportError('unavailable', 'Offline'))
+  await openForm()
+  fireEvent.change(await screen.findByLabelText(/^Project\b/i), { target: { value: projectId } })
+  fireEvent.click(screen.getByRole('button', { name: 'Save draft' }))
+  await screen.findByRole('heading', { name: 'Edit draft' })
+  await screen.findByText('Draft saved')
+  expect(window.location.pathname).toBe(`/drafts/${reportId}`)
+  expect((await screen.findByLabelText(/^Title\b/i) as HTMLInputElement).value).toBe(title)
+  expect(reports.getDraft).not.toHaveBeenCalled()
+  await waitFor(() => expect((screen.getByRole('button', { name: 'Save draft' }) as HTMLButtonElement).disabled).toBe(false))
+  fireEvent.change(screen.getByLabelText(/^Title\b/i), { target: { value: 'Next edit' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Save draft' }))
+  await waitFor(() => expect(reports.saveDraft).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Next edit' }), reportId))
+})
+
+it('authenticatedRouter_strictMode_mountsAndHandlesNavigation', async () => {
+  service.getCurrentSession.mockReset().mockResolvedValue(session(testerId))
+  render(createElement(StrictMode, null, createElement(AuthenticatedApp)))
+  expect(await screen.findByLabelText(/^Title\b/i)).toBeTruthy()
+  fireEvent.click(screen.getByRole('link', { name: 'Back to projects' }))
+  expect(await screen.findByRole('heading', { name: 'Active projects' })).toBeTruthy()
+})
+
+it('draftSave_projectReloadFails_keepsSavedFormAndRetriesBeforeWriting', async () => {
+  const draft = {
+    id: reportId, projectId, projectName: 'Project', projectArchivedAt: null,
+    title, description: '', version: '', reproductionSteps: '', expectedResults: '',
+    actualResults: '', severity: '' as const, testEnvironment: '', updatedAt: '2026-11-05T09:30:00Z',
+  }
+  projects.listActiveProjects.mockResolvedValueOnce([{ id: projectId, name: 'Project', archivedAt: null }])
+    .mockRejectedValueOnce(new Error('Offline'))
+    .mockResolvedValue([{ id: projectId, name: 'Project', archivedAt: null }])
+  reports.saveDraft.mockResolvedValue(draft)
+  reports.getDraft.mockRejectedValue(new ReportError('unavailable', 'Offline'))
+  await openForm()
+  fireEvent.change(screen.getByLabelText(/^Project\b/i), { target: { value: projectId } })
+  fireEvent.click(screen.getByRole('button', { name: 'Save draft' }))
+  await screen.findByRole('alert')
+  expect((screen.getByLabelText(/^Title\b/i) as HTMLInputElement).value).toBe(title)
+  expect(screen.getByText('Draft saved')).toBeTruthy()
+  expect((screen.getByRole('button', { name: 'Save draft' }) as HTMLButtonElement).disabled).toBe(true)
+  expect((screen.getByRole('button', { name: 'Submit report' }) as HTMLButtonElement).disabled).toBe(true)
+  expect(reports.getDraft).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+  await waitFor(() => expect((screen.getByRole('button', { name: 'Save draft' }) as HTMLButtonElement).disabled).toBe(false))
+  fireEvent.change(screen.getByLabelText(/^Title\b/i), { target: { value: 'Next edit' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Save draft' }))
+  expect(reports.saveDraft).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Next edit' }), reportId)
+})

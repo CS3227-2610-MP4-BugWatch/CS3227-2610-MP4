@@ -1,13 +1,13 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useSyncExternalStore } from 'react'
 import { supabase } from '../../shared/lib/supabaseClient.js'
 import { AuthProvider, useAuth } from './AuthProvider'
 import { AuthError, createAuthService } from './authService'
 import { LoginPage } from './LoginPage'
-import { BrowserRouter } from 'react-router'
+import { createBrowserRouter, RouterProvider } from 'react-router'
 import { createProjectRepository } from '../projects/projectRepository'
 import { ProjectsApp } from '../projects/ProjectsApp'
 import { ProjectError } from '../projects/types'
-import type { ProjectRepository } from '../projects/types'
+import type { ProjectRepository, SessionUser } from '../projects/types'
 import { createReportRepository } from '../reports/reportRepository'
 import { ReportError } from '../reports/types'
 import type { ReportRepository } from '../reports/types'
@@ -42,6 +42,11 @@ function AuthenticatedContent() {
         updateProject: (id, revision, input) => withSession(() => projectRepository.updateProject(id, revision, input)),
       },
       reportRepository: {
+        listDrafts: () => withSession(() => reports.listDrafts()),
+        getDraft: id => withSession(() => reports.getDraft(id)),
+        saveDraft: (input, id) => withSession(() => reports.saveDraft(input, id)),
+        deleteDraft: id => withSession(() => reports.deleteDraft(id)),
+        submitDraft: (id, input) => withSession(() => reports.submitDraft(id, input)),
         createReport: input => withSession(() => reports.createReport(input)),
         getReport: id => withSession(() => reports.getReport(id)),
         listReportHistory: id => withSession(() => reports.listReportHistory(id)),
@@ -69,10 +74,10 @@ function AuthenticatedContent() {
     <main className="project-workspace">
       <h1>BugWatch</h1>
       {auth.status === 'authenticated' ? (
-        <BrowserRouter key={auth.user.id}>
+        <div key={auth.user.id}>
           <p>Signed in as {auth.user.displayName} ({auth.user.role})</p>
-          <ProjectsApp repository={repository} reportRepository={reportRepository} user={auth.user} />
-        </BrowserRouter>
+          <AuthenticatedRouter repository={repository} reportRepository={reportRepository} user={auth.user} />
+        </div>
       ) : auth.status === 'incomplete_profile' ? (
         <p role="alert">Account setup incomplete—contact the administrator.</p>
       ) : (
@@ -91,4 +96,22 @@ function AuthenticatedContent() {
 
 export default function AuthenticatedApp() {
   return <AuthProvider service={service}><AuthenticatedContent /></AuthProvider>
+}
+
+function AuthenticatedRouter({ repository, reportRepository, user }: { repository: ProjectRepository; reportRepository: ReportRepository; user: SessionUser }) {
+  const store = useMemo(() => createRouterStore(repository, reportRepository, user), [repository, reportRepository, user])
+  const router = useSyncExternalStore(store.subscribe, store.getSnapshot)
+  return router ? <RouterProvider router={router} /> : null
+}
+
+function createRouterStore(repository: ProjectRepository, reportRepository: ReportRepository, user: SessionUser) {
+  let router: ReturnType<typeof createBrowserRouter> | null = null
+  return {
+    subscribe(notify: () => void) {
+      router = createBrowserRouter([{ path: '*', element: <ProjectsApp repository={repository} reportRepository={reportRepository} user={user} /> }])
+      notify()
+      return () => { router?.dispose(); router = null }
+    },
+    getSnapshot: () => router,
+  }
 }

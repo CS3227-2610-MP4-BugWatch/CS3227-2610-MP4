@@ -30,6 +30,17 @@ export interface Report extends ValidatedReportInput {
   reporterDisplayName: string
 }
 
+export interface DraftSummary {
+  id: string
+  projectId: string
+  projectName: string
+  projectArchivedAt: string | null
+  title: string
+  updatedAt: string
+}
+
+export interface ReportDraft extends DraftSummary, ReportInput {}
+
 export interface ReportHistoryEntry {
   id: string
   reportId: string
@@ -59,6 +70,11 @@ export class ReportError extends Error {
 }
 
 export interface ReportRepository {
+  listDrafts(): Promise<DraftSummary[]>
+  getDraft(id: string): Promise<ReportDraft | null>
+  saveDraft(input: ReportInput, id?: string): Promise<ReportDraft>
+  deleteDraft(id: string): Promise<void>
+  submitDraft(id: string, input: ReportInput): Promise<Report>
   createReport(input: ReportInput): Promise<Report>
   getReport(id: string): Promise<Report | null>
   listReportHistory(id: string): Promise<ReportHistoryEntry[]>

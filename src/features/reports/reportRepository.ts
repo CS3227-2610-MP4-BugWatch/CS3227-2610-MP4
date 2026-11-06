@@ -1,9 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { ReportError } from './types'
-import type { ProjectReportSummary, Report, ReportFieldErrors, ReportHistoryEntry, ReportInput, ReportRepository, ReportSeverity } from './types'
-import { REPORT_SEVERITIES, REPORT_TEXT_FIELDS, REPORT_UUID, validateReportInput } from './validation'
+import type { DraftSummary, ReportDraft, ProjectReportSummary, Report, ReportFieldErrors, ReportHistoryEntry, ReportInput, ReportRepository, ReportSeverity } from './types'
+import { REPORT_SEVERITIES, REPORT_TEXT_FIELDS, REPORT_UUID, validateDraftInput, validateReportInput } from './validation'
 
 const PROJECT_REPORT_PAGE_SIZE = 100
+const DRAFT_PAGE_SIZE = 100
 
 const reportFields = {
   project_id: 'projectId',
@@ -85,6 +86,24 @@ function reportRow(value: unknown): Report {
   }
 }
 
+function draftSummaryRow(value: unknown): DraftSummary {
+  const row = record(value)
+  const title = text(row.title)
+  if (title !== title.trim() || Array.from(title).length > REPORT_TEXT_FIELDS.title.limit) fail(null)
+  return { id: uuid(row.id), projectId: uuid(row.project_id), projectName: text(row.project_name),
+    projectArchivedAt: row.project_archived_at === null ? null : timestamp(row.project_archived_at),
+    title, updatedAt: timestamp(row.updated_at) }
+}
+
+function draftRow(value: unknown): ReportDraft {
+  const row = record(value)
+  const input = Object.fromEntries(Object.entries(reportFields).map(([db, field]) => [field, text(row[db])]))
+  const result = validateDraftInput(input as unknown as ReportInput)
+  if (!result.valid) fail(null)
+  for (const field of Object.values(reportFields)) if (result.value[field] !== input[field]) fail(null)
+  return { ...result.value, ...draftSummaryRow(value) }
+}
+
 function historyRow(value: unknown): ReportHistoryEntry {
   const row = record(value)
   if (row.event !== 'created') fail(null)
@@ -146,6 +165,50 @@ export function createReportRepository(client: SupabaseClient): ReportRepository
   }
 
   return {
+    async listDrafts() {
+      const summaries: DraftSummary[] = []
+      const seen = new Set<string>()
+      let previous: ReturnType<typeof cursorKey> | undefined
+      let parameters: Record<string, unknown> = {}
+      for (;;) {
+        const page = await rpc('list_report_drafts', parameters)
+        if (!Array.isArray(page) || page.length > DRAFT_PAGE_SIZE) fail(null)
+        for (const value of page) {
+          const summary = draftSummaryRow(value)
+          const key = cursorKey(summary.updatedAt, summary.id)
+          if (seen.has(key.id) || (previous && (key.microseconds > previous.microseconds
+            || (key.microseconds === previous.microseconds && key.id >= previous.id)))) fail(null)
+          seen.add(key.id)
+          previous = key
+          summaries.push(summary)
+          parameters = { p_before_updated_at: summary.updatedAt, p_before_id: summary.id }
+        }
+        if (page.length < DRAFT_PAGE_SIZE) return summaries
+      }
+    },
+    async getDraft(id) {
+      if (!REPORT_UUID.test(id)) return null
+      const data = await rpc('get_report_draft', { p_draft_id: id })
+      return data === null ? null : draftRow(data)
+    },
+    async saveDraft(input, id) {
+      if (id !== undefined && !REPORT_UUID.test(id)) throw new ReportError('not_found', 'The draft could not be found.')
+      const result = validateDraftInput(input)
+      if (!result.valid) throw new ReportError('validation', 'Check the report fields.', result.errors)
+      const parameters = Object.fromEntries(Object.entries(reportFields).map(([db, field]) => [`p_${db}`, result.value[field]]))
+      return draftRow(await rpc('save_report_draft', { p_draft_id: id ?? null, ...parameters }))
+    },
+    async deleteDraft(id) {
+      if (!REPORT_UUID.test(id)) throw new ReportError('not_found', 'The draft could not be found.')
+      await rpc('delete_report_draft', { p_draft_id: id })
+    },
+    async submitDraft(id, input) {
+      if (!REPORT_UUID.test(id)) throw new ReportError('not_found', 'The draft could not be found.')
+      const result = validateReportInput(input)
+      if (!result.valid) throw new ReportError('validation', 'Check the report fields.', result.errors)
+      const parameters = Object.fromEntries(Object.entries(reportFields).map(([db, field]) => [`p_${db}`, result.value[field]]))
+      return reportRow(await rpc('submit_report_draft', { p_draft_id: id, ...parameters }))
+    },
     async createReport(input) {
       const result = validateReportInput(input)
       if (!result.valid) throw new ReportError('validation', 'Check the report fields.', result.errors)

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { createElement } from 'react'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import { MemoryRouter } from 'react-router'
+import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, expect, it, vi } from 'vitest'
 import { ProjectsApp } from '../features/projects/ProjectsApp'
 import type { Project, ProjectRepository, SessionUser } from '../features/projects/types'
@@ -44,6 +44,7 @@ function setup(initialReports: Report[] = [saved, otherSaved]) {
     createProject: vi.fn(), updateProject: vi.fn(),
   } satisfies ProjectRepository
   const reportRepository = {
+    listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn(),
     listProjectReports: vi.fn(async (id: string) => rows.filter(item => item.projectId === id).map(item => ({
       id: item.id, projectId: item.projectId, title: item.title, projectName: item.projectName,
       severity: item.severity, state: item.state, assignedDeveloperId: item.assignedDeveloperId,
@@ -58,8 +59,8 @@ function setup(initialReports: Report[] = [saved, otherSaved]) {
     listReportHistory: vi.fn().mockResolvedValue([]),
   }
   function show(path = `/projects/${projectId}`, user = tester) {
-    return render(createElement(MemoryRouter, { initialEntries: [path] },
-      createElement(ProjectsApp, { repository, reportRepository, user })))
+    const router = createMemoryRouter([{ path: '*', element: createElement(ProjectsApp, { repository, reportRepository, user }) }], { initialEntries: [path] })
+    return render(createElement(RouterProvider, { router }))
   }
   return { show, repository, reportRepository }
 }

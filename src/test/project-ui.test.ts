@@ -12,6 +12,7 @@ const reportRepository: ReportRepository = {
   createReport: vi.fn(),
   getReport: vi.fn(),
   listReportHistory: vi.fn(),
+  listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn(),
   listProjectReports: vi.fn(),
 }
 
