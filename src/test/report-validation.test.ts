@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ReportInput } from '../features/reports/types'
-import { validateReportInput } from '../features/reports/validation'
+import { validateDraftInput, validateReportInput } from '../features/reports/validation'
 
 const input: ReportInput = {
   projectId: '10000000-0000-4000-8000-000000000001',
@@ -77,5 +77,29 @@ describe('report input validation', () => {
     expect(validateReportInput({ ...input, testEnvironment: '😀'.repeat(1001) })).toMatchObject({
       valid: false, errors: { testEnvironment: expect.any(String) },
     })
+  })
+})
+
+describe('draft input validation', () => {
+  const incomplete: ReportInput = { projectId: input.projectId, title: '', description: '', version: '', reproductionSteps: ' Open page ', expectedResults: '', actualResults: '', severity: '' }
+
+  it('validateDraftInput_incompleteFields_acceptsAndNormalizesText', () => {
+    expect(validateDraftInput(incomplete)).toMatchObject({ valid: true, value: { ...incomplete, reproductionSteps: 'Open page', testEnvironment: '' } })
+  })
+  it.each(['', 'bad-id'])('validateDraftInput_invalidProject%j_rejects', projectId => {
+    expect(validateDraftInput({ ...incomplete, projectId })).toMatchObject({ valid: false, errors: { projectId: expect.any(String) } })
+  })
+  it.each([...limits, ['testEnvironment', 1000] as const])('validateDraftInput_%sAtMaximum_acceptsAndAboveMaximumRejects', (field, limit) => {
+    expect(validateDraftInput({ ...incomplete, [field]: '😀'.repeat(limit) })).toMatchObject({ valid: true })
+    expect(validateDraftInput({ ...incomplete, [field]: '😀'.repeat(limit + 1) })).toMatchObject({ valid: false, errors: { [field]: expect.any(String) } })
+  })
+  it.each(['very_low', 'low', 'medium', 'high', ''] as const)('validateDraftInput_severity%s_accepts', severity => {
+    expect(validateDraftInput({ ...incomplete, severity })).toMatchObject({ valid: true, value: { severity } })
+  })
+  it('validateDraftInput_invalidSeverity_rejects', () => {
+    expect(validateDraftInput({ ...incomplete, severity: 'critical' } as unknown as ReportInput)).toMatchObject({ valid: false, errors: { severity: expect.any(String) } })
+  })
+  it('validateDraftInput_nonStringText_rejects', () => {
+    expect(validateDraftInput({ ...incomplete, title: 42 } as unknown as ReportInput)).toMatchObject({ valid: false, errors: { title: expect.any(String) } })
   })
 })

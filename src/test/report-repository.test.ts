@@ -175,3 +175,109 @@ describe('project report listing repository', () => {
     await expect(setup([]).repository.listProjectReports(projectId)).resolves.toEqual([])
   })
 })
+
+const draftRow = {
+  id, project_id: projectId, project_name: 'Project', project_archived_at: null,
+  title: '', description: '', version: '', reproduction_steps: 'Visit page',
+  expected_results: '', actual_results: '', severity: '', test_environment: '', updated_at: time,
+}
+const draftInput: ReportInput = {
+  projectId, title: '', description: '', version: '', reproductionSteps: 'Visit page',
+  expectedResults: '', actualResults: '', severity: '', testEnvironment: '',
+}
+const draft = {
+  id, projectName: 'Project', projectArchivedAt: null, updatedAt: time, ...draftInput,
+}
+const draftParams = {
+  p_draft_id: id, p_project_id: projectId, p_title: '', p_description: '', p_version: '',
+  p_reproduction_steps: 'Visit page', p_expected_results: '', p_actual_results: '', p_severity: '', p_test_environment: '',
+}
+
+describe('draft repository', () => {
+  it('listDrafts_archivedAndActiveRows_mapsProjectLabels', async () => {
+    const { rpc, repository } = setup([draftRow, { ...draftRow, id: '00000000-0000-4000-8000-000000000001', project_archived_at: time }])
+    await expect(repository.listDrafts()).resolves.toEqual([
+      { id, projectId, projectName: 'Project', projectArchivedAt: null, title: '', updatedAt: time },
+      { id: '00000000-0000-4000-8000-000000000001', projectId, projectName: 'Project', projectArchivedAt: time, title: '', updatedAt: time },
+    ])
+    expect(rpc).toHaveBeenCalledWith('list_report_drafts', {})
+  })
+  it('getDraft_existingDraft_mapsFields', async () => {
+    const { rpc, repository } = setup(draftRow)
+    await expect(repository.getDraft(id)).resolves.toEqual(draft)
+    expect(rpc).toHaveBeenCalledWith('get_report_draft', { p_draft_id: id })
+  })
+  it('getDraft_missingDraft_returnsNull', async () => {
+    await expect(setup().repository.getDraft(id)).resolves.toBeNull()
+  })
+  it('saveDraft_incompleteInput_sendsNormalizedFields', async () => {
+    const { rpc, repository } = setup(draftRow)
+    await expect(repository.saveDraft({ ...draftInput, reproductionSteps: ' Visit page ' }, id)).resolves.toEqual(draft)
+    expect(rpc).toHaveBeenCalledExactlyOnceWith('save_report_draft', draftParams)
+  })
+  it('saveDraft_missingProject_rejectsWithoutRequest', async () => {
+    const { rpc, repository } = setup()
+    await expect(repository.saveDraft({ ...draftInput, projectId: '' })).rejects.toMatchObject({ code: 'validation', fieldErrors: { projectId: expect.any(String) } })
+    expect(rpc).not.toHaveBeenCalled()
+  })
+  it('deleteDraft_ownedDraft_sendsIdentifier', async () => {
+    const { rpc, repository } = setup()
+    await repository.deleteDraft(id)
+    expect(rpc).toHaveBeenCalledExactlyOnceWith('delete_report_draft', { p_draft_id: id })
+  })
+  it('submitDraft_validCurrentValues_returnsReport', async () => {
+    const { rpc, repository } = setup(row)
+    await expect(repository.submitDraft(id, input)).resolves.toEqual(report)
+    expect(rpc).toHaveBeenCalledExactlyOnceWith('submit_report_draft', {
+      p_draft_id: id, p_project_id: projectId, p_title: input.title, p_description: input.description,
+      p_version: input.version, p_reproduction_steps: input.reproductionSteps, p_expected_results: input.expectedResults,
+      p_actual_results: input.actualResults, p_severity: input.severity, p_test_environment: '',
+    })
+  })
+  it('submitDraft_incompleteInput_rejectsWithoutRequest', async () => {
+    const { rpc, repository } = setup()
+    await expect(repository.submitDraft(id, draftInput)).rejects.toMatchObject({ code: 'validation' })
+    expect(rpc).not.toHaveBeenCalled()
+  })
+  it.each([['P2001', 'unauthenticated'], ['P2002', 'forbidden'], ['P2004', 'archived'], ['P2005', 'not_found'], ['unknown', 'unavailable']])(
+    'saveDraft_databaseError%s_mapsTo%s', async (code, expected) => {
+      await expect(setup(null, { code, message: 'Private SQL internals' }).repository.saveDraft(draftInput, id)).rejects.toMatchObject({ code: expected })
+    },
+  )
+})
+
+
+
+function draftSummaryRow(sequence: number, updatedAt = '2026-11-05T09:30:00.000012+00:00') {
+  return { ...draftRow, id: `50000000-0000-4000-8000-${String(sequence).padStart(12, '0')}`, updated_at: updatedAt }
+}
+
+describe('draft listing pagination', () => {
+  const page = Array.from({ length: 100 }, (_, index) => draftSummaryRow(200 - index))
+  it('listDrafts_fullPage_fetchesNextPageUsingExactCursor', async () => {
+    const last = draftSummaryRow(100, '2026-11-05T09:30:00.000011+00:00')
+    const { rpc, repository } = setup()
+    rpc.mockResolvedValueOnce({ data: page, error: null }).mockResolvedValueOnce({ data: [last], error: null })
+    const results = await repository.listDrafts()
+    expect(results.map(item => item.id)).toEqual([...page, last].map(item => item.id))
+    expect(rpc).toHaveBeenNthCalledWith(1, 'list_report_drafts', {})
+    expect(rpc).toHaveBeenNthCalledWith(2, 'list_report_drafts', {
+      p_before_updated_at: page.at(-1)!.updated_at, p_before_id: page.at(-1)!.id,
+    })
+    expect(rpc).toHaveBeenCalledTimes(2)
+  })
+  it('listDrafts_repeatedPage_rejectsInsteadOfLooping', async () => {
+    const { rpc, repository } = setup()
+    rpc.mockResolvedValueOnce({ data: page, error: null }).mockResolvedValueOnce({ data: page, error: null })
+    await expect(repository.listDrafts()).rejects.toMatchObject({ code: 'unavailable' })
+    expect(rpc).toHaveBeenCalledTimes(2)
+  })
+  it('listDrafts_outOfOrderPage_rejects', async () => {
+    await expect(setup([draftSummaryRow(1), draftSummaryRow(2)]).repository.listDrafts())
+      .rejects.toMatchObject({ code: 'unavailable' })
+  })
+  it('listDrafts_oversizedPage_rejects', async () => {
+    await expect(setup([...page, draftSummaryRow(100)]).repository.listDrafts())
+      .rejects.toMatchObject({ code: 'unavailable' })
+  })
+})

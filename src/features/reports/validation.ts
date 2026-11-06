@@ -48,3 +48,22 @@ export function validateReportInput(input: ReportInput): ValidationResult {
   if (Object.keys(errors).length || !isSeverity(severity)) return { valid: false, errors }
   return { valid: true, value: { projectId, severity, ...fields } }
 }
+
+export function validateDraftInput(input: ReportInput): { valid: true; value: ReportInput } | { valid: false; errors: ReportFieldErrors } {
+  const errors: ReportFieldErrors = {}
+  const projectId = input?.projectId
+  const severity = input?.severity
+  if (typeof projectId !== 'string' || !REPORT_UUID.test(projectId)) errors.projectId = 'Choose an active project.'
+  if (severity !== '' && !isSeverity(severity)) errors.severity = 'Choose a severity.'
+  const fields = { title: '', description: '', version: '', reproductionSteps: '', expectedResults: '', actualResults: '', testEnvironment: '' }
+  for (const key of REPORT_TEXT_KEYS) {
+    const raw = input?.[key]
+    const value = typeof raw === 'string' ? raw.trim() : ''
+    const { label, limit } = REPORT_TEXT_FIELDS[key]
+    if (typeof raw !== 'string' && !(key === 'testEnvironment' && raw === undefined)) errors[key] = `Enter text for ${label.toLowerCase()}.`
+    else if (Array.from(value).length > limit) errors[key] = `${label} must be at most ${limit.toLocaleString('en-US')} characters.`
+    fields[key] = value
+  }
+  if (Object.keys(errors).length || (severity !== '' && !isSeverity(severity))) return { valid: false, errors }
+  return { valid: true, value: { projectId, severity, ...fields } }
+}
