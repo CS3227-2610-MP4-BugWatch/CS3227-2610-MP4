@@ -184,3 +184,10 @@ Implementer and tester acknowledged exact I1/I2 before editing at revision 1; no
 ### Archive record
 
 - Archived on 2026-11-07 after user selected sync then archive. All four planning artifacts and 18/18 tasks were complete, and current explicit reviewer approvals and post-approval summaries were confirmed. The seven added requirements were synced into openspec/specs/report-workflow/spec.md with Purpose and scenarios preserved; all three main specs and strict report-workflow validation passed. Archive metadata is preserved. Existing implementation approval is unaffected by this administrative move.
+
+### Pull request publication
+
+- Published as draft [PR #6](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/pull/6) from upstream `feature/accept-and-start-report-investigation` to upstream `development`.
+- Branch starts at PR #5's `ui-polish` head `9a298e6`. The description explicitly requests reviewers merge PR #5 first, then recheck comparison and CI; a squash merge may require rebasing away prerequisite commits.
+- Feature changes are grouped into database/security/hosted checks, application/local tests, guide updates, specification/workflow records, and publication handoff commits. Detailed description is preserved in `pull-request.md`.
+- Unrelated local modifications remain uncommitted. No implementation/test edits were introduced by publication, so final review approvals remain current. Publication evidence is in `logs/2026-11-07-create-report-workflow-feature-pr.md`.
