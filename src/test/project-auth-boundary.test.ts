@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
+import { MantineProvider } from '@mantine/core'
+import type { ReactElement } from 'react'
 import { createElement } from 'react'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render as testingRender, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProjectError } from '../features/projects/types'
 
@@ -23,6 +25,15 @@ vi.mock('../features/auth/authService', async importOriginal => ({
 }))
 
 import AuthenticatedApp from '../features/auth/AuthenticatedApp'
+
+Object.defineProperty(window, 'matchMedia', { configurable: true, writable: true, value: (query: string) => ({
+  matches: false, media: query, onchange: null, addListener: () => undefined, removeListener: () => undefined,
+  addEventListener: () => undefined, removeEventListener: () => undefined, dispatchEvent: () => false,
+}) })
+
+function render(element: ReactElement) {
+  return testingRender(createElement(MantineProvider, { env: 'test' }, element))
+}
 
 beforeEach(() => {
   vi.clearAllMocks()

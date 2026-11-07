@@ -1,3 +1,4 @@
+import { Button } from '@mantine/core'
 import { useEffect, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import { ProjectReportsPanel } from '../reports/ProjectReportsPanel'
@@ -30,11 +31,11 @@ export function ProjectDetailsPage({ repository, reportRepository, user }: {
   }, [repository, projectId, attempt])
 
   return <section className="project-panel">
-    <div className="project-toolbar"><Link to="/projects">Back to projects</Link>
+    <div className="project-toolbar"><Button component={Link} to="/projects" variant="default">Back to projects</Button>
       {!loading && !error && project && project.archivedAt === null && user.role === 'developer'
         && <Link to={`/projects/${project.id}/edit`}>Edit project</Link>}
       {!loading && !error && project && project.archivedAt === null && user.role === 'tester'
-        && <Link to={`/reports/new?projectId=${encodeURIComponent(project.id)}`}>Report bug</Link>}
+        && <Button component={Link} to={`/reports/new?projectId=${encodeURIComponent(project.id)}`} variant="light" color="blue">Report bug</Button>}
     </div>
     {loading ? <p role="status">Loading project…</p> : error ? <div role="alert"><p>{error}</p>
       <button onClick={() => { setLoading(true); setError(''); setAttempt(value => value + 1) }}>Retry</button></div>
@@ -75,7 +76,7 @@ function ProjectOverview({ project, repository, user }: { project: Project; repo
 
   return <>
     <p className="project-description">{project.description}</p>
-    <p><a href={project.repositoryUrl} target="_blank" rel="noreferrer">{project.repositoryUrl}</a></p>
+    <p className="project-repository"><strong>Repository</strong><br /><a href={project.repositoryUrl} target="_blank" rel="noreferrer">{project.repositoryUrl}</a></p>
     <p className="project-metadata">Created by {project.createdBy === user.id ? user.displayName : project.createdBy} · Revision {project.revision}</p>
     <h3>Project history</h3>
     {error ? <div role="alert"><p>Project history could not be loaded.</p>

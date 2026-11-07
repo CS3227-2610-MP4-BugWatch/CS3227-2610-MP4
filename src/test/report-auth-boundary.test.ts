@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
+import { MantineProvider } from '@mantine/core'
+import type { ReactElement } from 'react'
 import { createElement, StrictMode } from 'react'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render as testingRender, screen, waitFor } from '@testing-library/react'
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { ReportError, type Report } from '../features/reports/types'
@@ -26,6 +28,15 @@ vi.mock('../features/auth/authService', async importOriginal => ({
 }))
 
 import AuthenticatedApp from '../features/auth/AuthenticatedApp'
+
+Object.defineProperty(window, 'matchMedia', { configurable: true, writable: true, value: (query: string) => ({
+  matches: false, media: query, onchange: null, addListener: () => undefined, removeListener: () => undefined,
+  addEventListener: () => undefined, removeEventListener: () => undefined, dispatchEvent: () => false,
+}) })
+
+function render(element: ReactElement) {
+  return testingRender(createElement(MantineProvider, { env: 'test' }, element))
+}
 
 const testerId = '10000000-0000-4000-8000-000000000001'
 const otherId = '10000000-0000-4000-8000-000000000002'
@@ -73,6 +84,41 @@ it('reportForm_sessionLoss_clearsProtectedForm', async () => {
   await act(async () => { callback('SIGNED_OUT', null) })
   await screen.findByRole('button', { name: 'Log in' })
   expect(screen.queryByLabelText(/^Title\b/i)).toBeNull()
+  expect(screen.queryByRole('navigation', { name: 'Workspace navigation' })).toBeNull()
+})
+
+it('workspace_logoutPending_immediatelyRemovesNavigationAndUnsavedForm', async () => {
+  let finish!: () => void
+  service.signOut.mockReturnValueOnce(new Promise<void>(resolve => { finish = resolve }))
+  await openForm()
+  expect(screen.getByRole('navigation', { name: 'Workspace navigation' })).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Log out' }))
+  await screen.findByRole('button', { name: 'Log in' })
+  expect(service.signOut).toHaveBeenCalledOnce()
+  expect(screen.queryByRole('navigation', { name: 'Workspace navigation' })).toBeNull()
+  expect(screen.queryByLabelText(/^Title\b/i)).toBeNull()
+  await act(async () => { finish() })
+  expect(screen.queryByRole('navigation', { name: 'Workspace navigation' })).toBeNull()
+})
+
+it('workspace_logoutFailure_keepsProtectedContentRemovedAndOffersRetry', async () => {
+  service.signOut.mockRejectedValueOnce(new Error('Connection lost'))
+  await openForm()
+  fireEvent.click(screen.getByRole('button', { name: 'Log out' }))
+  expect(await screen.findByRole('button', { name: 'Retry' })).toBeTruthy()
+  expect(screen.queryByRole('navigation', { name: 'Workspace navigation' })).toBeNull()
+  expect(screen.queryByLabelText(/^Title\b/i)).toBeNull()
+  expect(screen.getAllByRole('alert').some(alert => /Authentication is unavailable/.test(alert.textContent ?? ''))).toBe(true)
+})
+
+it('workspace_menuToggle_keepsUnsavedFormAndDoesNotReloadProjects', async () => {
+  await openForm()
+  const menu = screen.getByRole('button', { name: 'Toggle navigation' })
+  fireEvent.click(menu)
+  fireEvent.click(menu)
+  expect((screen.getByLabelText(/^Title\b/i) as HTMLInputElement).value).toBe(title)
+  expect(projects.listActiveProjects).toHaveBeenCalledOnce()
+  expect(reports.saveDraft).not.toHaveBeenCalled()
 })
 
 it('reportForm_userReplacement_clearsFirstUserInputAndIgnoresOldSubmission', async () => {

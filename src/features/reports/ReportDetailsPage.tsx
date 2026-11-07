@@ -1,3 +1,4 @@
+import { Badge } from '@mantine/core'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import type { Report, ReportHistoryEntry, ReportInput, ReportRepository, ReportSeverity } from './types'
@@ -66,20 +67,23 @@ function SavedReport({ report, history }: { report: Report; history: ReportHisto
     </nav>
     <p><Link to={reportsPath}><span aria-hidden="true">← </span>Back to project reports</Link></p>
     <h2>{report.title}</h2>
+    <dl className="report-facts">
+      <div><dt>Project</dt><dd><Link to={`/projects/${report.projectId}`}>{report.projectName}</Link></dd></div>
+      <div><dt>Reporter</dt><dd>{report.reporterDisplayName.trim() || report.reporterUsername}</dd></div>
+      <div><dt>State</dt><dd><Badge variant="light">{report.state}</Badge></dd></div>
+      <div><dt>Assigned developer</dt><dd>Unassigned</dd></div>
+      <div><dt>Created</dt><dd><time dateTime={report.createdAt}>{dateLabel(report.createdAt)}</time></dd></div>
+      <div><dt>Updated</dt><dd><time dateTime={report.updatedAt}>{dateLabel(report.updatedAt)}</time></dd></div>
+      <div><dt>Severity</dt><dd><Badge variant="light" color={report.severity === 'high' ? 'red' : 'gray'}>{REPORT_SEVERITIES[report.severity]}</Badge></dd></div>
+    </dl>
+    <h3>Report details</h3>
     <dl>
-      <dt>Project</dt><dd><Link to={`/projects/${report.projectId}`}>{report.projectName}</Link></dd>
-      <dt>Reporter</dt><dd>{report.reporterDisplayName.trim() || report.reporterUsername}</dd>
-      <dt>State</dt><dd>{report.state}</dd>
-      <dt>Assigned developer</dt><dd>Unassigned</dd>
-      <dt>Created</dt><dd><time dateTime={report.createdAt}>{dateLabel(report.createdAt)}</time></dd>
-      <dt>Updated</dt><dd><time dateTime={report.updatedAt}>{dateLabel(report.updatedAt)}</time></dd>
-      <dt>Severity</dt><dd>{REPORT_SEVERITIES[report.severity]}</dd>
       {REPORT_TEXT_KEYS.filter(key => key !== 'title').map(key => <div key={key}>
         <dt>{REPORT_TEXT_FIELDS[key].label}</dt><dd className="project-description">{report[key] || 'Not provided'}</dd>
       </div>)}
     </dl>
     <h3>Creation history</h3>
-    {history.length ? <ol>{history.map(entry => <li key={entry.id}>
+    {history.length ? <ol className="project-history">{history.map(entry => <li key={entry.id}>
       <p>{entry.actorDisplayName?.trim() || (entry.actorId === report.reporterId
         ? report.reporterDisplayName.trim() || report.reporterUsername : 'Unknown user')} created this report on{' '}
       <time dateTime={entry.occurredAt}>{dateLabel(entry.occurredAt)}</time>.</p>

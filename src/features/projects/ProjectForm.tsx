@@ -53,11 +53,13 @@ export function ProjectForm({ initialValue, pending, error, fieldErrors, blocked
     </div>
   }
 
-  return <form onSubmit={submit} noValidate>
+  return <form className="project-form" onSubmit={submit} noValidate>
     {error && <p role="alert" className="project-message">{error}</p>}
+    <fieldset className="form-section"><legend>Project information</legend>
     {field('name', 'Name')}
     {field('description', 'Description', true)}
     {field('repositoryUrl', 'Repository URL')}
+    </fieldset>
     <div className="project-actions">
       <button type="submit" disabled={pending || blocked}>{pending ? 'Saving…' : 'Save project'}</button>
       <button type="button" disabled={pending} onClick={onCancel}>Cancel</button>
