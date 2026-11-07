@@ -9,7 +9,7 @@ Testers can already write reports manually, but rough observations can be hard t
 - Add on-demand suggestions for title, description, and reproduction steps in new and resumed report forms. Require a project, title, and description before generation.
 - Show editable, labeled suggestions with per-field application and a numbered list of short questions about missing details.
 - Allow only the selected project's name and description as additional model context for this Tester capability. Use only current form fields as report context.
-- Call SoCLaaS from a server-side Vercel Function and enforce three requests per Tester per rolling five minutes.
+- Call SoCLaaS from a server-side Vercel Function and enforce five requests per Tester per rolling five minutes.
 - Keep suggestions and questions in form memory. Save and submit only report field values. Preserve the manual workflow through assistant failures.
 
 ## Capabilities

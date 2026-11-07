@@ -6,8 +6,8 @@ import { createReportSuggestionDependencies } from '../../api/_lib/_report-sugge
 vi.mock('@supabase/supabase-js', () => ({ createClient: vi.fn() }))
 
 const settings = {
-  TESTER_SUGGESTIONS_ENABLED: 'true', SUPABASE_URL: 'https://review.example.test',
-  SUPABASE_PUBLISHABLE_KEY: 'public-key', SUPABASE_SERVICE_ROLE_KEY: 'service-key',
+  TESTER_SUGGESTIONS_ENABLED: 'true', VITE_SUPABASE_URL: 'https://review.example.test',
+  VITE_SUPABASE_PUBLISHABLE_KEY: 'public-key', SUPABASE_SERVICE_ROLE_KEY: 'service-key',
   SOCLAAS_API_KEY: 'provider-key', SOCLAAS_MODEL: 'test-model',
 }
 const id = '10000000-0000-4000-8000-000000000001'
@@ -56,6 +56,7 @@ it('reportSuggestionsDefaultHandler_validToken_usesScopedReadsAndPrivilegedQuota
   expect(projectFilter).toHaveBeenCalledExactlyOnceWith('id', projectId)
   expect(quota).toHaveBeenCalledExactlyOnceWith('reserve_tester_suggestion_attempt', { p_actor_id: id })
   const clients = vi.mocked(createClient).mock.calls
+  expect(clients.every(call => call[0] === settings.VITE_SUPABASE_URL)).toBe(true)
   expect(clients.filter(call => call[1] === 'public-key')).toHaveLength(2)
   for (const [, , options] of clients.filter(call => call[1] === 'public-key')) {
     expect(options).toMatchObject({ global: { headers: { Authorization: 'Bearer session-token' } } })
@@ -65,6 +66,7 @@ it('reportSuggestionsDefaultHandler_validToken_usesScopedReadsAndPrivilegedQuota
   expect(service[0][2]).not.toHaveProperty('global')
   const [, init] = fetch.mock.calls[0] as [string, RequestInit]
   const sent = JSON.parse(String(init.body))
+  expect(sent).toMatchObject({ reasoning_effort: 'none', max_tokens: 1500, stream: false })
   expect(JSON.parse(sent.messages[1].content)).toEqual({
     project: { name: 'Trusted project', description: 'Trusted description' },
     report: { title: 'Original title', description: 'Original description' },
@@ -86,6 +88,22 @@ it('reportSuggestionsDefaultHandler_developerProfile_neverCallsQuotaOrProvider',
 it('reportSuggestionDependencies_missingConfiguration_returnsNoIntegration', () => {
   expect(createReportSuggestionDependencies({ ...settings, SOCLAAS_API_KEY: '' })).toBeNull()
   expect(createClient).not.toHaveBeenCalled()
+})
+
+it('reportSuggestionDependencies_legacyServerSettings_stillSupported', () => {
+  setup()
+  const deps = createReportSuggestionDependencies({
+    TESTER_SUGGESTIONS_ENABLED: 'true',
+    SUPABASE_URL: settings.VITE_SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY: settings.VITE_SUPABASE_PUBLISHABLE_KEY,
+    SUPABASE_SERVICE_ROLE_KEY: settings.SUPABASE_SERVICE_ROLE_KEY,
+    SOCLAAS_API_KEY: settings.SOCLAAS_API_KEY,
+    SOCLAAS_MODEL: settings.SOCLAAS_MODEL,
+  })
+  expect(deps).not.toBeNull()
+  expect(createClient).toHaveBeenCalledWith(
+    settings.VITE_SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY, expect.any(Object),
+  )
 })
 
 it('reportSuggestionDependencies_invalidQuotaResult_failsClosed', async () => {

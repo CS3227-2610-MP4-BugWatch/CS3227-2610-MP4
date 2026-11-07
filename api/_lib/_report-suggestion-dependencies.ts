@@ -5,8 +5,8 @@ import { createSoCLaaSGenerator } from './_soclaas.js'
 const statelessAuth = { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false }
 
 export function createReportSuggestionDependencies(env: NodeJS.ProcessEnv): ReportSuggestionDependencies | null {
-  const url = env.SUPABASE_URL?.trim()
-  const publishableKey = env.SUPABASE_PUBLISHABLE_KEY?.trim()
+  const url = env.VITE_SUPABASE_URL?.trim() || env.SUPABASE_URL?.trim()
+  const publishableKey = env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() || env.SUPABASE_PUBLISHABLE_KEY?.trim()
   const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY?.trim()
   const apiKey = env.SOCLAAS_API_KEY?.trim()
   const model = env.SOCLAAS_MODEL?.trim()

@@ -19,5 +19,5 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src"],
-  "exclude": ["src/test/report-suggestions-api.test.ts", "src/test/report-suggestions-dependencies.test.ts"]
+  "exclude": ["src/test/report-suggestions-api.test.ts", "src/test/report-suggestions-dependencies.test.ts", "src/test/local-api.test.ts", "src/test/report-suggestion-quota.test.ts"]
 }

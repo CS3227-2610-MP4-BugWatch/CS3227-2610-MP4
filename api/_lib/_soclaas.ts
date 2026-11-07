@@ -1,7 +1,7 @@
 import type { ReportSuggestionDependencies } from '../tester/report-suggestions.js'
 
 const CHAT_URL = 'https://soclaas-api.comp.nus.edu.sg/v1/chat/completions'
-const TIMEOUT_MS = 8_000
+const TIMEOUT_MS = 15_000
 const MAX_OUTPUT_TOKENS = 1_500
 
 const instructions = [
@@ -24,6 +24,8 @@ export function createSoCLaaSGenerator(apiKey: string, model: string): ReportSug
       body: JSON.stringify({
         model,
         stream: false,
+        // Qwen's reasoning can consume the output budget before it returns JSON.
+        reasoning_effort: 'none',
         max_tokens: MAX_OUTPUT_TOKENS,
         messages: [
           { role: 'system', content: instructions },

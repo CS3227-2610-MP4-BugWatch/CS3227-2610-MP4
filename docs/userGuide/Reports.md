@@ -47,7 +47,7 @@ When the assistant is enabled, select an active project and enter a title and de
 - Read the numbered **Details to add** questions and enter any answers in the report fields. Generate again if you want to use the new details.
 - Save or submit as usual. Only report fields, including any suggestions you applied, are saved. Unapplied suggestions and questions are temporary.
 
-The assistant uses the selected project's name and description and the allowed report fields. The Tester chooses severity separately. The feature allows three generation attempts per Tester in a rolling five-minute window. If generation fails or you reach the limit, you can continue writing and saving the report.
+The assistant uses the selected project's name and description and the allowed report fields. The Tester chooses severity separately. The feature allows five generation attempts per Tester in a rolling five-minute window. If generation fails or you reach the limit, you can continue writing and saving the report.
 
 ## Find and read reports
 

@@ -56,10 +56,10 @@ The form SHALL show each available title, description, or reproduction-steps sug
 - **AND** cancellation or a failed generation leaves report fields and existing suggestions intact
 
 ### Requirement: Server-enforced generation limit and safe failure
-The system SHALL limit each Tester to three generation attempts in a rolling five-minute window across tabs. An admitted attempt dispatched to SoCLaaS SHALL count even if the provider call fails. An invalid or denied request SHALL NOT call SoCLaaS. Timeouts, malformed responses, and rate limits SHALL preserve the manual reporting flow and previous suggestions.
+The system SHALL limit each Tester to five generation attempts in a rolling five-minute window across tabs. An admitted attempt dispatched to SoCLaaS SHALL count even if the provider call fails. An invalid or denied request SHALL NOT call SoCLaaS. Timeouts, malformed responses, and rate limits SHALL preserve the manual reporting flow and previous suggestions.
 
-#### Scenario: Fourth request within five minutes
-- **WHEN** the same Tester makes a fourth eligible request within the rolling window
+#### Scenario: Sixth request within five minutes
+- **WHEN** the same Tester makes a sixth eligible request within the rolling window
 - **THEN** the server rejects it without calling SoCLaaS and the form shows when the Tester can try again
 
 #### Scenario: Unauthorized access
