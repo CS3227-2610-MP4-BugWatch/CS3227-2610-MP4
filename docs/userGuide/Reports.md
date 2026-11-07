@@ -18,6 +18,8 @@ A Tester can submit a bug to an active project. A submitted report starts as **O
 
 The form groups fields under **Identify the problem**, **Reproduce the problem**, **Expected and actual results**, and **Impact**. **Submit report**, **Save draft**, and **Cancel** appear after the fields; validation and save feedback appear in the form.
 
+Use the **Back to projects** button above the form to return to the project list. If you have unsaved changes, confirm whether to leave or keep editing.
+
 For example, a checkout report could say what was in the cart, the steps to apply a discount, what total you expected, and what appeared instead. Give the version you tested so a Developer can investigate the same behaviour.
 
 The title allows 1–200 characters; version allows 1–100. Description, reproduction steps, expected results, and actual results each allow 1–5,000 characters. The optional environment allows up to 1,000 characters. Lengths are counted after surrounding whitespace is removed. Choose **Cancel** to leave without submitting.
@@ -39,6 +41,6 @@ If you try to leave the form with unsaved changes, including by choosing a works
 
 ## Find and read reports
 
-Open a project and select its **Reports** tab. The table lists that project's submitted reports, newest first, with the title, project, severity, status, assignee, and reporter. Select a title to open the report. If the project has no reports, the tab shows **No reports yet**. If reports cannot be loaded, select **Retry**; this does not prevent you from opening the project's **Overview** tab.
+Open a project and select its **Reports** tab. The table lists that project's submitted reports, newest first, with the title, project, severity, status, assignee, and reporter. Select anywhere in a report entry to open it; the bold title is also a keyboard-accessible link. Entries highlight on hover or keyboard focus. Listing severity badges retain their labels and use teal for Very Low, green for Low, yellow for Medium, and red for High. If the project has no reports, the tab shows **No reports yet**. If reports cannot be loaded, select **Retry**; this does not prevent you from opening the project's **Overview** tab.
 
 The saved page shows the project, report fields, reporter, state, assignment, timestamps, and creation history. Use its breadcrumb to visit **Projects**, the project's **Overview**, or **Reports**, or select **Back to project reports** to return to the listing. If a saved report cannot be loaded, select **Retry**. A missing report shows **Report not found**. Report editing, AI suggestions, discussion, assignment, resolution, and attachments are not available in this feature.

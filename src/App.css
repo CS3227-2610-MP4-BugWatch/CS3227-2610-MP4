@@ -17,8 +17,8 @@
 .project-actions { justify-content: flex-start; margin-top: 1.5rem; }
 .project-toolbar h2 { margin: 0; }
 .project-panel h2 { overflow-wrap: anywhere; }
-.project-toolbar > h2 + a, .project-toolbar > a + a { display: inline-flex; align-items: center; justify-content: center; border-radius: .5rem; padding: .65rem 1rem; color: var(--mantine-primary-color-light-color); background: var(--accent-bg); text-decoration: none; font-weight: 600; }
-.project-toolbar > h2 + a:hover, .project-toolbar > a + a:hover { text-decoration: underline; }
+.project-toolbar > h2 + a:not(.mantine-Button-root), .project-toolbar > a + a:not(.mantine-Button-root) { display: inline-flex; align-items: center; justify-content: center; border-radius: .5rem; padding: .65rem 1rem; color: var(--mantine-primary-color-light-color); background: var(--accent-bg); text-decoration: none; font-weight: 600; }
+.project-toolbar > h2 + a:not(.mantine-Button-root):hover, .project-toolbar > a + a:not(.mantine-Button-root):hover { text-decoration: underline; }
 .page-intro { color: var(--text); margin: .5rem 0 1.5rem; }
 .project-tabs { display: flex; gap: 1.5rem; margin: 1.5rem 0; border-bottom: 1px solid var(--border); }
 .project-tabs a { padding: .75rem .25rem; text-decoration: none; color: var(--text); }
@@ -27,7 +27,13 @@
 .project-report-table th, .project-report-table td { padding: 1rem .5rem; text-align: left; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
 .project-report-table th { color: var(--text); font-size: .8rem; font-weight: 600; }
 .project-report-table th:first-child { width: 28%; }
-.project-report-table td:first-child a { font-weight: 600; }
+.project-report-table td:first-child a { font-weight: 700; }
+.report-entry { position: relative; isolation: isolate; }
+.report-entry:hover, .report-entry:focus-within { background: var(--accent-bg); }
+.report-entry-link { color: var(--text-h); font-weight: 700; text-decoration: none; }
+.report-entry-link::after { content: ''; position: absolute; inset: 0; z-index: 1; }
+.report-entry-link:focus-visible { outline: none; }
+.report-entry-link:focus-visible::after { outline: 3px solid var(--accent); outline-offset: -3px; }
 .project-workspace button:not(.mantine-Button-root), .auth-page button:not(.mantine-Button-root), .project-field select, .project-field input, .project-field textarea { font: inherit; color: var(--text-h); background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: .65rem .8rem; }
 .project-workspace button, .auth-page button { cursor: pointer; }
 .project-workspace button:hover:not(:disabled) { border-color: var(--accent); }
@@ -43,9 +49,10 @@
 .project-field [id$="-error"], .field-error { color: light-dark(#b4232d, #ff9ba3); font-weight: 500; }
 .project-message, .project-workspace [role="alert"] { padding: 1rem; background: var(--accent-bg); border-radius: .5rem; margin: 1rem 0; }
 .project-list { padding: 0; list-style: none; display: grid; gap: 1rem; }
-.project-list li { border: 1px solid var(--border); border-radius: .65rem; padding: 1.25rem; }
-.project-link { font-size: 1.1rem; font-weight: 600; text-decoration: none; }
-.project-link:hover, .project-link:focus-visible { text-decoration: underline; }
+.project-list li { min-width: 0; }
+.project-entry { display: block; border: 1px solid var(--border); border-radius: .65rem; padding: 1.25rem; color: var(--text-h); text-decoration: none; }
+.project-entry:hover, .project-entry:focus-visible { background: var(--accent-bg); border-color: var(--accent); }
+.project-link { font-size: 1.1rem; font-weight: 700; }
 .project-list p, .project-description { white-space: pre-wrap; margin: .75rem 0; overflow-wrap: anywhere; }
 .project-list small, .project-metadata { color: var(--text); font-size: .85rem; }
 .project-panel a, .project-panel dd { overflow-wrap: anywhere; }

@@ -67,6 +67,25 @@ function fill(input: ProjectInput = project) {
 afterEach(cleanup)
 
 describe('project browser and detail interactions', () => {
+  it('projectList_entryMetadata_opensProjectThroughOneNativeLink', async () => {
+    const repo = repository()
+    repo.listActiveProjects.mockResolvedValue([project])
+    show(repo)
+    const entry = await screen.findByRole('link', { name: project.name })
+    expect(entry.getAttribute('href')).toBe(`/projects/${project.id}`)
+    expect(entry.contains(screen.getByText(project.description))).toBe(true)
+    expect(entry.textContent).toContain('Created by')
+    expect(entry.querySelector('a')).toBeNull()
+    entry.focus()
+    expect(document.activeElement).toBe(entry)
+    fireEvent.click(screen.getByText(project.description))
+    await screen.findByRole('heading', { name: project.name })
+    const back = screen.getByRole('link', { name: 'Back to projects' })
+    expect(back.getAttribute('href')).toBe('/projects')
+    fireEvent.click(back)
+    expect(await screen.findByRole('heading', { name: 'Active projects' })).toBeTruthy()
+  })
+
   it('projectList_pendingThenEmpty_distinguishesLoadingFromEmpty', async () => {
     const repo = repository()
     const request = deferred<Project[]>()

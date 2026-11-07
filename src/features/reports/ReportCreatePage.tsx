@@ -1,3 +1,4 @@
+import { Button } from '@mantine/core'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import type { Project, ProjectRepository, SessionUser } from '../projects/types'
@@ -54,11 +55,11 @@ export function ReportCreatePage({ projectRepository, reportRepository, user, dr
       }
     } finally { saveLock.current = false; if (active.current) setPending(false) }
   }
-  if (user.role !== 'tester') return <section className="project-panel"><h2>Tester access required</h2><p>Only testers can submit reports.</p><Link to="/projects">Back to projects</Link></section>
+  if (user.role !== 'tester') return <section className="project-panel"><h2>Tester access required</h2><p>Only testers can submit reports.</p><Button component={Link} to="/projects" variant="default">Back to projects</Button></section>
   const selected = searchParams.get('projectId') ?? ''
   const projects = projectsState.status === 'ready' ? projectsState.projects : []
   return <section className="project-panel">
-    <h2>{draft ? 'Edit draft' : 'Report a bug'}</h2><p className="page-intro">{draft ? 'Continue your private draft, then submit it when ready.' : 'Describe what happened so a developer can reproduce the problem.'}</p><Link to="/projects">Back to projects</Link>
+    <h2>{draft ? 'Edit draft' : 'Report a bug'}</h2><p className="page-intro">{draft ? 'Continue your private draft, then submit it when ready.' : 'Describe what happened so a developer can reproduce the problem.'}</p><Button component={Link} to="/projects" variant="default">Back to projects</Button>
     {projectsState.status === 'loading' && <p role="status">Loading projects…</p>}
     {projectsState.status === 'error' && <><p role="alert">Projects could not be loaded. Please try again.</p><button type="button" onClick={() => { setProjectsState({ status: 'loading' }); setAttempt(value => value + 1) }}>Retry</button></>}
     {projectsState.status === 'ready' && !projects.length && <p>No active projects are available.</p>}

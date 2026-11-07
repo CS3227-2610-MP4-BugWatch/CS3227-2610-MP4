@@ -34,9 +34,11 @@ export function ProjectListPage({ repository, user }: { repository: ProjectRepos
     {!loading && !error && (projects.length === 0
       ? <p>No active projects yet. A developer can create the first one.</p>
       : <ul className="project-list">{projects.map(project => <li key={project.id}>
-        <Link className="project-link" to={`/projects/${project.id}`}>{project.name}</Link>
-        <p>{project.description}</p>
-        <small>Created by {project.createdBy === user.id ? user.displayName : project.createdBy}</small>
+        <Link className="project-entry" aria-label={project.name} to={`/projects/${project.id}`}>
+          <strong className="project-link">{project.name}</strong>
+          <p>{project.description}</p>
+          <small>Created by {project.createdBy === user.id ? user.displayName : project.createdBy}</small>
+        </Link>
       </li>)}</ul>)}
   </section>
 }

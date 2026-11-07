@@ -78,6 +78,24 @@ function setup(initialReports: Report[] = [saved, otherSaved]) {
 
 afterEach(cleanup)
 
+it.each([
+  ['very_low', 'Very Low', 'teal'], ['low', 'Low', 'green'],
+  ['medium', 'Medium', 'yellow'], ['high', 'High', 'red'],
+] as const)('projectReports_%sSeverity_retainsLabelAndUsesDistinctColor', async (severity, label, color) => {
+  const { show } = setup([{ ...saved, severity }])
+  show(`/projects/${projectId}?tab=reports`)
+  const link = await screen.findByRole('link', { name: saved.title })
+  expect(link.getAttribute('href')).toBe(`/reports/${reportId}`)
+  link.focus()
+  expect(document.activeElement).toBe(link)
+  const row = within(link.closest('tr')!)
+  expect(row.getAllByRole('cell')).toHaveLength(6)
+  const badge = row.getByText(label)
+  expect(badge.closest('[style]')?.getAttribute('style')).toContain(`--mantine-color-${color}-light`)
+  fireEvent.click(link)
+  expect(await screen.findByRole('heading', { name: saved.title })).toBeTruthy()
+})
+
 it('projectDetails_defaultOverview_retainsMetadataAndHistory', async () => {
   const { show, reportRepository } = setup()
   show()
