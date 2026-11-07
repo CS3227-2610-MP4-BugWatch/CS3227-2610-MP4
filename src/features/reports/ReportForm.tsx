@@ -106,7 +106,8 @@ export function ReportForm({ projects, initialProjectId, initialInput, projectsA
           {key === 'title' || key === 'version' ? <input type="text" {...props} /> : <textarea rows={3} {...props} />}
           {(key === 'title' || key === 'description' || key === 'reproductionSteps') && suggestion(key)}
         </>)
-      })}
+      })}</fieldset>)}
+      <fieldset className="form-section"><legend>Impact</legend>
       {field('severity', 'Severity', <select {...accessibility('severity')} required value={input.severity} onChange={event => change('severity', event.target.value as ReportInput['severity'])}><option value="">Choose a severity</option>{Object.entries(REPORT_SEVERITIES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>)}
       </fieldset>
       {assistant.suggestions && (assistant.suggestions.source.projectId !== input.projectId

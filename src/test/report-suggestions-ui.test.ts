@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
+import { MantineProvider } from '@mantine/core'
+import type { ReactElement } from 'react'
 import { createElement, StrictMode } from 'react'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render as testingRender, screen, waitFor } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, expect, it, vi } from 'vitest'
 import { ProjectsApp } from '../features/projects/ProjectsApp'
@@ -8,6 +10,15 @@ import { ReportForm } from '../features/reports/ReportForm'
 import * as suggestionClient from '../features/reports/reportSuggestionClient'
 import type { ReportSuggestionResult } from '../features/reports/reportSuggestionTypes'
 import type { ReportDraft } from '../features/reports/types'
+
+Object.defineProperty(window, 'matchMedia', { configurable: true, writable: true, value: (query: string) => ({
+  matches: false, media: query, onchange: null, addListener: () => undefined, removeListener: () => undefined,
+  addEventListener: () => undefined, removeEventListener: () => undefined, dispatchEvent: () => false,
+}) })
+
+function render(element: ReactElement) {
+  return testingRender(createElement(MantineProvider, { env: 'test' }, element))
+}
 
 const projectId = '20000000-0000-4000-8000-000000000001'
 const project = {
@@ -171,6 +182,7 @@ it('reportSuggestions_firstDraftSave_keepsPendingSuggestionsUntilLeavingTheDraft
     saveDraft: vi.fn().mockResolvedValue(draft), getDraft: vi.fn().mockResolvedValue(draft),
     listDrafts: vi.fn().mockResolvedValue([draft]), deleteDraft: vi.fn(), submitDraft: vi.fn(),
     listProjectReports: vi.fn(), createReport: vi.fn(), getReport: vi.fn(), listReportHistory: vi.fn(),
+    acceptReport: vi.fn(), startInvestigation: vi.fn(),
   }
   let finish!: (value: ReportSuggestionResult) => void
   const generate = vi.spyOn(suggestionClient, 'requestReportSuggestions').mockReturnValue(
