@@ -28,14 +28,14 @@ export function DraftListPage({ repository, user }: { repository: ReportReposito
   const groups = new Map<string, DraftSummary[]>()
   for (const draft of drafts) groups.set(draft.projectId, [...(groups.get(draft.projectId) ?? []), draft])
   return <section className="project-panel">
-    <h2>My drafts</h2><Link to="/projects">Back to projects</Link>
+    <h2>My drafts</h2><p className="page-intro">Private reports in progress, grouped by project.</p><Link to="/projects">Back to projects</Link>
     {status === 'loading' && <p role="status">Loading drafts…</p>}
     {status === 'error' && <><p role="alert">Drafts could not be loaded.</p><button onClick={() => { setStatus('loading'); setAttempt(value => value + 1) }}>Retry</button></>}
     {error && <p role="alert">{error}</p>}
     {status === 'ready' && !drafts.length && <p>No drafts yet.</p>}
     {[...groups.entries()].map(([projectId, group]) => <section key={projectId}>
       <h3>{group[0].projectName}{group[0].projectArchivedAt ? ' (Archived)' : ''}</h3>
-      <ul>{group.map(draft => <li key={draft.id}>
+      <ul className="draft-list">{group.map(draft => <li key={draft.id}>
         <Link to={`/drafts/${draft.id}`}>{draft.title || 'Untitled draft'}</Link>{' '}
         <button type="button" disabled={deleting !== null} onClick={() => { void remove(draft.id) }}>Delete</button>
       </li>)}</ul>

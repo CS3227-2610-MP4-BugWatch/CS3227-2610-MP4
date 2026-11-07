@@ -95,6 +95,7 @@ export function ProjectEditorPage({ repository, user }: { repository: ProjectRep
     <p>Archived projects cannot be edited.</p><Link to={`/projects/${project.id}`}>View project</Link></section>
 
   return <section className="project-panel"><h2>{projectId ? 'Edit project' : 'Create project'}</h2>
+    <p className="page-intro">Keep the project details and repository link up to date.</p>
     {conflict && <div className="project-message"><p>Another save changed this project. Reload before saving again. Reloading discards your unsaved text.</p>
       <button type="button" disabled={pending} onClick={() => { void reload() }}>Reload latest project</button></div>}
     <ProjectForm key={formVersion} initialValue={project ?? EMPTY_INPUT} pending={pending} error={error}

@@ -1,4 +1,4 @@
-import { useMemo, useState, useSyncExternalStore } from 'react'
+import { createContext, useContext, useMemo, useState, useSyncExternalStore } from 'react'
 import { supabase } from '../../shared/lib/supabaseClient.js'
 import { AuthProvider, useAuth } from './AuthProvider'
 import { AuthError, createAuthService } from './authService'
@@ -11,6 +11,8 @@ import type { ProjectRepository, SessionUser } from '../projects/types'
 import { createReportRepository } from '../reports/reportRepository'
 import { ReportError } from '../reports/types'
 import type { ReportRepository } from '../reports/types'
+
+const SignOutContext = createContext({ onSignOut: () => {}, signOutPending: false, signOutError: '' })
 
 const service = createAuthService(supabase)
 const projectRepository = createProjectRepository(supabase)
@@ -49,6 +51,8 @@ function AuthenticatedContent() {
         submitDraft: (id, input) => withSession(() => reports.submitDraft(id, input)),
         createReport: input => withSession(() => reports.createReport(input)),
         getReport: id => withSession(() => reports.getReport(id)),
+        acceptReport: id => withSession(() => reports.acceptReport(id)),
+        startInvestigation: id => withSession(() => reports.startInvestigation(id)),
         listReportHistory: id => withSession(() => reports.listReportHistory(id)),
         listProjectReports: id => withSession(() => reports.listProjectReports(id)),
       },
@@ -70,28 +74,17 @@ function AuthenticatedContent() {
   if (auth.status === 'signed_out') return <LoginPage />
   if (auth.status === 'loading') return <p role="status">Loading your account…</p>
 
-  return (
-    <main className="project-workspace">
-      <h1>BugWatch</h1>
-      {auth.status === 'authenticated' ? (
-        <div key={auth.user.id}>
-          <p>Signed in as {auth.user.displayName} ({auth.user.role})</p>
-          <AuthenticatedRouter repository={repository} reportRepository={reportRepository} user={auth.user} />
-        </div>
-      ) : auth.status === 'incomplete_profile' ? (
-        <p role="alert">Account setup incomplete—contact the administrator.</p>
-      ) : (
-        <>
-          <p role="alert">Authentication is unavailable. Please try again.</p>
-          <button type="button" onClick={() => { void auth.retry() }} disabled={pending}>Retry</button>
-        </>
-      )}
-      {error && <p role="alert">{error}</p>}
-      <button type="button" onClick={() => { void logout() }} disabled={pending}>
-        {pending ? 'Logging out…' : 'Log out'}
-      </button>
-    </main>
-  )
+  if (auth.status === 'authenticated') return <SignOutContext.Provider value={{ onSignOut: () => { void logout() }, signOutPending: pending, signOutError: error }}>
+    <AuthenticatedRouter key={auth.user.id} repository={repository} reportRepository={reportRepository} user={auth.user} />
+  </SignOutContext.Provider>
+  return <main className="auth-page"><section className="project-panel"><h1>BugWatch</h1>
+    {auth.status === 'incomplete_profile' ? <p role="alert">Account setup incomplete - contact the administrator.</p> : <>
+      <p role="alert">Authentication is unavailable. Please try again.</p>
+      <button type="button" onClick={() => { void auth.retry() }} disabled={pending}>Retry</button>
+    </>}
+    {error && <p role="alert">{error}</p>}
+    <button type="button" onClick={() => { void logout() }} disabled={pending}>{pending ? 'Logging out...' : 'Log out'}</button>
+  </section></main>
 }
 
 export default function AuthenticatedApp() {
@@ -108,10 +101,15 @@ function createRouterStore(repository: ProjectRepository, reportRepository: Repo
   let router: ReturnType<typeof createBrowserRouter> | null = null
   return {
     subscribe(notify: () => void) {
-      router = createBrowserRouter([{ path: '*', element: <ProjectsApp repository={repository} reportRepository={reportRepository} user={user} /> }])
+      router = createBrowserRouter([{ path: '*', element: <RoutedWorkspace repository={repository} reportRepository={reportRepository} user={user} /> }])
       notify()
       return () => { router?.dispose(); router = null }
     },
     getSnapshot: () => router,
   }
+}
+
+function RoutedWorkspace(props: { repository: ProjectRepository; reportRepository: ReportRepository; user: SessionUser }) {
+  const signOut = useContext(SignOutContext)
+  return <ProjectsApp {...props} {...signOut} />
 }

@@ -6,7 +6,7 @@
 
 # Bug reports
 
-A Tester can submit a bug to an active project. A submitted report starts as **Open** and **Unassigned**. Both logged-in Testers and Developers can find submitted reports in the project's **Reports** tab and read their details and creation history. Your environment must have the report migrations described in the [developer guide](../developerGuide/Reports.md).
+A Tester can submit a bug to an active project. A submitted report starts as **Open** and **Unassigned**. Both logged-in Testers and Developers can find submitted reports in the project's **Reports** tab and read their details and activity history. Your environment must have the report migrations described in the [developer guide](../developerGuide/Reports.md).
 
 ## Submit a report
 
@@ -15,6 +15,10 @@ A Tester can submit a bug to an active project. A submitted report starts as **O
 3. Choose a **Severity**: Very Low, Low, Medium, or High. There is no preselected severity. Optionally enter a **Test environment**, such as a browser and operating system.
 4. Select **Submit report**. After a successful save, BugWatch opens the saved report page.
 5. On the saved report page, use the breadcrumb or **Back to project reports** to return to the project's **Reports** tab. You can also reload the saved report link or share it with another logged-in user.
+
+The form groups fields under **Identify the problem**, **Reproduce the problem**, **Expected and actual results**, and **Impact**. **Submit report**, **Save draft**, and **Cancel** appear after the fields; validation and save feedback appear in the form.
+
+Use the **Back to projects** button above the form to return to the project list. If you have unsaved changes, confirm whether to leave or keep editing.
 
 For example, a checkout report could say what was in the cart, the steps to apply a discount, what total you expected, and what appeared instead. Give the version you tested so a Developer can investigate the same behaviour.
 
@@ -29,14 +33,26 @@ If a submission fails, your form text remains available for correction or retry 
 ## Save and resume a private draft
 
 1. Start a report and select an active project. Enter whatever you have and select **Save draft**. Other fields can be blank, and the report field length limits still apply. The form stays open and shows **Draft saved**.
-2. Select **My drafts** from the projects screen to find your drafts grouped by project, including after you sign back in. Only you can see your drafts. Select a draft to resume it or use **Delete** and confirm to remove it.
+2. Select **My drafts** in the workspace sidebar to find your drafts grouped by project, including after you sign back in. On a narrow screen, open **Menu** first. Only you can see your drafts. Select a draft to resume it or use **Delete** and confirm to remove it.
 3. To move a draft, select another active project and save. If the original project is archived, you can still open or delete the draft. To save edits or submit, select an active project.
 4. Finish the required fields and select **Submit report**. When submission succeeds, the report opens and the draft disappears from **My drafts**. If a connection drops after the report was saved, retrying submission from the same draft opens the existing report.
 
-If you try to leave the form with unsaved changes, choose **Keep editing** or **Leave without saving**. Leaving preserves the last saved version. Save before signing out if you want to keep newer edits.
+If you try to leave the form with unsaved changes, including by choosing a workspace destination, choose **Keep editing** or **Leave without saving**. Leaving preserves the last saved version. Save before signing out if you want to keep newer edits.
 
 ## Find and read reports
 
-Open a project and select its **Reports** tab. The table lists that project's submitted reports, newest first, with the title, project, severity, status, assignee, and reporter. Select a title to open the report. If the project has no reports, the tab shows **No reports yet**. If reports cannot be loaded, select **Retry**; this does not prevent you from opening the project's **Overview** tab.
+Open a project and select its **Reports** tab. The table lists that project's submitted reports, newest first, with the title, project, severity, status, assignee, and reporter. Select anywhere in a report entry to open it; the bold title is also a keyboard-accessible link. Entries highlight on hover or keyboard focus. Listing severity badges retain their labels and use teal for Very Low, green for Low, yellow for Medium, and red for High. If the project has no reports, the tab shows **No reports yet**. If reports cannot be loaded, select **Retry**; this does not prevent you from opening the project's **Overview** tab.
 
-The saved page shows the project, report fields, reporter, state, assignment, timestamps, and creation history. Use its breadcrumb to visit **Projects**, the project's **Overview**, or **Reports**, or select **Back to project reports** to return to the listing. If a saved report cannot be loaded, select **Retry**. A missing report shows **Report not found**. Report editing, AI suggestions, discussion, assignment, resolution, and attachments are not available in this feature.
+The saved page shows the project, report fields, reporter, state, assignment, and timestamps. Once a Developer has accepted a report, it also shows when the assignment was made. **Activity history** shows who created or accepted the report, who started investigation, and the recorded changes. Use its breadcrumb to visit **Projects**, the project's **Overview**, or **Reports**, or select **Back to project reports** to return to the listing. If a saved report cannot be loaded, select **Retry**. A missing report shows **Report not found**.
+
+## Accept a report and start investigation
+
+1. Log in as a Developer, open an active project's **Reports** tab, and select an **Open**, unassigned report. Any Developer can accept an available report, including one in a project created by someone else.
+2. On the report details page, select **Accept report**. The report becomes **Accepted**, is assigned to you, and records the assignment time in its details and activity history. Acceptance does not start investigation.
+3. When you are ready to investigate, return to the same details page and select **Start investigation**. The report becomes **In progress** and keeps its existing assignee and assignment time.
+
+Only the assigned Developer can start investigation. Testers can read the report and its history but cannot accept or start it. Neither action is available on the listing or for an archived project. Actions are unavailable while an action is being saved.
+
+If another Developer accepts the report first, the page explains that it is already assigned and refreshes the report. It also refreshes after a state conflict or if the project was archived. If the connection drops during an action or its readback, the action may have been saved: select **Reload** to check the current report before trying another action. BugWatch does not automatically repeat the action.
+
+Releasing or transferring an assignment is not available. Report editing, AI suggestions, discussion, resolution, and attachments are also unavailable in this feature.

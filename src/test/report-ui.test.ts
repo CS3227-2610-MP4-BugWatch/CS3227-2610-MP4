@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
+import { MantineProvider } from '@mantine/core'
+import type { ReactElement } from 'react'
 import { createElement } from 'react'
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render as testingRender, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider, useLocation } from 'react-router'
 import { afterEach, expect, it, vi } from 'vitest'
 import { DraftEditPage } from '../features/reports/DraftEditPage'
@@ -8,6 +10,15 @@ import { ReportCreatePage } from '../features/reports/ReportCreatePage'
 import { ReportDetailsPage } from '../features/reports/ReportDetailsPage'
 import { ReportError, type Report } from '../features/reports/types'
 import type { SessionUser } from '../shared/types/session'
+
+Object.defineProperty(window, 'matchMedia', { configurable: true, writable: true, value: (query: string) => ({
+  matches: false, media: query, onchange: null, addListener: () => undefined, removeListener: () => undefined,
+  addEventListener: () => undefined, removeEventListener: () => undefined, dispatchEvent: () => false,
+}) })
+
+function render(element: ReactElement) {
+  return testingRender(createElement(MantineProvider, { env: 'test' }, element))
+}
 
 const user: SessionUser = { id: '10000000-0000-4000-8000-000000000001', role: 'tester', username: 'test', displayName: 'Tester' }
 const projectId = '20000000-0000-4000-8000-000000000001'
@@ -21,7 +32,7 @@ const input = {
 }
 const saved: Report = {
   ...input, id: reportId, reporterId: user.id, createdAt: time, updatedAt: time,
-  state: 'Open', assignedDeveloperId: null, projectName: 'Test project', projectArchivedAt: null,
+  state: 'Open', assignedDeveloperId: null, assignedAt: null, assignedDeveloperUsername: null, assignedDeveloperDisplayName: null, projectName: 'Test project', projectArchivedAt: null,
   reporterDisplayName: user.displayName, reporterUsername: user.username,
 }
 
@@ -40,7 +51,7 @@ function setup() {
     getProject: vi.fn(), listProjectHistory: vi.fn(), createProject: vi.fn(), updateProject: vi.fn(),
   }
   const reportRepository = {
-    listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn().mockResolvedValue(saved),
+    acceptReport: vi.fn(), startInvestigation: vi.fn(), listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn().mockResolvedValue(saved),
     listProjectReports: vi.fn(),
     createReport: vi.fn().mockResolvedValue(saved), getReport: vi.fn().mockResolvedValue(saved),
     listReportHistory: vi.fn().mockResolvedValue([{
@@ -52,7 +63,7 @@ function setup() {
     const router = createMemoryRouter([
       { path: '/drafts/:draftId', element: createElement(DraftEditPage, { projectRepository, reportRepository, user: actor }) },
       { path: '/reports/new', element: createElement(ReportCreatePage, { projectRepository, reportRepository, user: actor }) },
-      { path: '/reports/:reportId', element: createElement(ReportDetailsPage, { reportRepository }) },
+      { path: '/reports/:reportId', element: createElement(ReportDetailsPage, { reportRepository, user: actor }) },
       { path: '/projects/:projectId', element: createElement(ProjectDestination) },
     ], { initialEntries: [path] })
     return render(createElement(RouterProvider, { router }))
@@ -84,6 +95,24 @@ it('reportCreate_success_opensSavedDetailUsingReturnedId', async () => {
   await screen.findByRole('heading', { name: saved.title })
   expect(reportRepository.createReport).toHaveBeenCalledExactlyOnceWith(input)
   expect(reportRepository.getReport).toHaveBeenCalledExactlyOnceWith(reportId)
+})
+
+it('reportForm_groupedFields_exposesAllExistingInputsAndDraftActions', async () => {
+  const { show } = setup()
+  show()
+  await screen.findByLabelText(/^Project\b/i)
+  for (const [name, labels] of [
+    ['Identify the problem', ['Title', 'Description', 'Version']],
+    ['Reproduce the problem', ['Reproduction steps', 'Test environment']],
+    ['Expected and actual results', ['Expected results', 'Actual results']],
+    ['Impact', ['Severity']],
+  ] as const) {
+    const section = within(screen.getByRole('group', { name }))
+    for (const label of labels) expect(section.getByLabelText(label)).toBeTruthy()
+  }
+  expect(screen.getByRole('button', { name: 'Save draft' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Submit report' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Cancel' })).toBeTruthy()
 })
 
 it('reportCreate_noSeverity_rejectsAndPreservesOtherInputs', async () => {

@@ -40,7 +40,8 @@ docs/developerGuide/                   Developer Guide landing page and topic pa
 .agents/skills/                       Repository-specific agent skills
 workflow/instructions/                Shared and coordinator instruction references
 .codex/agents/                        Project-scoped agent definitions
-workflow/                             Coordinator-owned feature plans and handoff summaries
+workflow/<feature-name>/              Coordinator-owned feature plan and agent summaries for each feature
+workflow/templates/                   Feature plan and agent summary templates
 logs/                                 Agent interaction logs
 ```
 
@@ -145,18 +146,21 @@ Project agents are defined in `.codex/agents/`:
 | `codebase_explorer` | Inspect code paths, dependencies, conventions, and tests; report evidence without editing files. |
 | `implementer` | Make scoped React and TypeScript application changes. |
 | `tester` | Design and implement Vitest tests in `src/test/*.test.ts`. |
+| `ui_polisher` | Improve visual consistency and responsive presentation after feature implementation. |
 | `documentation_writer` | Update guide topic pages and navigation using the documentation writing skill. |
 | `reviewer` | Independently inspect correctness, regressions, security, tests, and documentation without editing files. |
 
 Agents inherit the parent's model, reasoning settings, and permissions unless the user explicitly requests supported overrides. Instructions to avoid edits define role behaviour; they do not create a separate read-only sandbox.
 
-The root agent must read `workflow/instructions/coordinator.md` for delegation, feature planning, execution order, integration, review, definition of done, overall logging, and final reporting. Feature plans live at `workflow/YYYY-MM-DD-<feature-name>.md` and are owned by the coordinator.
+The root agent must read `workflow/instructions/coordinator.md` for delegation, feature planning, execution order, integration, review, definition of done, overall logging, and final reporting. New feature plans live at `workflow/<feature-name>/feature-plan.md` and are owned by the coordinator. Each feature directory also holds the implementer's and tester's post-approval summaries when those agents participate.
 
 Subagents must return their findings, changed files, actual checks and results, and unresolved issues to the coordinator. The coordinator owns further delegation; subagents must not spawn additional agents.
 
-Each file has one active writer. Preserve unrelated user changes and follow assigned ownership. Subagents follow `workflow/instructions/handoffs.md`, report blockers promptly, and return completion reports to the coordinator. They must not edit the shared feature plan or create competing workflow logs.
+Each file has one active writer. Preserve unrelated user changes and follow assigned ownership. Subagents follow `workflow/instructions/handoffs.md`, report blockers promptly, and return completion reports to the coordinator. They must not edit the shared feature plan or create competing workflow logs. After independent approval, the implementer and tester write their own template-based summary files in the feature directory when assigned by the coordinator.
 
 Every implementer or tester completion report, including completion of fixes, requires independent reviewer review and explicit approval before the coordinator may complete the overall task. A completion report alone is not approval. Follow `workflow/instructions/coordinator.md` and `workflow/instructions/handoffs.md` for approval tracking and mandatory re-review after changes.
+
+The same review gate applies to each `ui_polisher` completion report. The coordinator assigns it presentation files only after functional implementation stabilizes and transfers exclusive file ownership before those edits begin.
 
 See `docs/developerGuide/AgentWorkflow.md` for configuration and usage details.
 
