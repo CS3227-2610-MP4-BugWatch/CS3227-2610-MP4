@@ -138,7 +138,12 @@ try {
   Set-ProcessVariable 'PROJECT_TEST_SECOND_DEVELOPER_TOKEN' (Get-AccessToken 'Second developer' $secondDeveloperEmail)
 
   Write-Host "Running isolated Supabase $Suite integration tests..."
-  & (Join-Path $PSScriptRoot 'node_modules/.bin/vitest.cmd') --run "src/test/$Suite-database.test.ts"
+  $suiteFiles = if ($Suite -eq 'report') {
+    @('src/test/report-database.test.ts', 'src/test/report-workflow-database.test.ts')
+  } else {
+    @('src/test/project-database.test.ts')
+  }
+  & (Join-Path $PSScriptRoot 'node_modules/.bin/vitest.cmd') --run @suiteFiles
   $exitCode = $LASTEXITCODE
 }
 finally {
