@@ -37,6 +37,8 @@ function fail(error: unknown, status?: number): never {
     }
     case 'P2004': throw new ReportError('archived', 'That project is archived. Choose another active project.')
     case 'P2005': throw new ReportError('not_found', 'The report or project could not be found.')
+    case 'P2006': throw new ReportError('already_assigned', 'This report is already assigned to a Developer.')
+    case 'P2007': throw new ReportError('state_conflict', 'The report state has changed. Reload the current report before continuing.')
     default: throw new ReportError('unavailable', 'Report storage is unavailable. Please try again.')
   }
 }
@@ -63,11 +65,29 @@ function timestamp(value: unknown): string {
   return date
 }
 
+function nullableText(value: unknown): string | null {
+  return value === null ? null : text(value)
+}
+
+function assignment(row: Record<string, unknown>): Pick<Report, 'state' | 'assignedDeveloperId' | 'assignedDeveloperUsername' | 'assignedDeveloperDisplayName'> {
+  const state = row.state
+  if (state !== 'Open' && state !== 'Accepted' && state !== 'In progress') fail(null)
+  const assignedDeveloperId = row.assigned_developer_id === null ? null : uuid(row.assigned_developer_id)
+  const assignedDeveloperUsername = nullableText(row.assigned_developer_username)
+  const assignedDeveloperDisplayName = nullableText(row.assigned_developer_display_name)
+  if ((state === 'Open') !== (assignedDeveloperId === null)
+    || (assignedDeveloperId === null && (assignedDeveloperUsername !== null || assignedDeveloperDisplayName !== null))) fail(null)
+  return { state, assignedDeveloperId, assignedDeveloperUsername, assignedDeveloperDisplayName }
+}
+
 function reportRow(value: unknown): Report {
   const row = record(value)
   const input = Object.fromEntries(Object.entries(reportFields).map(([db, field]) => [field, text(row[db])]))
   const result = validateReportInput(input as unknown as ReportInput)
-  if (!result.valid || row.state !== 'Open' || row.assigned_developer_id !== null) fail(null)
+  if (!result.valid) fail(null)
+  const ownership = assignment(row)
+  const assignedAt = row.assigned_at === null ? null : timestamp(row.assigned_at)
+  if ((ownership.assignedDeveloperId === null) !== (assignedAt === null)) fail(null)
   for (const field of Object.values(reportFields)) {
     if (result.value[field] !== input[field]) fail(null)
   }
@@ -75,8 +95,8 @@ function reportRow(value: unknown): Report {
     ...result.value,
     id: uuid(row.id),
     reporterId: uuid(row.reporter_id),
-    state: row.state,
-    assignedDeveloperId: row.assigned_developer_id,
+    ...ownership,
+    assignedAt,
     createdAt: timestamp(row.created_at),
     updatedAt: timestamp(row.updated_at),
     projectName: text(row.project_name),
@@ -106,24 +126,43 @@ function draftRow(value: unknown): ReportDraft {
 
 function historyRow(value: unknown): ReportHistoryEntry {
   const row = record(value)
-  if (row.event !== 'created') fail(null)
   const source = record(row.changes)
-  const changes: ReportHistoryEntry['changes'] = {}
-  for (const [databaseField, field] of Object.entries(reportFields)) {
-    if (!(databaseField in source)) continue
-    const change = record(source[databaseField])
-    if (change.before !== null) fail(null)
-    changes[field] = { before: null, after: text(change.after) }
-  }
-  return {
+  const identity = {
     id: uuid(row.id),
     reportId: uuid(row.report_id),
     actorId: uuid(row.actor_id),
     actorDisplayName: row.actor_display_name === null ? null : text(row.actor_display_name),
+    actorUsername: row.actor_username === undefined ? undefined : nullableText(row.actor_username),
     occurredAt: timestamp(row.occurred_at),
-    event: row.event,
-    changes,
   }
+  if (row.event === 'created') {
+    const changes: Extract<ReportHistoryEntry, { event: 'created' }>['changes'] = {}
+    for (const [databaseField, field] of Object.entries(reportFields)) {
+      if (!(databaseField in source)) continue
+      const change = record(source[databaseField])
+      if (change.before !== null) fail(null)
+      changes[field] = { before: null, after: text(change.after) }
+    }
+    return { ...identity, event: 'created', changes }
+  }
+  const state = record(source.state)
+  if (row.event === 'accepted') {
+    const developer = record(source.assigned_developer_id)
+    const assignedAt = record(source.assigned_at)
+    if (state.before !== 'Open' || state.after !== 'Accepted' || developer.before !== null || assignedAt.before !== null
+      || Object.keys(source).length !== 3) fail(null)
+    return { ...identity, event: 'accepted',
+      assignedDeveloperUsername: row.assigned_developer_username === undefined ? undefined : nullableText(row.assigned_developer_username),
+      assignedDeveloperDisplayName: row.assigned_developer_display_name === undefined ? undefined : nullableText(row.assigned_developer_display_name),
+      changes: { state: { before: 'Open', after: 'Accepted' },
+        assignedDeveloperId: { before: null, after: uuid(developer.after) },
+        assignedAt: { before: null, after: timestamp(assignedAt.after) } } }
+  }
+  if (row.event === 'investigation_started' && state.before === 'Accepted' && state.after === 'In progress'
+    && Object.keys(source).length === 1) {
+    return { ...identity, event: 'investigation_started', changes: { state: { before: 'Accepted', after: 'In progress' } } }
+  }
+  return fail(null)
 }
 
 function summaryRow(value: unknown, expectedProjectId: string) {
@@ -133,16 +172,14 @@ function summaryRow(value: unknown, expectedProjectId: string) {
   const severity = text(row.severity)
   if (projectId.toLowerCase() !== expectedProjectId.toLowerCase()
     || !title || title !== title.trim() || Array.from(title).length > REPORT_TEXT_FIELDS.title.limit
-    || !Object.hasOwn(REPORT_SEVERITIES, severity)
-    || row.state !== 'Open' || row.assigned_developer_id !== null) fail(null)
+    || !Object.hasOwn(REPORT_SEVERITIES, severity)) fail(null)
   const summary: ProjectReportSummary = {
     id: uuid(row.id),
     projectId,
     title,
     projectName: text(row.project_name),
     severity: severity as ReportSeverity,
-    state: row.state,
-    assignedDeveloperId: row.assigned_developer_id,
+    ...assignment(row),
     reporterDisplayName: text(row.reporter_display_name),
   }
   return { summary, createdAt: timestamp(row.created_at) }
@@ -221,6 +258,14 @@ export function createReportRepository(client: SupabaseClient): ReportRepository
       if (!REPORT_UUID.test(id)) return null
       const data = await rpc('get_report', { p_report_id: id })
       return data === null ? null : reportRow(data)
+    },
+    async acceptReport(id) {
+      if (!REPORT_UUID.test(id)) throw new ReportError('not_found', 'The report could not be found.')
+      return reportRow(await rpc('accept_report', { p_report_id: id }))
+    },
+    async startInvestigation(id) {
+      if (!REPORT_UUID.test(id)) throw new ReportError('not_found', 'The report could not be found.')
+      return reportRow(await rpc('start_report_investigation', { p_report_id: id }))
     },
     async listReportHistory(id) {
       if (!REPORT_UUID.test(id)) throw new ReportError('not_found', 'The report could not be found.')

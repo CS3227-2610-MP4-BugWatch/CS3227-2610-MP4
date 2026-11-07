@@ -16,7 +16,7 @@ const { service, projects, reports } = vi.hoisted(() => ({
     listActiveProjects: vi.fn(), getProject: vi.fn(), listProjectHistory: vi.fn(),
     createProject: vi.fn(), updateProject: vi.fn(),
   },
-  reports: { createReport: vi.fn(), getReport: vi.fn(), listReportHistory: vi.fn(), saveDraft: vi.fn(), getDraft: vi.fn() },
+  reports: { acceptReport: vi.fn(), startInvestigation: vi.fn(), createReport: vi.fn(), getReport: vi.fn(), listReportHistory: vi.fn(), saveDraft: vi.fn(), getDraft: vi.fn() },
 }))
 
 vi.mock('../shared/lib/supabaseClient.js', () => ({ supabase: {} }))
@@ -229,4 +229,49 @@ it('draftSave_projectReloadFails_keepsSavedFormAndRetriesBeforeWriting', async (
   fireEvent.change(screen.getByLabelText(/^Title\b/i), { target: { value: 'Next edit' } })
   fireEvent.click(screen.getByRole('button', { name: 'Save draft' }))
   expect(reports.saveDraft).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Next edit' }), reportId)
+})
+
+
+function workflowReport(state: Report['state'] = 'Open'): Report {
+  const assigned = state !== 'Open'
+  return { id: reportId, projectId, title: 'Protected workflow report', description: 'Bug', version: '1', reproductionSteps: 'Open', expectedResults: 'Works', actualResults: 'Fails', severity: 'low', testEnvironment: '', reporterId: otherId, reporterUsername: 'tester', reporterDisplayName: 'Tester', projectName: 'Project', projectArchivedAt: null, state, assignedDeveloperId: assigned ? testerId : null, assignedAt: assigned ? '2026-11-07T10:00:00Z' : null, assignedDeveloperUsername: assigned ? 'dev' : null, assignedDeveloperDisplayName: assigned ? 'Developer' : null, createdAt: '2026-11-07T09:00:00Z', updatedAt: '2026-11-07T10:00:00Z' }
+}
+async function openWorkflow(state: Report['state'] = 'Open') {
+  window.history.replaceState({}, '', `/reports/${reportId}`)
+  service.loadIdentity.mockImplementation(async (id: string) => ({ id, role: 'developer', username: id === testerId ? 'first' : 'second', displayName: id === testerId ? 'First Developer' : 'Second Developer' }))
+  reports.getReport.mockResolvedValue(workflowReport(state))
+  reports.listReportHistory.mockResolvedValue([])
+  render(createElement(AuthenticatedApp))
+  await screen.findByRole('heading', { name: 'Protected workflow report' })
+}
+it.each([['acceptReport', 'Open', 'Accept report'], ['startInvestigation', 'Accepted', 'Start investigation']] as const)('workflow_%sExpiredSession_rechecksAuthAndClearsProtectedContent', async (method, state, label) => {
+  reports[method].mockRejectedValueOnce(new ReportError('unauthenticated', 'Session ended'))
+  await openWorkflow(state)
+  fireEvent.click(screen.getByRole('button', { name: label }))
+  await screen.findByRole('button', { name: 'Log in' })
+  expect(service.getCurrentSession).toHaveBeenCalledTimes(2)
+  expect(screen.queryByRole('heading', { name: 'Protected workflow report' })).toBeNull()
+  expect(reports[method]).toHaveBeenCalledExactlyOnceWith(reportId)
+})
+it.each(['logout', 'identity replacement', 'stale expiry'] as const)('workflow_acceptanceCompletionAfter%s_doesNotRestoreOldProtectedState', async replacement => {
+  let complete!: (value: Report) => void
+  let reject!: (reason: Error) => void
+  reports.acceptReport.mockReturnValueOnce(new Promise<Report>((resolve, fail) => { complete = resolve; reject = fail }))
+  await openWorkflow()
+  fireEvent.click(screen.getByRole('button', { name: 'Accept report' }))
+  expect(reports.acceptReport).toHaveBeenCalledOnce()
+  if (replacement === 'logout') {
+    await act(async () => { callback('SIGNED_OUT', null) })
+    await screen.findByRole('button', { name: 'Log in' })
+  } else {
+    reports.getReport.mockResolvedValue({ ...workflowReport(), title: 'Replacement identity report' })
+    await act(async () => { callback('SIGNED_IN', session(otherId)) })
+    await screen.findByRole('heading', { name: 'Replacement identity report' })
+  }
+  const reads = reports.getReport.mock.calls.length
+  await act(async () => { if (replacement === 'stale expiry') reject(new ReportError('unauthenticated', 'Old session ended')); else complete(workflowReport('Accepted')) })
+  expect(reports.getReport).toHaveBeenCalledTimes(reads)
+  expect(service.getCurrentSession).toHaveBeenCalledTimes(1)
+  expect(screen.queryByRole('heading', { name: 'Protected workflow report' })).toBeNull()
+  if (replacement !== 'logout') expect(screen.getByRole('heading', { name: 'Replacement identity report' })).toBeTruthy()
 })
