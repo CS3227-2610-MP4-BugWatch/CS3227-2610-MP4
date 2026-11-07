@@ -1,4 +1,4 @@
-import { Badge } from '@mantine/core'
+import { Badge, Button } from '@mantine/core'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import type { ProjectReportSummary, ReportRepository, ReportSeverity } from './types'
@@ -29,10 +29,10 @@ export function ProjectReportsPanel({ projectId, repository }: { projectId: stri
     {state.status === 'loading' && <p role="status">Loading reports…</p>}
     {state.status === 'error' && <div role="alert">
       <p>Reports could not be loaded.</p>
-      <button type="button" onClick={() => {
+      <Button type="button" variant="default" onClick={() => {
         setState({ status: 'loading' })
         setAttempt(value => value + 1)
-      }}>Retry</button>
+      }}>Retry</Button>
     </div>}
     {state.status === 'ready' && (state.reports.length === 0
       ? <p>No reports yet.</p>
@@ -45,7 +45,9 @@ export function ProjectReportsPanel({ projectId, repository }: { projectId: stri
           <tbody>{state.reports.map(report => <tr key={report.id} className="report-entry">
             <td data-label="Title"><Link className="report-entry-link" to={`/reports/${report.id}`}>{report.title}</Link></td>
             <td data-label="Project">{report.projectName}</td><td data-label="Severity"><Badge variant="light" color={severityColors[report.severity]}>{REPORT_SEVERITIES[report.severity]}</Badge></td>
-            <td data-label="Status"><Badge variant="light">{report.state}</Badge></td><td data-label="Assignee">Unassigned</td><td data-label="Reporter">{report.reporterDisplayName}</td>
+            <td data-label="Status"><Badge variant="light" color={report.state === 'Open' ? 'gray' : report.state === 'Accepted' ? 'blue' : 'orange'}>{report.state}</Badge></td><td data-label="Assignee">{report.assignedDeveloperId
+              ? report.assignedDeveloperDisplayName?.trim() || report.assignedDeveloperUsername?.trim() || 'Unavailable user'
+              : 'Unassigned'}</td><td data-label="Reporter">{report.reporterDisplayName}</td>
           </tr>)}</tbody>
         </table>
       </div>)}

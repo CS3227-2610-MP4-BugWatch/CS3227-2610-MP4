@@ -51,6 +51,8 @@ function AuthenticatedContent() {
         submitDraft: (id, input) => withSession(() => reports.submitDraft(id, input)),
         createReport: input => withSession(() => reports.createReport(input)),
         getReport: id => withSession(() => reports.getReport(id)),
+        acceptReport: id => withSession(() => reports.acceptReport(id)),
+        startInvestigation: id => withSession(() => reports.startInvestigation(id)),
         listReportHistory: id => withSession(() => reports.listReportHistory(id)),
         listProjectReports: id => withSession(() => reports.listProjectReports(id)),
       },

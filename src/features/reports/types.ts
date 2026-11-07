@@ -1,4 +1,5 @@
 export type ReportSeverity = 'very_low' | 'low' | 'medium' | 'high'
+export type ReportState = 'Open' | 'Accepted' | 'In progress'
 
 export interface ReportInput {
   projectId: string
@@ -22,8 +23,11 @@ export interface Report extends ValidatedReportInput {
   reporterId: string
   createdAt: string
   updatedAt: string
-  state: 'Open'
-  assignedDeveloperId: null
+  state: ReportState
+  assignedDeveloperId: string | null
+  assignedAt: string | null
+  assignedDeveloperUsername: string | null
+  assignedDeveloperDisplayName: string | null
   projectName: string
   projectArchivedAt: string | null
   reporterUsername: string
@@ -41,20 +45,37 @@ export interface DraftSummary {
 
 export interface ReportDraft extends DraftSummary, ReportInput {}
 
-export interface ReportHistoryEntry {
+interface ReportHistoryIdentity {
   id: string
   reportId: string
   actorId: string
   actorDisplayName: string | null
+  actorUsername?: string | null
   occurredAt: string
-  event: 'created'
-  changes: Partial<Record<keyof ReportInput, { before: null; after: string }>>
 }
 
-export type ProjectReportSummary = Pick<Report,
-  'id' | 'projectId' | 'title' | 'projectName' | 'severity' | 'state' | 'assignedDeveloperId' | 'reporterDisplayName'>
+export type ReportHistoryEntry = ReportHistoryIdentity & ({
+  event: 'created'
+  changes: Partial<Record<keyof ReportInput, { before: null; after: string }>>
+} | {
+  event: 'accepted'
+  assignedDeveloperUsername?: string | null
+  assignedDeveloperDisplayName?: string | null
+  changes: {
+    state: { before: 'Open'; after: 'Accepted' }
+    assignedDeveloperId: { before: null; after: string }
+    assignedAt: { before: null; after: string }
+  }
+} | {
+  event: 'investigation_started'
+  changes: { state: { before: 'Accepted'; after: 'In progress' } }
+})
 
-type ReportErrorCode = 'validation' | 'unauthenticated' | 'forbidden' | 'archived' | 'not_found' | 'unavailable'
+export type ProjectReportSummary = Pick<Report,
+  'id' | 'projectId' | 'title' | 'projectName' | 'severity' | 'state' | 'assignedDeveloperId'
+  | 'assignedDeveloperUsername' | 'assignedDeveloperDisplayName' | 'reporterDisplayName'>
+
+type ReportErrorCode = 'validation' | 'unauthenticated' | 'forbidden' | 'archived' | 'not_found' | 'unavailable' | 'already_assigned' | 'state_conflict'
 export type ReportFieldErrors = Partial<Record<keyof ReportInput, string>>
 
 export class ReportError extends Error {
@@ -77,6 +98,8 @@ export interface ReportRepository {
   submitDraft(id: string, input: ReportInput): Promise<Report>
   createReport(input: ReportInput): Promise<Report>
   getReport(id: string): Promise<Report | null>
+  acceptReport(id: string): Promise<Report>
+  startInvestigation(id: string): Promise<Report>
   listReportHistory(id: string): Promise<ReportHistoryEntry[]>
   listProjectReports(projectId: string): Promise<ProjectReportSummary[]>
 }

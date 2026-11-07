@@ -6,7 +6,7 @@
 
 # Bug reports
 
-A Tester can submit a bug to an active project. A submitted report starts as **Open** and **Unassigned**. Both logged-in Testers and Developers can find submitted reports in the project's **Reports** tab and read their details and creation history. Your environment must have the report migrations described in the [developer guide](../developerGuide/Reports.md).
+A Tester can submit a bug to an active project. A submitted report starts as **Open** and **Unassigned**. Both logged-in Testers and Developers can find submitted reports in the project's **Reports** tab and read their details and activity history. Your environment must have the report migrations described in the [developer guide](../developerGuide/Reports.md).
 
 ## Submit a report
 
@@ -43,4 +43,16 @@ If you try to leave the form with unsaved changes, including by choosing a works
 
 Open a project and select its **Reports** tab. The table lists that project's submitted reports, newest first, with the title, project, severity, status, assignee, and reporter. Select anywhere in a report entry to open it; the bold title is also a keyboard-accessible link. Entries highlight on hover or keyboard focus. Listing severity badges retain their labels and use teal for Very Low, green for Low, yellow for Medium, and red for High. If the project has no reports, the tab shows **No reports yet**. If reports cannot be loaded, select **Retry**; this does not prevent you from opening the project's **Overview** tab.
 
-The saved page shows the project, report fields, reporter, state, assignment, timestamps, and creation history. Use its breadcrumb to visit **Projects**, the project's **Overview**, or **Reports**, or select **Back to project reports** to return to the listing. If a saved report cannot be loaded, select **Retry**. A missing report shows **Report not found**. Report editing, AI suggestions, discussion, assignment, resolution, and attachments are not available in this feature.
+The saved page shows the project, report fields, reporter, state, assignment, and timestamps. Once a Developer has accepted a report, it also shows when the assignment was made. **Activity history** shows who created or accepted the report, who started investigation, and the recorded changes. Use its breadcrumb to visit **Projects**, the project's **Overview**, or **Reports**, or select **Back to project reports** to return to the listing. If a saved report cannot be loaded, select **Retry**. A missing report shows **Report not found**.
+
+## Accept a report and start investigation
+
+1. Log in as a Developer, open an active project's **Reports** tab, and select an **Open**, unassigned report. Any Developer can accept an available report, including one in a project created by someone else.
+2. On the report details page, select **Accept report**. The report becomes **Accepted**, is assigned to you, and records the assignment time in its details and activity history. Acceptance does not start investigation.
+3. When you are ready to investigate, return to the same details page and select **Start investigation**. The report becomes **In progress** and keeps its existing assignee and assignment time.
+
+Only the assigned Developer can start investigation. Testers can read the report and its history but cannot accept or start it. Neither action is available on the listing or for an archived project. Actions are unavailable while an action is being saved.
+
+If another Developer accepts the report first, the page explains that it is already assigned and refreshes the report. It also refreshes after a state conflict or if the project was archived. If the connection drops during an action or its readback, the action may have been saved: select **Reload** to check the current report before trying another action. BugWatch does not automatically repeat the action.
+
+Releasing or transferring an assignment is not available. Report editing, AI suggestions, discussion, resolution, and attachments are also unavailable in this feature.

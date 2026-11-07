@@ -28,7 +28,7 @@ export function ProjectsApp({ repository, reportRepository, user, onSignOut = ()
     <Route path="/drafts" element={<DraftListPage key={pageKey} repository={reportRepository} user={user} />} />
     <Route path="/drafts/:draftId" element={<DraftEditPage key={pageKey} projectRepository={repository} reportRepository={reportRepository} user={user} savedDrafts={savedDrafts} />} />
     <Route path="/reports/new" element={<ReportCreatePage key={pageKey} projectRepository={repository} reportRepository={reportRepository} user={user} savedDrafts={savedDrafts} />} />
-    <Route path="/reports/:reportId" element={<ReportDetailsPage key={pageKey} reportRepository={reportRepository} />} />
+    <Route path="/reports/:reportId" element={<ReportDetailsPage key={pageKey} reportRepository={reportRepository} user={user} />} />
     <Route path="*" element={<section className="project-panel"><h2>Page not found</h2><Link to="/projects">Back to projects</Link></section>} />
   </Routes></WorkspaceShell>
 }

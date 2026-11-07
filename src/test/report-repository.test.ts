@@ -18,13 +18,13 @@ const row = {
   version: input.version, reproduction_steps: input.reproductionSteps,
   expected_results: input.expectedResults, actual_results: input.actualResults,
   severity: input.severity, test_environment: '', reporter_id: reporterId,
-  created_at: time, updated_at: time, state: 'Open', assigned_developer_id: null,
+  created_at: time, updated_at: time, state: 'Open', assigned_developer_id: null, assigned_at: null, assigned_developer_username: null, assigned_developer_display_name: null,
   project_name: 'Project', project_archived_at: null,
   reporter_username: 'tester', reporter_display_name: 'Reporter',
 }
 const report: Report = {
   ...input, id, reporterId, createdAt: time, updatedAt: time,
-  state: 'Open', assignedDeveloperId: null, projectName: 'Project',
+  state: 'Open', assignedDeveloperId: null, assignedAt: null, assignedDeveloperUsername: null, assignedDeveloperDisplayName: null, projectName: 'Project',
   projectArchivedAt: null, reporterUsername: 'tester', reporterDisplayName: 'Reporter',
 }
 const changes = Object.fromEntries(Object.entries({
@@ -121,7 +121,7 @@ function summaryRow(sequence: number, createdAt = '2026-11-05T09:30:00.000012+00
   return {
     id: `50000000-0000-4000-8000-${String(sequence).padStart(12, '0')}`,
     project_id: projectId, title: `Report ${sequence}`, project_name: 'Project',
-    severity: 'low', state: 'Open', assigned_developer_id: null, reporter_display_name: 'Reporter',
+    severity: 'low', state: 'Open', assigned_developer_id: null, assigned_at: null, assigned_developer_username: null, assigned_developer_display_name: null, reporter_display_name: 'Reporter',
     created_at: createdAt,
   }
 }
@@ -138,7 +138,7 @@ describe('project report listing repository', () => {
     expect(results.map(result => result.id)).toEqual([...fullPage, last].map(item => item.id))
     expect(results.at(-1)).toEqual({
       id: last.id, projectId, title: last.title, projectName: 'Project', severity: 'low',
-      state: 'Open', assignedDeveloperId: null, reporterDisplayName: 'Reporter',
+      state: 'Open', assignedDeveloperId: null, assignedDeveloperUsername: null, assignedDeveloperDisplayName: null, reporterDisplayName: 'Reporter',
     })
     expect(rpc).toHaveBeenNthCalledWith(1, 'list_project_reports', { p_project_id: projectId })
     expect(rpc).toHaveBeenNthCalledWith(2, 'list_project_reports', {

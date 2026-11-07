@@ -32,7 +32,7 @@ const input = {
 }
 const saved: Report = {
   ...input, id: reportId, reporterId: user.id, createdAt: time, updatedAt: time,
-  state: 'Open', assignedDeveloperId: null, projectName: 'Test project', projectArchivedAt: null,
+  state: 'Open', assignedDeveloperId: null, assignedAt: null, assignedDeveloperUsername: null, assignedDeveloperDisplayName: null, projectName: 'Test project', projectArchivedAt: null,
   reporterDisplayName: user.displayName, reporterUsername: user.username,
 }
 
@@ -51,7 +51,7 @@ function setup() {
     getProject: vi.fn(), listProjectHistory: vi.fn(), createProject: vi.fn(), updateProject: vi.fn(),
   }
   const reportRepository = {
-    listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn().mockResolvedValue(saved),
+    acceptReport: vi.fn(), startInvestigation: vi.fn(), listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn().mockResolvedValue(saved),
     listProjectReports: vi.fn(),
     createReport: vi.fn().mockResolvedValue(saved), getReport: vi.fn().mockResolvedValue(saved),
     listReportHistory: vi.fn().mockResolvedValue([{
@@ -63,7 +63,7 @@ function setup() {
     const router = createMemoryRouter([
       { path: '/drafts/:draftId', element: createElement(DraftEditPage, { projectRepository, reportRepository, user: actor }) },
       { path: '/reports/new', element: createElement(ReportCreatePage, { projectRepository, reportRepository, user: actor }) },
-      { path: '/reports/:reportId', element: createElement(ReportDetailsPage, { reportRepository }) },
+      { path: '/reports/:reportId', element: createElement(ReportDetailsPage, { reportRepository, user: actor }) },
       { path: '/projects/:projectId', element: createElement(ProjectDestination) },
     ], { initialEntries: [path] })
     return render(createElement(RouterProvider, { router }))
