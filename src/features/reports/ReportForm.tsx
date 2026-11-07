@@ -3,7 +3,7 @@ import type { FormEvent, ReactNode } from 'react'
 import { useBlocker } from 'react-router'
 import type { Project } from '../projects/types'
 import type { ReportFieldErrors, ReportInput } from './types'
-import { REPORT_SEVERITIES, REPORT_TEXT_FIELDS, REPORT_TEXT_KEYS, validateDraftInput, validateReportInput } from './validation'
+import { REPORT_SEVERITIES, REPORT_TEXT_FIELDS, validateDraftInput, validateReportInput } from './validation'
 
 type Props = {
   projects: Project[]; initialProjectId: string; initialInput?: ReportInput; projectsAvailable: boolean
@@ -58,7 +58,7 @@ export function ReportForm({ projects, initialProjectId, initialInput, projectsA
   function accessibility(key: keyof ReportInput) { return { id: key, disabled: pending, 'aria-invalid': !!message(key), 'aria-describedby': message(key) ? `${key}-error` : undefined } }
   return <>
     {blocker.state === 'blocked' && <div role="dialog" aria-modal="true" aria-label="Unsaved changes"><p>You have unsaved changes.</p><button type="button" onClick={() => blocker.reset()}>Keep editing</button><button type="button" onClick={() => blocker.proceed()}>Leave without saving</button></div>}
-    <form onSubmit={submit} noValidate>
+    <form className="project-form" onSubmit={submit} noValidate>
       <p>All fields are required except Test environment.</p>
       {archived ? <div role="alert">{isDraft ? <p>This project has been archived. Select an active project to save or submit.</p> : <><p>This project has been archived. Your report wasn’t submitted.</p><p>If the bug still needs attention, contact the Developer who created this project outside BugWatch.</p></>}</div> : error && <p role="alert">{error}</p>}
       {confirmation && <p role="status">{confirmation}</p>}
@@ -67,11 +67,17 @@ export function ReportForm({ projects, initialProjectId, initialInput, projectsA
         {input.projectId && !projects.some(project => project.id === input.projectId) && <option value={input.projectId}>{archivedProjectName ?? (archived ? 'Archived project' : 'Selected project')}{archived ? ' (Archived)' : ''}</option>}
         {projects.map(project => <option key={project.id} value={project.id}>{project.name}</option>)}
       </select>)}
-      {REPORT_TEXT_KEYS.map(key => {
+      {[
+        { title: 'Identify the problem', keys: ['title', 'description', 'version'] as const },
+        { title: 'Reproduce the problem', keys: ['reproductionSteps', 'testEnvironment'] as const },
+        { title: 'Expected and actual results', keys: ['expectedResults', 'actualResults'] as const },
+      ].map(group => <fieldset className="form-section" key={group.title}><legend>{group.title}</legend>{group.keys.map(key => {
         const props = { ...accessibility(key), required: key !== 'testEnvironment', value: input[key] ?? '', onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => change(key, event.target.value) }
-        return field(key, REPORT_TEXT_FIELDS[key].label, key === 'title' || key === 'version' ? <input type="text" {...props} /> : <textarea rows={3} {...props} />)
-      })}
+        return field(key, REPORT_TEXT_FIELDS[key].label, key === 'title' || key === 'version' ? <input type="text" {...props} /> : <textarea rows={4} {...props} />)
+      })}</fieldset>)}
+      <fieldset className="form-section"><legend>Impact</legend>
       {field('severity', 'Severity', <select {...accessibility('severity')} required value={input.severity} onChange={event => change('severity', event.target.value as ReportInput['severity'])}><option value="">Choose a severity</option>{Object.entries(REPORT_SEVERITIES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>)}
+      </fieldset>
       <div className="project-toolbar"><button type="submit" disabled={pending || archived || !projectsAvailable}>{pending ? 'Please wait…' : 'Submit report'}</button><button type="button" disabled={pending || archived || !projectsAvailable} onClick={() => validate(true)}>Save draft</button><button type="button" disabled={pending} onClick={() => onCancel(input.projectId)}>{archived ? 'Discard report' : 'Cancel'}</button></div>
     </form>
   </>

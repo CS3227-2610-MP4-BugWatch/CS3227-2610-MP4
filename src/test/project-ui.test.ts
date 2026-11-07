@@ -1,12 +1,23 @@
 // @vitest-environment jsdom
+import { MantineProvider } from '@mantine/core'
+import type { ReactElement } from 'react'
 import { createElement } from 'react'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render as testingRender, screen, waitFor } from '@testing-library/react'
 import { Link, MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ProjectsApp } from '../features/projects/ProjectsApp'
 import type { ReportRepository } from '../features/reports/types'
 import { ProjectError } from '../features/projects/types'
 import type { Project, ProjectHistoryEntry, ProjectInput, ProjectRepository, SessionUser } from '../features/projects/types'
+
+Object.defineProperty(window, 'matchMedia', { configurable: true, writable: true, value: (query: string) => ({
+  matches: false, media: query, onchange: null, addListener: () => undefined, removeListener: () => undefined,
+  addEventListener: () => undefined, removeEventListener: () => undefined, dispatchEvent: () => false,
+}) })
+
+function render(element: ReactElement) {
+  return testingRender(createElement(MantineProvider, { env: 'test' }, element))
+}
 
 const reportRepository: ReportRepository = {
   createReport: vi.fn(),
@@ -56,6 +67,25 @@ function fill(input: ProjectInput = project) {
 afterEach(cleanup)
 
 describe('project browser and detail interactions', () => {
+  it('projectList_entryMetadata_opensProjectThroughOneNativeLink', async () => {
+    const repo = repository()
+    repo.listActiveProjects.mockResolvedValue([project])
+    show(repo)
+    const entry = await screen.findByRole('link', { name: project.name })
+    expect(entry.getAttribute('href')).toBe(`/projects/${project.id}`)
+    expect(entry.contains(screen.getByText(project.description))).toBe(true)
+    expect(entry.textContent).toContain('Created by')
+    expect(entry.querySelector('a')).toBeNull()
+    entry.focus()
+    expect(document.activeElement).toBe(entry)
+    fireEvent.click(screen.getByText(project.description))
+    await screen.findByRole('heading', { name: project.name })
+    const back = screen.getByRole('link', { name: 'Back to projects' })
+    expect(back.getAttribute('href')).toBe('/projects')
+    fireEvent.click(back)
+    expect(await screen.findByRole('heading', { name: 'Active projects' })).toBeTruthy()
+  })
+
   it('projectList_pendingThenEmpty_distinguishesLoadingFromEmpty', async () => {
     const repo = repository()
     const request = deferred<Project[]>()

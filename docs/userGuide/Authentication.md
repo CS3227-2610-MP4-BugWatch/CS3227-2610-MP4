@@ -18,10 +18,14 @@ If the email or password is incorrect, check the details and try again. If authe
 
 When the app renews your session in the background or you return to its browser tab, your current account screen stays open. Any unsaved project form text remains in place. Signing out or losing the session still returns you to the login screen.
 
+## Navigate the workspace
+
+The header shows your display name, role, and **Log out**. On wider screens, the sidebar offers **Projects** to both roles and **My drafts** to Testers. On a narrow screen, select **Menu** to open or close those destinations. With focus on **Menu** or its navigation, press Escape to close the menu. The current destination is highlighted. See [Projects](Projects.md) and [Bug reports](Reports.md) for the available workflows.
+
 ## Account setup and logout
 
-If the screen says **Account setup incomplete—contact the administrator.**, your account needs an administrator to complete or correct its profile before you can enter. Select **Log out** if you need to leave that screen.
+If the screen says **Account setup incomplete - contact the administrator.**, your account needs an administrator to complete or correct its profile before you can enter. Select **Log out** if you need to leave that screen.
 
-If identity loading is temporarily unavailable, select **Retry**. You can also select **Log out**. On the account screen, select **Log out** to end your session and return to login. If logout fails, the app reports an error; retry when the service is available.
+If identity loading is temporarily unavailable, select **Retry**. You can also select **Log out**. In the workspace, select **Log out** in the header to end your session and return to login. Signing out clears protected content and unsaved form text immediately. If logout fails, the app reports an error and offers a retry when the service is available.
 
-The [simulated project workspace](Projects.md) uses separate sample identities for development and does not change real accounts or roles. Administrators can find setup details in the [authentication developer guide](../developerGuide/Authentication.md).
+Administrators can find setup details in the [authentication developer guide](../developerGuide/Authentication.md).
