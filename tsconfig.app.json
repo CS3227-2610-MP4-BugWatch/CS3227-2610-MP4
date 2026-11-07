@@ -18,5 +18,6 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/test/report-suggestions-api.test.ts", "src/test/report-suggestions-dependencies.test.ts"]
 }

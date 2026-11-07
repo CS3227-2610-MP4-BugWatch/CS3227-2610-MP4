@@ -1,4 +1,4 @@
-import type { ReportFieldErrors, ReportInput, ReportSeverity, ValidatedReportInput } from './types'
+import type { ReportFieldErrors, ReportInput, ReportSeverity, ValidatedReportInput } from './types.js'
 
 export const REPORT_SEVERITIES = {
   very_low: 'Very Low',

@@ -32,6 +32,14 @@ Drafts and submission receipts live in separate tables. Owner-scoped RPCs requir
 
 Deploy migration `008` before the updated frontend, then deploy the frontend promptly. An older Open-only frontend cannot decode reports after they are assigned. If rollback is needed, disable workflow actions while retaining the extended readers and stored workflow data; do not revert to an Open-only frontend or drop assignment and history metadata once assigned reports exist. Use a forward corrective migration where needed.
 
+## Tester assistant
+
+Apply `src/features/reports/database/009_tester_suggestion_quota.sql` after `008` in the isolated database. The quota function can be invoked by the server's service role. It checks the Tester profile and serializes requests per Tester using a row lock and database time. Only the latest admitted timestamps are needed.
+
+The form calls `POST /api/tester/report-suggestions` with the current Supabase bearer token. The Vercel Function verifies the session and exact `tester` role, loads the active project through the user's authorized Supabase client, and reserves quota before contacting SoCLaaS. It forwards only allowed form fields and the server-looked-up project name and description. Severity and the project ID stay in BugWatch. The endpoint filters malformed suggestion and question entries and returns a safe error when no entries are usable.
+
+Keep `TESTER_SUGGESTIONS_ENABLED` disabled until the live model, account quota handling and retention are confirmed. For isolated preview setup, configure the function's `SOCLAAS_API_KEY`, `SOCLAAS_MODEL`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` as server settings. Scope the Supabase values to the same isolated project used by the preview frontend. Keep both secret keys outside `VITE_` variables. Mocked tests exercise the contract without contacting SoCLaaS.
+
 ## Verification
 
 Run local checks from the repository root:
