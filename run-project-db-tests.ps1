@@ -139,7 +139,7 @@ try {
 
   Write-Host "Running isolated Supabase $Suite integration tests..."
   $suiteFiles = if ($Suite -eq 'report') {
-    @('src/test/report-database.test.ts', 'src/test/report-workflow-database.test.ts')
+    @('src/test/report-database.test.ts', 'src/test/report-workflow-database.test.ts', 'src/test/report-discussion-database.test.ts')
   } else {
     @('src/test/project-database.test.ts')
   }
