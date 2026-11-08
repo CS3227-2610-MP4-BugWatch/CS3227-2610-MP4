@@ -5,11 +5,13 @@ import type { Project, ProjectRepository, SessionUser } from '../projects/types'
 import { ReportForm } from './ReportForm'
 import { ReportError } from './types'
 import type { ReportDraft, ReportFieldErrors, ReportInput, ReportRepository } from './types'
+import { createReportSuggestionSession, draftSuggestionHandoffs } from './useReportSuggestions'
+import type { ReportSuggestionSession } from './useReportSuggestions'
 
-type Props = { projectRepository: ProjectRepository; reportRepository: ReportRepository; user: SessionUser; draft?: ReportDraft; savedDrafts?: Map<string, ReportDraft> }
+type Props = { projectRepository: ProjectRepository; reportRepository: ReportRepository; user: SessionUser; draft?: ReportDraft; savedDrafts?: Map<string, ReportDraft>; initialSuggestionSession?: ReportSuggestionSession }
 type ProjectsState = { status: 'loading' | 'error' } | { status: 'ready'; projects: Project[] }
 
-export function ReportCreatePage({ projectRepository, reportRepository, user, draft, savedDrafts }: Props) {
+export function ReportCreatePage({ projectRepository, reportRepository, user, draft, savedDrafts, initialSuggestionSession }: Props) {
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams] = useSearchParams()
@@ -21,6 +23,7 @@ export function ReportCreatePage({ projectRepository, reportRepository, user, dr
   const [archivedProjectId, setArchivedProjectId] = useState(draft?.projectArchivedAt ? draft.projectId : '')
   const [fieldErrors, setFieldErrors] = useState<ReportFieldErrors>({})
   const [savedInput, setSavedInput] = useState<ReportInput | null>(draft ? inputFromDraft(draft) : null)
+  const [suggestionSession] = useState(() => initialSuggestionSession ?? createReportSuggestionSession())
   const active = useRef(false)
   const saveLock = useRef(false)
   const allowNavigation = useRef(false)
@@ -41,7 +44,15 @@ export function ReportCreatePage({ projectRepository, reportRepository, user, dr
         const saved = await reportRepository.saveDraft(input, draft?.id)
         if (active.current) {
           setSavedInput(inputFromDraft(saved)); setConfirmation('Draft saved')
-          if (!draft) { savedDrafts?.set(saved.id, saved); allowNavigation.current = true; void navigate(`/drafts/${saved.id}`, { replace: true, state: { draftSaved: true } }) }
+          if (!draft) {
+            if (savedDrafts) {
+              savedDrafts.set(saved.id, saved)
+              suggestionSession.beginHandoff()
+              draftSuggestionHandoffs.set(saved, suggestionSession)
+            }
+            allowNavigation.current = true
+            void navigate(`/drafts/${saved.id}`, { replace: true, state: { draftSaved: true } })
+          }
         }
       } else {
         const report = draft ? await reportRepository.submitDraft(draft.id, input) : await reportRepository.createReport(input)
@@ -66,7 +77,7 @@ export function ReportCreatePage({ projectRepository, reportRepository, user, dr
     {(!!draft || (projectsState.status === 'ready' && !!projects.length)) && <ReportForm projects={projects} projectsAvailable={projectsState.status === 'ready'}
       initialProjectId={projects.some(project => project.id === selected) ? selected : ''} initialInput={draft ? inputFromDraft(draft) : undefined}
       pending={pending} error={error} fieldErrors={fieldErrors} archivedProjectId={archivedProjectId} archivedProjectName={draft?.projectName}
-      savedInput={savedInput} isDraft={!!draft} confirmation={confirmation} allowNavigation={allowNavigation}
+      savedInput={savedInput} isDraft={!!draft} confirmation={confirmation} allowNavigation={allowNavigation} suggestionSession={suggestionSession}
       onSubmit={input => { void write(input, false) }} onSaveDraft={input => { void write(input, true) }}
       onCancel={projectId => { void navigate(projects.some(project => project.id === projectId) ? `/projects/${projectId}` : '/projects') }} />}
   </section>

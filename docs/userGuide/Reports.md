@@ -39,6 +39,16 @@ If a submission fails, your form text remains available for correction or retry 
 
 If you try to leave the form with unsaved changes, including by choosing a workspace destination, choose **Keep editing** or **Leave without saving**. Leaving preserves the last saved version. Save before signing out if you want to keep newer edits.
 
+## Get AI suggestions
+
+When the assistant is enabled, select an active project and enter a title and description. Select **Generate suggestions** at the bottom of the form. You can keep editing while the request runs.
+
+- Review each **AI generated suggestion** below its report field. Edit the suggestion if needed, then select **Use suggestion** to replace that field.
+- Read the numbered **Details to add** questions and enter any answers in the report fields. Generate again if you want to use the new details.
+- Save or submit as usual. Only report fields, including any suggestions you applied, are saved. Unapplied suggestions and questions are temporary.
+
+The assistant uses the selected project's name and description and the allowed report fields. The Tester chooses severity separately. The feature allows five generation attempts per Tester in a rolling five-minute window. If generation fails or you reach the limit, you can continue writing and saving the report.
+
 ## Find and read reports
 
 Open a project and select its **Reports** tab. The table lists that project's submitted reports, newest first, with the title, project, severity, status, assignee, and reporter. Select anywhere in a report entry to open it; the bold title is also a keyboard-accessible link. Entries highlight on hover or keyboard focus. Listing severity badges retain their labels and use teal for Very Low, green for Low, yellow for Medium, and red for High. If the project has no reports, the tab shows **No reports yet**. If reports cannot be loaded, select **Retry**; this does not prevent you from opening the project's **Overview** tab.
@@ -55,4 +65,4 @@ Only the assigned Developer can start investigation. Testers can read the report
 
 If another Developer accepts the report first, the page explains that it is already assigned and refreshes the report. It also refreshes after a state conflict or if the project was archived. If the connection drops during an action or its readback, the action may have been saved: select **Reload** to check the current report before trying another action. BugWatch does not automatically repeat the action.
 
-Releasing or transferring an assignment is not available. Report editing, AI suggestions, discussion, resolution, and attachments are also unavailable in this feature.
+Releasing or transferring an assignment is not available. Report editing, discussion, resolution, and attachments are outside this workflow.

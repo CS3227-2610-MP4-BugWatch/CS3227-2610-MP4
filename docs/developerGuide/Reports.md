@@ -32,6 +32,20 @@ Drafts and submission receipts live in separate tables. Owner-scoped RPCs requir
 
 Deploy migration `008` before the updated frontend, then deploy the frontend promptly. An older Open-only frontend cannot decode reports after they are assigned. If rollback is needed, disable workflow actions while retaining the extended readers and stored workflow data; do not revert to an Open-only frontend or drop assignment and history metadata once assigned reports exist. Use a forward corrective migration where needed.
 
+## Tester assistant
+
+For local development, fill the ignored `.env` or `.env.local` from `.env.example` and run `npm run dev`. Vite's development middleware runs the existing suggestion endpoint at `/api/tester/report-suggestions` on the same local address as the app. Restart the dev server after editing env settings. The middleware loads the server keys into the Node process and exposes only Vite's normal public variables to browser code.
+
+The middleware applies only to Vite's development server. Vercel uses `npm run build` for the frontend and runs `api/tester/report-suggestions.ts` as a function, using the project environment settings. Set the keys separately for the review deployment. Local files supply local development values.
+
+Apply `src/features/reports/database/009_tester_suggestion_quota.sql` after `008` in the isolated database, then apply `010_tester_suggestion_quota_five.sql` to raise the limit to five attempts per rolling five minutes. Migration `010` preserves existing attempt timestamps and updates both the quota function and storage constraint. Apply both migrations for a fresh database; apply only `010` if `009` is already installed. The quota function can be invoked by the server's service role. It checks the Tester profile and serializes requests per Tester using a row lock and database time. Only the latest admitted timestamps are needed.
+
+To verify the quota migrations in disposable PostgreSQL, set `QUOTA_TEST_DOCKER=true` and `QUOTA_TEST_DOCKER_PATH` to your Docker executable, then run `npm run test -- --run src/test/report-suggestion-quota.test.ts`. Docker must be running. This opt-in suite uses `postgres:17.6-alpine3.22`, checks upgrade preservation, the sixth-attempt limit, expiry, concurrent requests and permissions, and removes its temporary container afterward. It does not connect to hosted Supabase.
+
+The form calls `POST /api/tester/report-suggestions` with the current Supabase bearer token. The Vercel Function verifies the session and exact `tester` role, loads the active project through the user's authorized Supabase client, and reserves quota before contacting SoCLaaS. It forwards only allowed form fields and the server-looked-up project name and description. Severity and the project ID stay in BugWatch. The provider request disables reasoning with `reasoning_effort: 'none'` so the configured Qwen model can return its JSON answer within the 1,500-token output budget and 15-second timeout. The endpoint filters malformed suggestion and question entries and returns a safe error when no entries are usable.
+
+Keep `TESTER_SUGGESTIONS_ENABLED` disabled until the live model, account quota handling and retention are confirmed. For isolated preview setup, configure the function's `SOCLAAS_API_KEY`, `SOCLAAS_MODEL`, and `SUPABASE_SERVICE_ROLE_KEY` as server settings. The server reuses `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` from the frontend. The earlier server names are accepted as a fallback. Use a service-role key from that same isolated project. Keep both secret keys outside `VITE_` variables. Mocked tests exercise the contract without contacting SoCLaaS.
+
 ## Verification
 
 Run local checks from the repository root:
