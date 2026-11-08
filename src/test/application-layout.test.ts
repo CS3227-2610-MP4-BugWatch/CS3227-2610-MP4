@@ -26,7 +26,7 @@ function setup(path = '/projects', user = tester, signOutState = { signOutPendin
     listProjectHistory: vi.fn().mockResolvedValue([]), createProject: vi.fn(), updateProject: vi.fn(),
   } satisfies ProjectRepository
   const reportRepository = {
-    acceptReport: vi.fn(), startInvestigation: vi.fn(), listDrafts: vi.fn().mockResolvedValue([]), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(),
+    awaitTesterInformation: vi.fn(), resumeInvestigation: vi.fn(), listReportComments: vi.fn().mockResolvedValue([]), postReportComment: vi.fn(), acceptReport: vi.fn(), startInvestigation: vi.fn(), listDrafts: vi.fn().mockResolvedValue([]), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(),
     submitDraft: vi.fn(), createReport: vi.fn(), getReport: vi.fn().mockResolvedValue(null),
     listReportHistory: vi.fn().mockResolvedValue([]), listProjectReports: vi.fn().mockResolvedValue([]),
   } satisfies ReportRepository

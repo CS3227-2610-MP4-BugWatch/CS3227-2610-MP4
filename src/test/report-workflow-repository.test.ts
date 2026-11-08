@@ -19,11 +19,11 @@ function setup(data: unknown = accepted, error: unknown = null, status?: number)
   const rpc = vi.fn().mockResolvedValue({ data, error, status })
   return { rpc, repository: createReportRepository({ rpc } as unknown as SupabaseClient) }
 }
-const methods = [['acceptReport', 'accept_report'], ['startInvestigation', 'start_report_investigation']] as const
+const methods = [['acceptReport', 'accept_report'], ['startInvestigation', 'start_report_investigation'], ['awaitTesterInformation', 'await_tester_information'], ['resumeInvestigation', 'resume_report_investigation']] as const
 
 describe('report workflow repository', () => {
   it.each(methods)('%s_validId_sendsOnlyReportIdAndReturnsPersistedFields', async (method, operation) => {
-    const row = { ...accepted, state: method === 'acceptReport' ? 'Accepted' : 'In progress' }
+    const row = { ...accepted, state: method === 'acceptReport' ? 'Accepted' : method === 'awaitTesterInformation' ? 'Awaiting tester information' : 'In progress' }
     const { rpc, repository } = setup(row)
     await expect(repository[method](id)).resolves.toMatchObject({ id, state: row.state, assignedDeveloperId: developerId, assignedAt: time, assignedDeveloperUsername: 'dev', assignedDeveloperDisplayName: 'Developer' })
     expect(rpc).toHaveBeenCalledExactlyOnceWith(operation, { p_report_id: id })
@@ -53,7 +53,7 @@ describe('report workflow repository', () => {
       expect(rpc).toHaveBeenCalledOnce()
     })
   }
-  it.each([open, accepted, { ...accepted, state: 'In progress' }])('getReport_supportedState$state_decodesAssignment', async row => {
+  it.each([open, accepted, { ...accepted, state: 'In progress' }, { ...accepted, state: 'Awaiting tester information' }])('getReport_supportedState$state_decodesAssignment', async row => {
     await expect(setup(row).repository.getReport(id)).resolves.toMatchObject({ state: row.state, assignedDeveloperId: row.assigned_developer_id, assignedAt: row.assigned_at })
   })
   it.each([
@@ -72,7 +72,7 @@ describe('report workflow repository', () => {
   it.each(['', '<img src=x onerror=alert(1)>'])('getReport_label%s_preservesPlainText', async label => {
     await expect(setup({ ...accepted, assigned_developer_display_name: label }).repository.getReport(id)).resolves.toMatchObject({ assignedDeveloperDisplayName: label })
   })
-  it.each(['Accepted', 'In progress'])('submitDraft_oldReceiptNow%s_decodesProgressedReport', async state => {
+  it.each(['Accepted', 'In progress', 'Awaiting tester information'])('submitDraft_oldReceiptNow%s_decodesProgressedReport', async state => {
     const { rpc, repository } = setup({ ...accepted, state })
     await expect(repository.submitDraft(id, input)).resolves.toMatchObject({ id, state, assignedAt: time })
     expect(rpc).toHaveBeenCalledOnce()
@@ -98,14 +98,20 @@ describe('report workflow history decoding', () => {
       { ...baseHistory, event: 'created', changes: { title: { before: null, after: 'Crash' } } },
       { ...baseHistory, event: 'accepted', assigned_developer_username: 'dev', assigned_developer_display_name: '<b>Dev</b>', changes: acceptanceChanges },
       { ...baseHistory, event: 'investigation_started', changes: { state: { before: 'Accepted', after: 'In progress' } } },
+      { ...baseHistory, event: 'tester_information_requested', changes: { state: { before: 'In progress', after: 'Awaiting tester information' } } },
+      { ...baseHistory, event: 'investigation_resumed', changes: { state: { before: 'Awaiting tester information', after: 'In progress' } } },
     ])
     const entries = await repository.listReportHistory(id)
     expect(entries[0]).toMatchObject({ event: 'created', changes: { title: { before: null, after: 'Crash' } } })
     expect(entries[1]).toMatchObject({ event: 'accepted', actorUsername: 'dev', assignedDeveloperDisplayName: '<b>Dev</b>', changes: { state: { before: 'Open', after: 'Accepted' }, assignedDeveloperId: { before: null, after: developerId }, assignedAt: { before: null, after: time } } })
     expect(entries[2]).toMatchObject({ event: 'investigation_started', changes: { state: { before: 'Accepted', after: 'In progress' } } })
+    expect(entries[3]).toMatchObject({ event: 'tester_information_requested', changes: { state: { before: 'In progress', after: 'Awaiting tester information' } } })
+    expect(entries[4]).toMatchObject({ event: 'investigation_resumed', changes: { state: { before: 'Awaiting tester information', after: 'In progress' } } })
   })
   it.each([
     { event: 'unknown', changes: {} },
+    { event: 'tester_information_requested', changes: { state: { before: 'Accepted', after: 'Awaiting tester information' } } },
+    { event: 'investigation_resumed', changes: { state: { before: 'In progress', after: 'Awaiting tester information' } } },
     { event: 'accepted', changes: {} },
     { event: 'accepted', changes: { ...acceptanceChanges, assigned_developer_id: { before: null, after: 'invalid' } } },
     { event: 'accepted', changes: { ...acceptanceChanges, assigned_at: { before: null, after: 'invalid' } } },

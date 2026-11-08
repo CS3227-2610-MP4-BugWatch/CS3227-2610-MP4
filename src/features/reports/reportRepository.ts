@@ -1,10 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { ReportError } from './types'
-import type { DraftSummary, ReportDraft, ProjectReportSummary, Report, ReportFieldErrors, ReportHistoryEntry, ReportInput, ReportRepository, ReportSeverity } from './types'
-import { REPORT_SEVERITIES, REPORT_TEXT_FIELDS, REPORT_UUID, validateDraftInput, validateReportInput } from './validation'
+import type { DraftSummary, ReportComment, ReportDraft, ProjectReportSummary, Report, ReportFieldErrors, ReportHistoryEntry, ReportInput, ReportRepository, ReportSeverity } from './types'
+import { REPORT_SEVERITIES, REPORT_TEXT_FIELDS, REPORT_UUID, validateCommentInput, validateDraftInput, validateReportInput } from './validation'
 
 const PROJECT_REPORT_PAGE_SIZE = 100
 const DRAFT_PAGE_SIZE = 100
+const COMMENT_PAGE_SIZE = 100
 
 const reportFields = {
   project_id: 'projectId',
@@ -18,7 +19,7 @@ const reportFields = {
   test_environment: 'testEnvironment',
 } as const satisfies Record<string, keyof ReportInput>
 
-function fail(error: unknown, status?: number): never {
+function fail(error: unknown, status?: number, comment = false): never {
   if (error instanceof ReportError) throw error
   const code = typeof error === 'object' && error !== null && 'code' in error ? error.code : undefined
   if (status === 401 || ['P2001', 'PGRST301', 'PGRST303'].includes(String(code))) {
@@ -28,6 +29,7 @@ function fail(error: unknown, status?: number): never {
     case 'P2002':
     case '42501': throw new ReportError('forbidden', 'You do not have permission to perform this report action.')
     case 'P2003': {
+      if (comment) throw new ReportError('validation', 'Check your comment and reply reference.')
       const fieldErrors: ReportFieldErrors = {}
       const detail = error && typeof error === 'object' && 'details' in error ? error.details : undefined
       if (typeof detail === 'string' && Object.hasOwn(reportFields, detail)) {
@@ -35,7 +37,7 @@ function fail(error: unknown, status?: number): never {
       }
       throw new ReportError('validation', 'Check the report fields.', fieldErrors)
     }
-    case 'P2004': throw new ReportError('archived', 'That project is archived. Choose another active project.')
+    case 'P2004': throw new ReportError('archived', comment ? 'This project is archived. Comments are read-only.' : 'That project is archived. Choose another active project.')
     case 'P2005': throw new ReportError('not_found', 'The report or project could not be found.')
     case 'P2006': throw new ReportError('already_assigned', 'This report is already assigned to a Developer.')
     case 'P2007': throw new ReportError('state_conflict', 'The report state has changed. Reload the current report before continuing.')
@@ -71,7 +73,7 @@ function nullableText(value: unknown): string | null {
 
 function assignment(row: Record<string, unknown>): Pick<Report, 'state' | 'assignedDeveloperId' | 'assignedDeveloperUsername' | 'assignedDeveloperDisplayName'> {
   const state = row.state
-  if (state !== 'Open' && state !== 'Accepted' && state !== 'In progress') fail(null)
+  if (state !== 'Open' && state !== 'Accepted' && state !== 'In progress' && state !== 'Awaiting tester information') fail(null)
   const assignedDeveloperId = row.assigned_developer_id === null ? null : uuid(row.assigned_developer_id)
   const assignedDeveloperUsername = nullableText(row.assigned_developer_username)
   const assignedDeveloperDisplayName = nullableText(row.assigned_developer_display_name)
@@ -162,7 +164,28 @@ function historyRow(value: unknown): ReportHistoryEntry {
     && Object.keys(source).length === 1) {
     return { ...identity, event: 'investigation_started', changes: { state: { before: 'Accepted', after: 'In progress' } } }
   }
+  if (row.event === 'tester_information_requested' && state.before === 'In progress' && state.after === 'Awaiting tester information'
+    && Object.keys(source).length === 1) {
+    return { ...identity, event: 'tester_information_requested', changes: { state: { before: 'In progress', after: 'Awaiting tester information' } } }
+  }
+  if (row.event === 'investigation_resumed' && state.before === 'Awaiting tester information' && state.after === 'In progress'
+    && Object.keys(source).length === 1) {
+    return { ...identity, event: 'investigation_resumed', changes: { state: { before: 'Awaiting tester information', after: 'In progress' } } }
+  }
   return fail(null)
+}
+
+function commentRow(value: unknown, expectedReportId: string): ReportComment {
+  const row = record(value)
+  const id = uuid(row.id)
+  const reportId = uuid(row.report_id)
+  const body = text(row.body)
+  const replyToCommentId = row.reply_to_comment_id === null ? null : uuid(row.reply_to_comment_id)
+  const validated = validateCommentInput({ body, replyToCommentId })
+  if (reportId.toLowerCase() !== expectedReportId.toLowerCase() || !validated.valid || validated.value.body !== body
+    || replyToCommentId?.toLowerCase() === id.toLowerCase()) fail(null)
+  return { id, reportId, authorId: uuid(row.author_id), authorUsername: nullableText(row.author_username),
+    authorDisplayName: nullableText(row.author_display_name), body, replyToCommentId, createdAt: timestamp(row.created_at) }
 }
 
 function summaryRow(value: unknown, expectedProjectId: string) {
@@ -193,12 +216,12 @@ function cursorKey(createdAt: string, id: string) {
 }
 
 export function createReportRepository(client: SupabaseClient): ReportRepository {
-  async function rpc(operation: string, parameters: Record<string, unknown>): Promise<unknown> {
+  async function rpc(operation: string, parameters: Record<string, unknown>, comment = false): Promise<unknown> {
     try {
       const { data, error, status } = await client.rpc(operation, parameters)
-      if (error) fail(error, status)
+      if (error) fail(error, status, comment)
       return data
-    } catch (error) { return fail(error) }
+    } catch (error) { return fail(error, undefined, comment) }
   }
 
   return {
@@ -266,6 +289,43 @@ export function createReportRepository(client: SupabaseClient): ReportRepository
     async startInvestigation(id) {
       if (!REPORT_UUID.test(id)) throw new ReportError('not_found', 'The report could not be found.')
       return reportRow(await rpc('start_report_investigation', { p_report_id: id }))
+    },
+    async awaitTesterInformation(id) {
+      if (!REPORT_UUID.test(id)) throw new ReportError('not_found', 'The report could not be found.')
+      return reportRow(await rpc('await_tester_information', { p_report_id: id }))
+    },
+    async resumeInvestigation(id) {
+      if (!REPORT_UUID.test(id)) throw new ReportError('not_found', 'The report could not be found.')
+      return reportRow(await rpc('resume_report_investigation', { p_report_id: id }))
+    },
+    async listReportComments(id) {
+      if (!REPORT_UUID.test(id)) throw new ReportError('not_found', 'The report could not be found.')
+      const comments: ReportComment[] = []
+      const seen = new Set<string>()
+      let previous: ReturnType<typeof cursorKey> | undefined
+      let parameters: Record<string, unknown> = { p_report_id: id }
+      for (;;) {
+        const page = await rpc('list_report_comments', parameters, true)
+        if (!Array.isArray(page) || page.length > COMMENT_PAGE_SIZE) fail(null)
+        for (const value of page) {
+          const comment = commentRow(value, id)
+          const key = cursorKey(comment.createdAt, comment.id)
+          if (seen.has(key.id) || (previous && (key.microseconds < previous.microseconds
+            || (key.microseconds === previous.microseconds && key.id <= previous.id)))) fail(null)
+          seen.add(key.id)
+          previous = key
+          comments.push(comment)
+          parameters = { p_report_id: id, p_after_created_at: comment.createdAt, p_after_id: comment.id }
+        }
+        if (page.length < COMMENT_PAGE_SIZE) return comments
+      }
+    },
+    async postReportComment(id, input) {
+      if (!REPORT_UUID.test(id)) throw new ReportError('not_found', 'The report could not be found.')
+      const result = validateCommentInput(input)
+      if (!result.valid) throw new ReportError('validation', result.message)
+      return commentRow(await rpc('post_report_comment', { p_report_id: id, p_body: result.value.body,
+        p_reply_to_comment_id: result.value.replyToCommentId }, true), id)
     },
     async listReportHistory(id) {
       if (!REPORT_UUID.test(id)) throw new ReportError('not_found', 'The report could not be found.')

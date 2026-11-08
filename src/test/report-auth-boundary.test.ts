@@ -16,7 +16,7 @@ const { service, projects, reports } = vi.hoisted(() => ({
     listActiveProjects: vi.fn(), getProject: vi.fn(), listProjectHistory: vi.fn(),
     createProject: vi.fn(), updateProject: vi.fn(),
   },
-  reports: { acceptReport: vi.fn(), startInvestigation: vi.fn(), createReport: vi.fn(), getReport: vi.fn(), listReportHistory: vi.fn(), saveDraft: vi.fn(), getDraft: vi.fn() },
+  reports: { awaitTesterInformation: vi.fn(), resumeInvestigation: vi.fn(), listReportComments: vi.fn().mockResolvedValue([]), postReportComment: vi.fn(), acceptReport: vi.fn(), startInvestigation: vi.fn(), createReport: vi.fn(), getReport: vi.fn(), listReportHistory: vi.fn(), saveDraft: vi.fn(), getDraft: vi.fn() },
 }))
 
 vi.mock('../shared/lib/supabaseClient.js', () => ({ supabase: {} }))
@@ -48,6 +48,7 @@ const session = (id: string) => ({ user: { id } } as Session)
 
 beforeEach(() => {
   vi.resetAllMocks()
+  reports.listReportComments.mockResolvedValue([])
   window.history.replaceState({}, '', '/reports/new')
   service.getCurrentSession.mockResolvedValueOnce(session(testerId)).mockResolvedValue(null)
   service.loadIdentity.mockImplementation(async (id: string) => ({
@@ -244,7 +245,7 @@ async function openWorkflow(state: Report['state'] = 'Open') {
   render(createElement(AuthenticatedApp))
   await screen.findByRole('heading', { name: 'Protected workflow report' })
 }
-it.each([['acceptReport', 'Open', 'Accept report'], ['startInvestigation', 'Accepted', 'Start investigation']] as const)('workflow_%sExpiredSession_rechecksAuthAndClearsProtectedContent', async (method, state, label) => {
+it.each([['acceptReport', 'Open', 'Accept report'], ['startInvestigation', 'Accepted', 'Start investigation'], ['awaitTesterInformation', 'In progress', 'Await tester information'], ['resumeInvestigation', 'Awaiting tester information', 'Resume investigation']] as const)('workflow_%sExpiredSession_rechecksAuthAndClearsProtectedContent', async (method, state, label) => {
   reports[method].mockRejectedValueOnce(new ReportError('unauthenticated', 'Session ended'))
   await openWorkflow(state)
   fireEvent.click(screen.getByRole('button', { name: label }))
@@ -274,4 +275,33 @@ it.each(['logout', 'identity replacement', 'stale expiry'] as const)('workflow_a
   expect(service.getCurrentSession).toHaveBeenCalledTimes(1)
   expect(screen.queryByRole('heading', { name: 'Protected workflow report' })).toBeNull()
   if (replacement !== 'logout') expect(screen.getByRole('heading', { name: 'Replacement identity report' })).toBeTruthy()
+})
+
+it('discussion_postExpiredSession_rechecksAuthAndClearsUnsentText', async () => {
+  reports.postReportComment.mockRejectedValueOnce(new ReportError('unauthenticated', 'Session ended'))
+  await openWorkflow('In progress')
+  fireEvent.change(await screen.findByRole('textbox', { name: 'Comment' }), { target: { value: 'Private unsent comment' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Post comment' }))
+  await screen.findByRole('button', { name: 'Log in' })
+  expect(service.getCurrentSession).toHaveBeenCalledTimes(2)
+  expect(screen.queryByRole('textbox', { name: 'Comment' })).toBeNull()
+  expect(screen.queryByText('Private unsent comment')).toBeNull()
+})
+
+it('discussion_staleUnauthorizedPostAfterIdentityReplacement_keepsReplacementSession', async () => {
+  let reject!: (reason: Error) => void
+  reports.postReportComment.mockReturnValueOnce(new Promise<never>((_, fail) => { reject = fail }))
+  await openWorkflow('In progress')
+  fireEvent.change(await screen.findByRole('textbox', { name: 'Comment' }), { target: { value: 'Old session text' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Post comment' }))
+  reports.getReport.mockResolvedValue({ ...workflowReport('In progress'), title: 'Replacement discussion' })
+  await act(async () => { callback('SIGNED_IN', session(otherId)) })
+  await screen.findByRole('heading', { name: 'Replacement discussion' })
+  const replacement = await screen.findByRole('textbox', { name: 'Comment' }) as HTMLTextAreaElement
+  expect(replacement.value).toBe('')
+  fireEvent.change(replacement, { target: { value: 'Replacement session text' } })
+  await act(async () => reject(new ReportError('unauthenticated', 'Old session ended')))
+  expect(service.getCurrentSession).toHaveBeenCalledTimes(1)
+  expect(replacement.value).toBe('Replacement session text')
+  expect(screen.getByRole('heading', { name: 'Replacement discussion' })).toBeTruthy()
 })

@@ -30,7 +30,7 @@ function setup(initial = open, actor = developer) {
   const repository = {
     listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn(), createReport: vi.fn(),
     getReport: vi.fn().mockResolvedValue(initial), listReportHistory: vi.fn().mockResolvedValue([]), listProjectReports: vi.fn().mockResolvedValue([initial]),
-    acceptReport: vi.fn().mockResolvedValue(accepted), startInvestigation: vi.fn().mockResolvedValue(progressing),
+    awaitTesterInformation: vi.fn().mockResolvedValue({ ...progressing, state: 'Awaiting tester information' }), resumeInvestigation: vi.fn().mockResolvedValue(progressing), listReportComments: vi.fn().mockResolvedValue([]), postReportComment: vi.fn(), acceptReport: vi.fn().mockResolvedValue(accepted), startInvestigation: vi.fn().mockResolvedValue(progressing),
   } satisfies ReportRepository
   const router = createMemoryRouter([{ path: '/reports/:reportId', element: createElement(ReportDetailsPage, { reportRepository: repository, user: actor }) }, { path: '/projects', element: createElement('h1', null, 'Projects destination') }], { initialEntries: [`/reports/${id}`] })
   const view = render(createElement(MantineProvider, { env: 'test' }, createElement(RouterProvider, { router })))
@@ -167,7 +167,8 @@ describe('workflow readback and labels', () => {
     ]
     repository.listReportHistory.mockResolvedValue(history)
     await ready()
-    expect(screen.getByRole('heading', { name: 'Activity history' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('tab', { name: 'Activity' }))
+    expect(await screen.findByRole('heading', { name: 'Activity history' })).toBeTruthy()
     expect(screen.getAllByText(/<img src=x>/).length).toBeGreaterThan(0)
     expect(view.container.querySelector('img')).toBeNull()
     expect(view.container.textContent).not.toContain(developer.id)

@@ -55,7 +55,7 @@ function setup(initialReports: Report[] = [saved, otherSaved]) {
     createProject: vi.fn(), updateProject: vi.fn(),
   } satisfies ProjectRepository
   const reportRepository = {
-    acceptReport: vi.fn(), startInvestigation: vi.fn(), listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn(),
+    awaitTesterInformation: vi.fn(), resumeInvestigation: vi.fn(), listReportComments: vi.fn().mockResolvedValue([]), postReportComment: vi.fn(), acceptReport: vi.fn(), startInvestigation: vi.fn(), listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn(),
     listProjectReports: vi.fn(async (id: string) => rows.filter(item => item.projectId === id).map(item => ({
       id: item.id, projectId: item.projectId, title: item.title, projectName: item.projectName,
       severity: item.severity, state: item.state, assignedDeveloperId: item.assignedDeveloperId,
