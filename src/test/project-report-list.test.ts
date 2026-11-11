@@ -34,7 +34,7 @@ const saved: Report = {
   id: reportId, projectId, title: 'Unexpected crash', description: 'Open page and observe crash',
   version: '1.2', reproductionSteps: 'Open the page', expectedResults: 'Page loads', actualResults: 'Crash',
   severity: 'high', testEnvironment: '', reporterId: tester.id, createdAt: time, updatedAt: time,
-  state: 'Open', assignedDeveloperId: null, assignedAt: null, assignedDeveloperUsername: null, assignedDeveloperDisplayName: null, projectName: project.name, projectArchivedAt: null,
+  resolution: null, canonicalReport: null, state: 'Open', assignedDeveloperId: null, assignedAt: null, assignedDeveloperUsername: null, assignedDeveloperDisplayName: null, projectName: project.name, projectArchivedAt: null,
   reporterUsername: tester.username, reporterDisplayName: tester.displayName,
 }
 const otherSaved: Report = {
@@ -55,7 +55,7 @@ function setup(initialReports: Report[] = [saved, otherSaved]) {
     createProject: vi.fn(), updateProject: vi.fn(),
   } satisfies ProjectRepository
   const reportRepository = {
-    awaitTesterInformation: vi.fn(), resumeInvestigation: vi.fn(), listReportComments: vi.fn().mockResolvedValue([]), postReportComment: vi.fn(), acceptReport: vi.fn(), startInvestigation: vi.fn(), listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn(),
+    resolveReport: vi.fn(), linkDuplicate: vi.fn(), awaitTesterInformation: vi.fn(), resumeInvestigation: vi.fn(), listReportComments: vi.fn().mockResolvedValue([]), postReportComment: vi.fn(), acceptReport: vi.fn(), startInvestigation: vi.fn(), listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn(),
     listProjectReports: vi.fn(async (id: string) => rows.filter(item => item.projectId === id).map(item => ({
       id: item.id, projectId: item.projectId, title: item.title, projectName: item.projectName,
       severity: item.severity, state: item.state, assignedDeveloperId: item.assignedDeveloperId,

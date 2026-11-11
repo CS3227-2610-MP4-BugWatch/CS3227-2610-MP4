@@ -71,6 +71,19 @@
 .report-detail-page .report-facts dt { margin-top: .5rem; }
 .report-detail-page .report-facts dd { margin: .25rem 0 .5rem; }
 .report-detail-page .report-header-actions { margin: 1rem 0 1.5rem; }
+.report-detail-page .report-header-actions .mantine-Button-root { max-width: 100%; height: auto; min-height: 2.25rem; padding-block: .5rem; }
+.report-detail-page .report-header-actions .mantine-Button-label { white-space: normal; overflow-wrap: anywhere; }
+.report-resolution-form, .report-resolution { min-width: 0; margin: 1.5rem 0; padding: 1.25rem; border: 1px solid var(--border); border-radius: .65rem; }
+.report-resolution-form { max-width: 760px; }
+.report-resolution-form > h3, .report-resolution > h3 { margin-top: 0; }
+.report-resolution-form > p { color: var(--text); }
+.report-resolution-form { display: grid; gap: 1rem; }
+.report-resolution-form > h3, .report-resolution-form > p { margin-bottom: 0; }
+.report-resolution-form > *, .report-resolution-values > div { min-width: 0; }
+.report-resolution-form .mantine-NativeSelect-input { max-width: 100%; }
+.report-resolution-values { margin: 0; }
+.report-resolution-values dd { line-height: 1.6; }
+.report-resolution-values a { text-underline-offset: .15em; }
 .report-detail-page .report-facts .mantine-Badge-root { max-width: 100%; height: auto; min-height: 1.25rem; padding-block: .15rem; white-space: normal; line-height: 1.4; }
 .report-tabs .mantine-Tabs-list { flex-wrap: wrap; gap: 1.5rem; }
 .report-detail-page .report-tabs .mantine-Tabs-tab { padding: .8rem .25rem; border: 0; border-bottom: 3px solid transparent; border-radius: 0; background: transparent; color: var(--text); font-weight: 500; }
@@ -98,7 +111,7 @@
 .report-activity { margin-top: 0; }
 .report-activity li > p { margin-top: 0; }
 .report-activity details { font-size: .9rem; }
-.report-detail-page :is(summary, a, button, textarea):focus-visible, .report-comment:focus, .report-discussion:focus { outline: 2px solid var(--accent); outline-offset: 3px; }
+.report-detail-page :is(summary, a, button, textarea, input, select):focus-visible, .report-comment:focus, .report-discussion:focus { outline: 2px solid var(--accent); outline-offset: 3px; }
 .draft-list { list-style: none; padding: 0; }
 .draft-list li { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border); }
 .draft-list li > a { min-width: 0; overflow-wrap: anywhere; }
@@ -127,5 +140,6 @@
   .project-report-table td::before { content: attr(data-label); color: var(--text); font-size: .8rem; }
   .project-report-table .mantine-Badge-root { justify-self: start; max-width: 100%; height: auto; min-height: 1.25rem; padding-block: .15rem; white-space: normal; text-align: center; line-height: 1.4; }
   .report-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .report-resolution-form, .report-resolution { padding: 1rem; }
 }
 @media (max-width: 25em) { .report-facts { grid-template-columns: 1fr; } }
