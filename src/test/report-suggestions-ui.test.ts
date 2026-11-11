@@ -183,6 +183,8 @@ it('reportSuggestions_firstDraftSave_keepsPendingSuggestionsUntilLeavingTheDraft
     listDrafts: vi.fn().mockResolvedValue([draft]), deleteDraft: vi.fn(), submitDraft: vi.fn(),
     listProjectReports: vi.fn(), createReport: vi.fn(), getReport: vi.fn(), listReportHistory: vi.fn(),
     acceptReport: vi.fn(), startInvestigation: vi.fn(),
+    awaitTesterInformation: vi.fn(), resumeInvestigation: vi.fn(),
+    listReportComments: vi.fn().mockResolvedValue([]), postReportComment: vi.fn(),
   }
   let finish!: (value: ReportSuggestionResult) => void
   const generate = vi.spyOn(suggestionClient, 'requestReportSuggestions').mockReturnValue(

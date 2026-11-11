@@ -1,5 +1,5 @@
 export type ReportSeverity = 'very_low' | 'low' | 'medium' | 'high'
-export type ReportState = 'Open' | 'Accepted' | 'In progress'
+export type ReportState = 'Open' | 'Accepted' | 'In progress' | 'Awaiting tester information'
 
 export interface ReportInput {
   projectId: string
@@ -45,6 +45,22 @@ export interface DraftSummary {
 
 export interface ReportDraft extends DraftSummary, ReportInput {}
 
+export interface CommentInput {
+  body: string
+  replyToCommentId?: string | null
+}
+
+export interface ReportComment {
+  id: string
+  reportId: string
+  authorId: string
+  authorUsername: string | null
+  authorDisplayName: string | null
+  body: string
+  replyToCommentId: string | null
+  createdAt: string
+}
+
 interface ReportHistoryIdentity {
   id: string
   reportId: string
@@ -69,6 +85,12 @@ export type ReportHistoryEntry = ReportHistoryIdentity & ({
 } | {
   event: 'investigation_started'
   changes: { state: { before: 'Accepted'; after: 'In progress' } }
+} | {
+  event: 'tester_information_requested'
+  changes: { state: { before: 'In progress'; after: 'Awaiting tester information' } }
+} | {
+  event: 'investigation_resumed'
+  changes: { state: { before: 'Awaiting tester information'; after: 'In progress' } }
 })
 
 export type ProjectReportSummary = Pick<Report,
@@ -100,6 +122,10 @@ export interface ReportRepository {
   getReport(id: string): Promise<Report | null>
   acceptReport(id: string): Promise<Report>
   startInvestigation(id: string): Promise<Report>
+  awaitTesterInformation(id: string): Promise<Report>
+  resumeInvestigation(id: string): Promise<Report>
+  listReportComments(id: string): Promise<ReportComment[]>
+  postReportComment(id: string, input: CommentInput): Promise<ReportComment>
   listReportHistory(id: string): Promise<ReportHistoryEntry[]>
   listProjectReports(projectId: string): Promise<ProjectReportSummary[]>
 }

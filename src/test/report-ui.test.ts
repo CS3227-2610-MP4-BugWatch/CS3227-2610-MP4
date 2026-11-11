@@ -51,7 +51,7 @@ function setup() {
     getProject: vi.fn(), listProjectHistory: vi.fn(), createProject: vi.fn(), updateProject: vi.fn(),
   }
   const reportRepository = {
-    acceptReport: vi.fn(), startInvestigation: vi.fn(), listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn().mockResolvedValue(saved),
+    awaitTesterInformation: vi.fn(), resumeInvestigation: vi.fn(), listReportComments: vi.fn().mockResolvedValue([]), postReportComment: vi.fn(), acceptReport: vi.fn(), startInvestigation: vi.fn(), listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn().mockResolvedValue(saved),
     listProjectReports: vi.fn(),
     createReport: vi.fn().mockResolvedValue(saved), getReport: vi.fn().mockResolvedValue(saved),
     listReportHistory: vi.fn().mockResolvedValue([{
@@ -257,15 +257,13 @@ it('reportCreate_pendingSubmit_blocksRepeatedRequestsAndIgnoresUnmountedResult',
   expect(reportRepository.getReport).not.toHaveBeenCalled()
 })
 
-it.each(['Reports', 'Back to project reports'])('reportDetails_directLink_%sOpensProjectReports', async linkName => {
+it('reportDetails_directLink_backButtonOpensProjectReportsWithoutBreadcrumb', async () => {
   const { show } = setup()
   show(`/reports/${reportId}`)
   await screen.findByRole('heading', { name: saved.title })
-  const breadcrumb = screen.getByRole('navigation', { name: /breadcrumb/i })
-  expect(breadcrumb.textContent?.replace(/\s+/g, ' ')).toMatch(/Projects\s*\/\s*Test project\s*\/\s*Reports\s*\/\s*Page crashes/)
-  expect(within(breadcrumb).getByRole('link', { name: 'Projects' }).getAttribute('href')).toBe('/projects')
-  expect(within(breadcrumb).getByRole('link', { name: saved.projectName }).getAttribute('href')).toBe(`/projects/${projectId}`)
-  const link = screen.getByRole('link', { name: linkName })
+  expect(screen.queryByRole('navigation', { name: /breadcrumb/i })).toBeNull()
+  expect(screen.getByRole('link', { name: saved.projectName }).getAttribute('href')).toBe(`/projects/${projectId}`)
+  const link = screen.getByRole('link', { name: 'Back to project reports' })
   expect(link.getAttribute('href')).toBe(`/projects/${projectId}?tab=reports`)
   fireEvent.click(link)
   await screen.findByRole('heading', { name: 'Selected project reports' })
@@ -283,6 +281,7 @@ it('reportDetails_directLink_loadsHistoryAndRendersMarkupLiterally', async () =>
   const { show, reportRepository } = setup()
   const view = show(`/reports/${reportId}`, { ...user, role: 'developer' })
   await screen.findByRole('heading', { name: saved.title })
+  fireEvent.click(screen.getByRole('tab', { name: 'Activity' }))
   expect(await screen.findByText(/Named history actor/i)).toBeTruthy()
   expect(screen.getAllByText(input.description, { exact: false }).length).toBeGreaterThan(0)
   expect(view.container.querySelector('img')).toBeNull()
@@ -293,6 +292,8 @@ it('reportDetails_failedHistoryLoad_retriesWithoutShowingMissingReport', async (
   const { show, reportRepository } = setup()
   reportRepository.listReportHistory.mockRejectedValueOnce(new ReportError('unavailable', 'History unavailable'))
   show(`/reports/${reportId}`)
+  await screen.findByRole('heading', { name: saved.title })
+  fireEvent.click(screen.getByRole('tab', { name: 'Activity' }))
   await screen.findByRole('alert')
   expect(screen.queryByText(/report not found/i)).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: /retry/i }))

@@ -65,6 +65,40 @@
 .project-form { max-width: 760px; }
 .report-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem 1.5rem; padding: .5rem 1.25rem; border: 1px solid var(--border); border-radius: .65rem; }
 .report-facts > div { min-width: 0; }
+.report-detail-page .report-navigation-button { max-width: 100%; text-decoration: none; }
+.report-detail-page .report-navigation-button .mantine-Button-label { white-space: normal; overflow-wrap: anywhere; text-align: left; }
+.report-detail-page .report-navigation-button:hover { background: var(--mantine-color-default-hover); border-color: var(--accent); }
+.report-detail-page .report-facts dt { margin-top: .5rem; }
+.report-detail-page .report-facts dd { margin: .25rem 0 .5rem; }
+.report-detail-page .report-header-actions { margin: 1rem 0 1.5rem; }
+.report-detail-page .report-facts .mantine-Badge-root { max-width: 100%; height: auto; min-height: 1.25rem; padding-block: .15rem; white-space: normal; line-height: 1.4; }
+.report-tabs .mantine-Tabs-list { flex-wrap: wrap; gap: 1.5rem; }
+.report-detail-page .report-tabs .mantine-Tabs-tab { padding: .8rem .25rem; border: 0; border-bottom: 3px solid transparent; border-radius: 0; background: transparent; color: var(--text); font-weight: 500; }
+.report-detail-page .report-tabs .mantine-Tabs-tab:hover:not(:disabled) { background: var(--mantine-color-default-hover); border-color: transparent; color: var(--text-h); }
+.report-detail-page .report-tabs .mantine-Tabs-tab[aria-selected="true"], .report-detail-page .report-tabs .mantine-Tabs-tab[aria-selected="true"]:hover { border-bottom-color: var(--accent); color: var(--mantine-primary-color-light-color); font-weight: 700; }
+.report-fields { border: 1px solid var(--border); border-radius: .65rem; padding: 1rem 1.25rem; }
+.report-fields > summary, .report-activity summary { cursor: pointer; color: var(--text-h); }
+.report-fields > summary h3 { display: inline; margin: 0; font-size: 1rem; }
+.report-timestamps { display: flex; flex-wrap: wrap; gap: .5rem 2rem; margin-bottom: 1.5rem; }
+.report-detail-page .report-timestamps dt { margin-top: .75rem; }
+.report-detail-page .report-timestamps dd { margin-bottom: 0; font-size: .85rem; color: var(--text); }
+.report-discussion { margin-top: 2rem; scroll-margin-top: 1rem; }
+.report-comments { list-style: none; margin: 1rem 0; padding: 0; display: grid; gap: 1rem; }
+.report-comment { min-width: 0; padding: 1rem 1.25rem; border: 1px solid var(--border); border-radius: .65rem; scroll-margin-top: 1rem; }
+.report-comment-header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: .35rem 1rem; }
+.report-comment-header > strong { min-width: 0; overflow-wrap: anywhere; }
+.report-comment-header a { color: var(--text); font-size: .8rem; }
+.report-comment-body { white-space: pre-wrap; overflow-wrap: anywhere; }
+.report-comment-reference { color: var(--text); font-size: .85rem; border-left: 2px solid var(--border); padding-left: .75rem; }
+.report-comment-form { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+.report-comment-form small { color: var(--text); }
+.report-reply-selection { display: flex; align-items: center; justify-content: space-between; gap: .5rem; flex-wrap: wrap; margin-bottom: .75rem; }
+.report-reply-selection > span { min-width: 0; overflow-wrap: anywhere; }
+.report-waiting-note, .report-readonly-note { padding: .85rem 1rem; border-radius: .5rem; background: var(--accent-bg); }
+.report-activity { margin-top: 0; }
+.report-activity li > p { margin-top: 0; }
+.report-activity details { font-size: .9rem; }
+.report-detail-page :is(summary, a, button, textarea):focus-visible, .report-comment:focus, .report-discussion:focus { outline: 2px solid var(--accent); outline-offset: 3px; }
 .draft-list { list-style: none; padding: 0; }
 .draft-list li { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border); }
 .draft-list li > a { min-width: 0; overflow-wrap: anywhere; }

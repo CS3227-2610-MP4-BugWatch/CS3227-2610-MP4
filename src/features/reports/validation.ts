@@ -1,4 +1,4 @@
-import type { ReportFieldErrors, ReportInput, ReportSeverity, ValidatedReportInput } from './types.js'
+import type { CommentInput, ReportFieldErrors, ReportInput, ReportSeverity, ValidatedReportInput } from './types.js'
 
 export const REPORT_SEVERITIES = {
   very_low: 'Very Low',
@@ -19,6 +19,19 @@ export const REPORT_TEXT_FIELDS = {
 
 export const REPORT_TEXT_KEYS = Object.keys(REPORT_TEXT_FIELDS) as (keyof typeof REPORT_TEXT_FIELDS)[]
 export const REPORT_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+export const COMMENT_TEXT_LIMIT = 5000
+
+export function validateCommentInput(input: CommentInput): { valid: true; value: { body: string; replyToCommentId: string | null } } | { valid: false; message: string } {
+  if (typeof input?.body !== 'string') return { valid: false, message: 'Enter text for your comment.' }
+  const body = input.body.trim()
+  if (!body) return { valid: false, message: 'Enter a comment.' }
+  if (Array.from(body).length > COMMENT_TEXT_LIMIT) return { valid: false, message: 'Comments must be at most 5,000 characters.' }
+  const replyToCommentId = input.replyToCommentId ?? null
+  if (replyToCommentId !== null && (typeof replyToCommentId !== 'string' || !REPORT_UUID.test(replyToCommentId))) {
+    return { valid: false, message: 'Choose a valid comment to reply to.' }
+  }
+  return { valid: true, value: { body, replyToCommentId } }
+}
 
 type ValidationResult = { valid: true; value: ValidatedReportInput } | { valid: false; errors: ReportFieldErrors }
 

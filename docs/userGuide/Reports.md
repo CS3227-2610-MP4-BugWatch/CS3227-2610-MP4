@@ -6,7 +6,7 @@
 
 # Bug reports
 
-A Tester can submit a bug to an active project. A submitted report starts as **Open** and **Unassigned**. Both logged-in Testers and Developers can find submitted reports in the project's **Reports** tab and read their details and activity history. Your environment must have the report migrations described in the [developer guide](../developerGuide/Reports.md).
+A Tester can submit a bug to an active project. A submitted report starts as **Open** and **Unassigned**. Both logged-in Testers and Developers can find submitted reports in the project's **Reports** tab, read their details and activity history, and join their discussions. Your environment must have the report migrations described in the [developer guide](../developerGuide/Reports.md).
 
 ## Submit a report
 
@@ -14,7 +14,7 @@ A Tester can submit a bug to an active project. A submitted report starts as **O
 2. Check the selected **Project**, then enter a **Title**, **Description**, **Version**, **Reproduction steps**, **Expected results**, and **Actual results**.
 3. Choose a **Severity**: Very Low, Low, Medium, or High. There is no preselected severity. Optionally enter a **Test environment**, such as a browser and operating system.
 4. Select **Submit report**. After a successful save, BugWatch opens the saved report page.
-5. On the saved report page, use the breadcrumb or **Back to project reports** to return to the project's **Reports** tab. You can also reload the saved report link or share it with another logged-in user.
+5. On the saved report page, select **Back to project reports** to return to the project's **Reports** tab. You can also reload the saved report link or share it with another logged-in user.
 
 The form groups fields under **Identify the problem**, **Reproduce the problem**, **Expected and actual results**, and **Impact**. **Submit report**, **Save draft**, and **Cancel** appear after the fields; validation and save feedback appear in the form.
 
@@ -53,7 +53,19 @@ The assistant uses the selected project's name and description and the allowed r
 
 Open a project and select its **Reports** tab. The table lists that project's submitted reports, newest first, with the title, project, severity, status, assignee, and reporter. Select anywhere in a report entry to open it; the bold title is also a keyboard-accessible link. Entries highlight on hover or keyboard focus. Listing severity badges retain their labels and use teal for Very Low, green for Low, yellow for Medium, and red for High. If the project has no reports, the tab shows **No reports yet**. If reports cannot be loaded, select **Retry**; this does not prevent you from opening the project's **Overview** tab.
 
-The saved page shows the project, report fields, reporter, state, assignment, and timestamps. Once a Developer has accepted a report, it also shows when the assignment was made. **Activity history** shows who created or accepted the report, who started investigation, and the recorded changes. Use its breadcrumb to visit **Projects**, the project's **Overview**, or **Reports**, or select **Back to project reports** to return to the listing. If a saved report cannot be loaded, select **Retry**. A missing report shows **Report not found**.
+The saved page shows the project, reporter, state, assigned developer, and severity above the report tabs. **Conversation** is selected first: its **Report details** section shows the report fields and timestamps, including the assignment time once a Developer accepts the report. Select **Report details** to collapse or expand it. Discussion follows below. The **Discussion** button near the header jumps to that section, and **Jump to latest** takes you to the newest comment when comments exist.
+
+Select **Activity** to see who created or accepted the report, started investigation, requested tester information, or resumed investigation. The selected tab has an accent underline and stronger text. Select an entry's **Recorded changes** to inspect its saved values, including the original submission fields. The report header and available actions remain above either tab. Select the **Project** link in the report facts to visit its overview, or select **Back to project reports** to return to the listing. The return button highlights on hover and shows a focus outline when using the keyboard. If a saved report cannot be loaded, select **Retry**. If only discussion or activity cannot be loaded, use **Retry discussion** or **Retry activity** in that section. A missing report shows **Report not found**.
+
+## Discuss a report
+
+1. Open a submitted report and find **Discussion** below **Report details** on the **Conversation** tab. Any logged-in Tester or Developer can participate, whether or not they reported or are assigned to the bug.
+2. Enter your message in **Comment** and select **Post comment**. For example, a Developer can ask which browser version reproduced the bug, and a Tester can add that information. Comments appear in chronological order with their author and time.
+3. To reference an earlier message, select its **Reply** button, enter your response, and select **Post comment**. The response stays in the same conversation and links back to the earlier comment. Select **Cancel reply** to remove the reference without clearing your text.
+
+Comments must contain 1–5,000 Unicode code points after surrounding whitespace is removed. Comments are plain text and can include line breaks. Switching between **Conversation** and **Activity** or collapsing details keeps text you are composing on that page. Comment drafts are not saved: leaving or reloading the page, signing out, or losing your session discards unsent text. Archived-project discussions remain readable, but posting and replying are unavailable until the project is restored.
+
+If a post cannot be confirmed, BugWatch keeps your text and explains that the comment may have been saved. Select **Reload** and check the conversation before posting again. BugWatch does not automatically repeat the post. Commenting does not change the report state.
 
 ## Accept a report and start investigation
 
@@ -65,4 +77,12 @@ Only the assigned Developer can start investigation. Testers can read the report
 
 If another Developer accepts the report first, the page explains that it is already assigned and refreshes the report. It also refreshes after a state conflict or if the project was archived. If the connection drops during an action or its readback, the action may have been saved: select **Reload** to check the current report before trying another action. BugWatch does not automatically repeat the action.
 
-Releasing or transferring an assignment is not available. Report editing, discussion, resolution, and attachments are outside this workflow.
+## Wait for tester information
+
+1. When you are the assigned Developer and a report is **In progress**, select **Await tester information** on its report page. It changes to **Awaiting tester information** and keeps its assignee and assignment time. You can change the state before writing a question; no existing comment is required.
+2. Ask your question in the ordinary **Discussion**. The reporting Tester or another logged-in participant can respond there.
+3. When you are ready to continue, select **Resume investigation**. The report returns to **In progress**. Only the assigned Developer can make either state change, and the report stays waiting until that Developer manually resumes it. Posting a question or reply never changes the state automatically.
+
+The two state changes appear in **Activity** with the actor and time. As with other report actions, unavailable, archived, conflicting, or uncertain outcomes are explained on the page; reload when prompted before another action.
+
+Releasing or transferring an assignment is not available. Report editing, resolution, and attachments are also unavailable in this feature.
