@@ -16,7 +16,7 @@ const { service, projects, reports } = vi.hoisted(() => ({
     listActiveProjects: vi.fn(), getProject: vi.fn(), listProjectHistory: vi.fn(),
     createProject: vi.fn(), updateProject: vi.fn(),
   },
-  reports: { awaitTesterInformation: vi.fn(), resumeInvestigation: vi.fn(), listReportComments: vi.fn().mockResolvedValue([]), postReportComment: vi.fn(), acceptReport: vi.fn(), startInvestigation: vi.fn(), createReport: vi.fn(), getReport: vi.fn(), listReportHistory: vi.fn(), saveDraft: vi.fn(), getDraft: vi.fn() },
+  reports: { listProjectReports: vi.fn().mockResolvedValue([]), resolveReport: vi.fn(), linkDuplicate: vi.fn(), awaitTesterInformation: vi.fn(), resumeInvestigation: vi.fn(), listReportComments: vi.fn().mockResolvedValue([]), postReportComment: vi.fn(), acceptReport: vi.fn(), startInvestigation: vi.fn(), createReport: vi.fn(), getReport: vi.fn(), listReportHistory: vi.fn(), saveDraft: vi.fn(), getDraft: vi.fn() },
 }))
 
 vi.mock('../shared/lib/supabaseClient.js', () => ({ supabase: {} }))
@@ -48,6 +48,7 @@ const session = (id: string) => ({ user: { id } } as Session)
 
 beforeEach(() => {
   vi.resetAllMocks()
+  reports.listProjectReports.mockResolvedValue([])
   reports.listReportComments.mockResolvedValue([])
   window.history.replaceState({}, '', '/reports/new')
   service.getCurrentSession.mockResolvedValueOnce(session(testerId)).mockResolvedValue(null)
@@ -235,7 +236,7 @@ it('draftSave_projectReloadFails_keepsSavedFormAndRetriesBeforeWriting', async (
 
 function workflowReport(state: Report['state'] = 'Open'): Report {
   const assigned = state !== 'Open'
-  return { id: reportId, projectId, title: 'Protected workflow report', description: 'Bug', version: '1', reproductionSteps: 'Open', expectedResults: 'Works', actualResults: 'Fails', severity: 'low', testEnvironment: '', reporterId: otherId, reporterUsername: 'tester', reporterDisplayName: 'Tester', projectName: 'Project', projectArchivedAt: null, state, assignedDeveloperId: assigned ? testerId : null, assignedAt: assigned ? '2026-11-07T10:00:00Z' : null, assignedDeveloperUsername: assigned ? 'dev' : null, assignedDeveloperDisplayName: assigned ? 'Developer' : null, createdAt: '2026-11-07T09:00:00Z', updatedAt: '2026-11-07T10:00:00Z' }
+  return { id: reportId, projectId, title: 'Protected workflow report', description: 'Bug', version: '1', reproductionSteps: 'Open', expectedResults: 'Works', actualResults: 'Fails', severity: 'low', testEnvironment: '', reporterId: otherId, reporterUsername: 'tester', reporterDisplayName: 'Tester', projectName: 'Project', projectArchivedAt: null, resolution: null, canonicalReport: null, state, assignedDeveloperId: assigned ? testerId : null, assignedAt: assigned ? '2026-11-07T10:00:00Z' : null, assignedDeveloperUsername: assigned ? 'dev' : null, assignedDeveloperDisplayName: assigned ? 'Developer' : null, createdAt: '2026-11-07T09:00:00Z', updatedAt: '2026-11-07T10:00:00Z' }
 }
 async function openWorkflow(state: Report['state'] = 'Open') {
   window.history.replaceState({}, '', `/reports/${reportId}`)
@@ -304,4 +305,62 @@ it('discussion_staleUnauthorizedPostAfterIdentityReplacement_keepsReplacementSes
   expect(service.getCurrentSession).toHaveBeenCalledTimes(1)
   expect(replacement.value).toBe('Replacement session text')
   expect(screen.getByRole('heading', { name: 'Replacement discussion' })).toBeTruthy()
+})
+
+async function startResolutionAction(method: 'resolveReport' | 'linkDuplicate') {
+  reports.listProjectReports.mockResolvedValue([{ ...workflowReport('Resolved'), id: projectId, title: 'Canonical report' }])
+  await openWorkflow('In progress')
+  if (method === 'linkDuplicate') {
+    fireEvent.click(screen.getByRole('button', { name: 'Resolve report' }))
+    fireEvent.change(screen.getByLabelText('Resolution outcome'), { target: { value: 'duplicate' } })
+    fireEvent.change(await screen.findByLabelText('Canonical report'), { target: { value: projectId } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save canonical link' }))
+  } else {
+    fireEvent.click(screen.getByRole('button', { name: 'Resolve report' }))
+    for (const [label, value] of [['Fix summary', 'Private fix summary'], ['Commit URL', 'https://example.test/commit/1'], ['Pull request URL', 'https://other.test/pr/2']]) fireEvent.change(screen.getByLabelText(new RegExp(`^${label}\\b`)), { target: { value } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save resolution' }))
+  }
+}
+
+it.each(['resolveReport', 'linkDuplicate'] as const)('%s_expiredSession_rechecksAuthAndClearsProtectedContent', async method => {
+  reports[method].mockRejectedValueOnce(new ReportError('unauthenticated', 'Session ended'))
+  await startResolutionAction(method)
+  await screen.findByRole('button', { name: 'Log in' })
+  expect(service.getCurrentSession).toHaveBeenCalledTimes(2)
+  expect(reports[method]).toHaveBeenCalledOnce()
+  expect(screen.queryByRole('heading', { name: 'Protected workflow report' })).toBeNull()
+  expect(screen.queryByLabelText(/^Fix summary/)).toBeNull()
+})
+
+it.each(['resolveReport', 'linkDuplicate'] as const)('%s_staleUnauthorizedAfterIdentityReplacement_preservesReplacementSession', async method => {
+  let reject!: (reason: Error) => void
+  reports[method].mockReturnValueOnce(new Promise<never>((_, fail) => { reject = fail }))
+  await startResolutionAction(method)
+  expect(reports[method]).toHaveBeenCalledOnce()
+  reports.getReport.mockResolvedValue({ ...workflowReport('In progress'), title: 'Replacement resolution report', assignedDeveloperId: otherId })
+  await act(async () => { callback('SIGNED_IN', session(otherId)) })
+  await screen.findByRole('heading', { name: 'Replacement resolution report' })
+  const reads = reports.getReport.mock.calls.length
+  fireEvent.click(screen.getByRole('button', { name: 'Resolve report' }))
+  const field = screen.getByLabelText(/^Fix summary/) as HTMLTextAreaElement
+  expect(field.value).toBe('')
+  fireEvent.change(field, { target: { value: 'Replacement input' } })
+  await act(async () => reject(new ReportError('unauthenticated', 'Old session ended')))
+  expect(service.getCurrentSession).toHaveBeenCalledTimes(1)
+  expect(reports.getReport).toHaveBeenCalledTimes(reads)
+  expect(field.value).toBe('Replacement input')
+})
+
+it.each(['resolveReport', 'linkDuplicate'] as const)('%s_pendingCompletionAfterLogout_doesNotRestoreProtectedContent', async method => {
+  let complete!: (value: Report) => void
+  reports[method].mockReturnValueOnce(new Promise<Report>(resolve => { complete = resolve }))
+  await startResolutionAction(method)
+  expect(reports[method]).toHaveBeenCalledOnce()
+  await act(async () => { callback('SIGNED_OUT', null) })
+  await screen.findByRole('button', { name: 'Log in' })
+  const reads = reports.getReport.mock.calls.length
+  await act(async () => complete(workflowReport('Resolved')))
+  expect(reports.getReport).toHaveBeenCalledTimes(reads)
+  expect(screen.queryByRole('heading', { name: 'Protected workflow report' })).toBeNull()
+  expect(screen.getByRole('button', { name: 'Log in' })).toBeTruthy()
 })

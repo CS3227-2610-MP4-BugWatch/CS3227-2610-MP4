@@ -1,4 +1,7 @@
-param([ValidateSet('project', 'report')][string] $Suite = 'project')
+param(
+  [ValidateSet('project', 'report')][string] $Suite = 'project',
+  [switch] $VerifyResolutionSql
+)
 
 $ErrorActionPreference = 'Stop'
 Set-Location -LiteralPath $PSScriptRoot
@@ -39,6 +42,55 @@ function Read-Secret([string] $prompt) {
   $secure = Read-Host $prompt -AsSecureString
   return [System.Net.NetworkCredential]::new('', $secure).Password
 }
+
+function Invoke-ResolutionSqlVerification($settings, [Uri] $isolatedUrl) {
+  # A server connection is needed for transactional failure injection; PostgREST
+  # deliberately provides no arbitrary-SQL endpoint. Never apply migrations here.
+  if ($isolatedUrl.Host -notmatch '^([a-z0-9]+)\.supabase\.co$') {
+    throw 'SQL verification requires the isolated project URL in https://<project-ref>.supabase.co form.'
+  }
+  $isolatedRef = $matches[1]
+  $databaseHost = Require-Setting $settings 'PROJECT_TEST_DATABASE_HOST'
+  $databaseUser = Require-Setting $settings 'PROJECT_TEST_DATABASE_USER'
+  $directConnection = $databaseHost -ieq "db.$isolatedRef.supabase.co" -and $databaseUser -ceq 'postgres'
+  $poolerConnection = $databaseHost -match '^[a-zA-Z0-9.-]+\.pooler\.supabase\.com$' -and $databaseUser -ceq "postgres.$isolatedRef"
+  if (-not ($directConnection -or $poolerConnection)) {
+    throw 'SQL connection must identify the same isolated project: its direct database host with user postgres, or a Supabase pooler with user postgres.<test-project-ref>.'
+  }
+  $databasePort = 5432
+  if ($settings.ContainsKey('PROJECT_TEST_DATABASE_PORT') -and
+      (-not [int]::TryParse($settings['PROJECT_TEST_DATABASE_PORT'], [ref] $databasePort) -or $databasePort -lt 1 -or $databasePort -gt 65535)) {
+    throw 'PROJECT_TEST_DATABASE_PORT must be between 1 and 65535.'
+  }
+  $psqlCommand = Get-Command psql -CommandType Application -ErrorAction SilentlyContinue
+  if (-not $psqlCommand) { throw 'Install PostgreSQL psql and add it to PATH before using -VerifyResolutionSql.' }
+
+  $sqlVariables = @('PGHOST', 'PGHOSTADDR', 'PGPORT', 'PGUSER', 'PGDATABASE', 'PGPASSWORD', 'PGSSLMODE', 'PGCONNECT_TIMEOUT', 'PGSERVICE', 'PGSERVICEFILE', 'PGOPTIONS')
+  $previousSqlValues = @{}
+  foreach ($name in $sqlVariables) { $previousSqlValues[$name] = [Environment]::GetEnvironmentVariable($name, 'Process') }
+  try {
+    foreach ($name in $sqlVariables) { Set-ProcessVariable $name $null }
+    Set-ProcessVariable 'PGHOST' $databaseHost
+    Set-ProcessVariable 'PGPORT' ([string] $databasePort)
+    Set-ProcessVariable 'PGUSER' $databaseUser
+    Set-ProcessVariable 'PGDATABASE' 'postgres'
+    Set-ProcessVariable 'PGSSLMODE' 'require'
+    Set-ProcessVariable 'PGCONNECT_TIMEOUT' '15'
+    $databasePassword = Read-Secret 'Isolated test-project database password (not the service-role key)'
+    if ([string]::IsNullOrWhiteSpace($databasePassword)) { throw 'An isolated database password is required for SQL verification.' }
+    Set-ProcessVariable 'PGPASSWORD' $databasePassword
+    $databasePassword = $null
+    Write-Host 'Checking resolution/link transaction rollback in the isolated project (migration 012 must already be applied)...'
+    & $psqlCommand.Source -X --no-password --set ON_ERROR_STOP=1 --file (Join-Path $PSScriptRoot 'src/features/reports/database/verify_report_resolutions.sql')
+    if ($LASTEXITCODE -ne 0) { throw 'Resolution SQL verification failed. Check that migrations 001-012 and test profiles are present in the isolated project.' }
+  }
+  finally {
+    $databasePassword = $null
+    foreach ($name in $sqlVariables) { Set-ProcessVariable $name $previousSqlValues[$name] }
+  }
+}
+
+if ($VerifyResolutionSql -and $Suite -ne 'report') { throw '-VerifyResolutionSql requires -Suite report.' }
 
 $settingsPath = Join-Path $PSScriptRoot '.env.project-test.local'
 if (-not (Test-Path -LiteralPath $settingsPath)) {
@@ -122,6 +174,7 @@ function Get-AccessToken([string] $label, [string] $email) {
 
 $exitCode = 1
 try {
+  if ($VerifyResolutionSql) { Invoke-ResolutionSqlVerification $settings $parsedUrl }
   Set-ProcessVariable 'PROJECT_TEST_ISOLATED' 'true'
   Set-ProcessVariable 'PROJECT_TEST_URL' $testUrl
   Set-ProcessVariable 'PROJECT_TEST_PUBLISHABLE_KEY' $publishableKey
@@ -139,7 +192,7 @@ try {
 
   Write-Host "Running isolated Supabase $Suite integration tests..."
   $suiteFiles = if ($Suite -eq 'report') {
-    @('src/test/report-database.test.ts', 'src/test/report-workflow-database.test.ts', 'src/test/report-discussion-database.test.ts')
+    @('src/test/report-database.test.ts', 'src/test/report-workflow-database.test.ts', 'src/test/report-discussion-database.test.ts', 'src/test/report-resolution-database.test.ts')
   } else {
     @('src/test/project-database.test.ts')
   }

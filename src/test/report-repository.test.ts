@@ -24,7 +24,7 @@ const row = {
 }
 const report: Report = {
   ...input, id, reporterId, createdAt: time, updatedAt: time,
-  state: 'Open', assignedDeveloperId: null, assignedAt: null, assignedDeveloperUsername: null, assignedDeveloperDisplayName: null, projectName: 'Project',
+  resolution: null, canonicalReport: null, state: 'Open', assignedDeveloperId: null, assignedAt: null, assignedDeveloperUsername: null, assignedDeveloperDisplayName: null, projectName: 'Project',
   projectArchivedAt: null, reporterUsername: 'tester', reporterDisplayName: 'Reporter',
 }
 const changes = Object.fromEntries(Object.entries({

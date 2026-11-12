@@ -55,6 +55,8 @@ function AuthenticatedContent() {
         startInvestigation: id => withSession(() => reports.startInvestigation(id)),
         awaitTesterInformation: id => withSession(() => reports.awaitTesterInformation(id)),
         resumeInvestigation: id => withSession(() => reports.resumeInvestigation(id)),
+        resolveReport: (id, input) => withSession(() => reports.resolveReport(id, input)),
+        linkDuplicate: (id, canonicalReportId, expectedCanonicalReportId) => withSession(() => reports.linkDuplicate(id, canonicalReportId, expectedCanonicalReportId)),
         listReportComments: id => withSession(() => reports.listReportComments(id)),
         postReportComment: (id, input) => withSession(() => reports.postReportComment(id, input)),
         listReportHistory: id => withSession(() => reports.listReportHistory(id)),
