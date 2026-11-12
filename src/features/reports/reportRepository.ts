@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { ReportError } from './types.js'
-import type { DraftSummary, ReportComment, ReportDraft, ProjectReportSummary, Report, ReportFieldErrors, ReportHistoryEntry, ReportInput, ReportRepository, ReportSeverity } from './types.js'
-import { REPORT_SEVERITIES, REPORT_TEXT_FIELDS, REPORT_UUID, validateCommentInput, validateDraftInput, validateReportInput } from './validation.js'
+import type { DraftSummary, ReportComment, ReportDraft, ProjectReportSummary, Report, ReportFieldErrors, ReportHistoryEntry, ReportInput, ReportRepository, ReportResolution, ReportSeverity, ResolutionFieldErrors, ResolutionInput } from './types.js'
+import { REPORT_SEVERITIES, REPORT_TEXT_FIELDS, REPORT_UUID, validateCommentInput, validateDraftInput, validateReportInput, validateResolutionInput } from './validation.js'
 
 const PROJECT_REPORT_PAGE_SIZE = 100
 const DRAFT_PAGE_SIZE = 100
@@ -19,6 +19,11 @@ const reportFields = {
   test_environment: 'testEnvironment',
 } as const satisfies Record<string, keyof ReportInput>
 
+const resolutionFields = {
+  kind: 'kind', fix_summary: 'fixSummary', affected_version: 'affectedVersion', commit_url: 'commitUrl',
+  pull_request_url: 'pullRequestUrl', explanation: 'explanation', canonical_report_id: 'canonicalReportId',
+} as const
+
 function fail(error: unknown, status?: number, comment = false): never {
   if (error instanceof ReportError) throw error
   const code = typeof error === 'object' && error !== null && 'code' in error ? error.code : undefined
@@ -30,10 +35,12 @@ function fail(error: unknown, status?: number, comment = false): never {
     case '42501': throw new ReportError('forbidden', 'You do not have permission to perform this report action.')
     case 'P2003': {
       if (comment) throw new ReportError('validation', 'Check your comment and reply reference.')
-      const fieldErrors: ReportFieldErrors = {}
+      const fieldErrors: ReportFieldErrors & ResolutionFieldErrors = {}
       const detail = error && typeof error === 'object' && 'details' in error ? error.details : undefined
       if (typeof detail === 'string' && Object.hasOwn(reportFields, detail)) {
         fieldErrors[reportFields[detail as keyof typeof reportFields]] = 'Check this field.'
+      } else if (typeof detail === 'string' && Object.hasOwn(resolutionFields, detail)) {
+        fieldErrors[resolutionFields[detail as keyof typeof resolutionFields]] = 'Check this field.'
       }
       throw new ReportError('validation', 'Check the report fields.', fieldErrors)
     }
@@ -73,13 +80,30 @@ function nullableText(value: unknown): string | null {
 
 function assignment(row: Record<string, unknown>): Pick<Report, 'state' | 'assignedDeveloperId' | 'assignedDeveloperUsername' | 'assignedDeveloperDisplayName'> {
   const state = row.state
-  if (state !== 'Open' && state !== 'Accepted' && state !== 'In progress' && state !== 'Awaiting tester information') fail(null)
+  if (state !== 'Open' && state !== 'Accepted' && state !== 'In progress' && state !== 'Awaiting tester information' && state !== 'Resolved' && state !== 'Closed') fail(null)
   const assignedDeveloperId = row.assigned_developer_id === null ? null : uuid(row.assigned_developer_id)
   const assignedDeveloperUsername = nullableText(row.assigned_developer_username)
   const assignedDeveloperDisplayName = nullableText(row.assigned_developer_display_name)
   if ((state === 'Open') !== (assignedDeveloperId === null)
     || (assignedDeveloperId === null && (assignedDeveloperUsername !== null || assignedDeveloperDisplayName !== null))) fail(null)
   return { state, assignedDeveloperId, assignedDeveloperUsername, assignedDeveloperDisplayName }
+}
+
+function resolutionRow(value: unknown): ReportResolution {
+  const row = record(value)
+  const input: Record<string, unknown> = {}
+  const metadata = ['author_id', 'author_username', 'author_display_name', 'resolved_at']
+  for (const key of Object.keys(row)) {
+    if (Object.hasOwn(resolutionFields, key)) input[resolutionFields[key as keyof typeof resolutionFields]] = row[key]
+    else if (!metadata.includes(key)) fail(null)
+  }
+  const validated = validateResolutionInput(input as ResolutionInput)
+  if (!validated.valid) fail(null)
+  for (const [key, raw] of Object.entries(input)) {
+    if ((validated.value as unknown as Record<string, unknown>)[key] !== raw) fail(null)
+  }
+  return { ...validated.value, authorId: uuid(row.author_id), authorUsername: nullableText(row.author_username),
+    authorDisplayName: nullableText(row.author_display_name), resolvedAt: timestamp(row.resolved_at) }
 }
 
 function reportRow(value: unknown): Report {
@@ -90,6 +114,20 @@ function reportRow(value: unknown): Report {
   const ownership = assignment(row)
   const assignedAt = row.assigned_at === null ? null : timestamp(row.assigned_at)
   if ((ownership.assignedDeveloperId === null) !== (assignedAt === null)) fail(null)
+  const resolution = row.resolution === undefined || row.resolution === null ? null : resolutionRow(row.resolution)
+  if ((ownership.state === 'Resolved' || ownership.state === 'Closed') !== (resolution !== null)
+    || (resolution && resolution.authorId.toLowerCase() !== ownership.assignedDeveloperId?.toLowerCase())) fail(null)
+  if (resolution && row.canonical_report === undefined) fail(null)
+  let canonicalReport: Report['canonicalReport'] = null
+  if (row.canonical_report !== undefined && row.canonical_report !== null) {
+    const canonical = record(row.canonical_report)
+    const title = text(canonical.title)
+    if (!title || title !== title.trim() || Array.from(title).length > REPORT_TEXT_FIELDS.title.limit || Object.keys(canonical).length !== 2) fail(null)
+    canonicalReport = { id: uuid(canonical.id), title }
+    if (canonicalReport.id.toLowerCase() === uuid(row.id).toLowerCase()) fail(null)
+  }
+  if (resolution?.kind === 'duplicate' && resolution.canonicalReportId.toLowerCase() === uuid(row.id).toLowerCase()) fail(null)
+  if (resolution?.kind === 'duplicate' && !canonicalReport) fail(null)
   for (const field of Object.values(reportFields)) {
     if (result.value[field] !== input[field]) fail(null)
   }
@@ -99,6 +137,8 @@ function reportRow(value: unknown): Report {
     reporterId: uuid(row.reporter_id),
     ...ownership,
     assignedAt,
+    resolution,
+    canonicalReport,
     createdAt: timestamp(row.created_at),
     updatedAt: timestamp(row.updated_at),
     projectName: text(row.project_name),
@@ -147,7 +187,24 @@ function historyRow(value: unknown): ReportHistoryEntry {
     }
     return { ...identity, event: 'created', changes }
   }
+  if (row.event === 'duplicate_linked') {
+    const change = record(source.canonical_report_id)
+    if (Object.keys(source).length !== 1 || Object.keys(change).length !== 2) fail(null)
+    const before = change.before === null ? null : uuid(change.before)
+    const after = uuid(change.after)
+    if (before?.toLowerCase() === after.toLowerCase() || after.toLowerCase() === identity.reportId.toLowerCase()) fail(null)
+    return { ...identity, event: 'duplicate_linked', changes: { canonicalReportId: { before, after } } }
+  }
   const state = record(source.state)
+  if (row.event === 'resolved') {
+    const change = record(source.resolution)
+    if (Object.keys(source).length !== 2 || Object.keys(state).length !== 2 || Object.keys(change).length !== 2
+      || state.before !== 'In progress' || state.after !== 'Resolved' || change.before !== null) fail(null)
+    const resolution = resolutionRow(change.after)
+    if (resolution.authorId.toLowerCase() !== identity.actorId.toLowerCase() || resolution.resolvedAt !== identity.occurredAt
+      || (resolution.kind === 'duplicate' && resolution.canonicalReportId.toLowerCase() === identity.reportId.toLowerCase())) fail(null)
+    return { ...identity, event: 'resolved', changes: { state: { before: 'In progress', after: 'Resolved' }, resolution: { before: null, after: resolution } } }
+  }
   if (row.event === 'accepted') {
     const developer = record(source.assigned_developer_id)
     const assignedAt = record(source.assigned_at)
@@ -297,6 +354,23 @@ export function createReportRepository(client: SupabaseClient): ReportRepository
     async resumeInvestigation(id) {
       if (!REPORT_UUID.test(id)) throw new ReportError('not_found', 'The report could not be found.')
       return reportRow(await rpc('resume_report_investigation', { p_report_id: id }))
+    },
+    async resolveReport(id, input) {
+      if (!REPORT_UUID.test(id)) throw new ReportError('not_found', 'The report could not be found.')
+      const result = validateResolutionInput(input)
+      if (!result.valid) throw new ReportError('validation', 'Check the resolution fields.', result.errors)
+      const parameters = Object.fromEntries(Object.entries(resolutionFields)
+        .filter(([, field]) => Object.hasOwn(result.value, field))
+        .map(([wire, field]) => [wire, (result.value as unknown as Record<string, unknown>)[field]]))
+      return reportRow(await rpc('resolve_report', { p_report_id: id, p_resolution: parameters }))
+    },
+    async linkDuplicate(id, canonicalReportId, expectedCanonicalReportId) {
+      if (!REPORT_UUID.test(id)) throw new ReportError('not_found', 'The report could not be found.')
+      if (typeof canonicalReportId !== 'string' || !REPORT_UUID.test(canonicalReportId) || canonicalReportId.toLowerCase() === id.toLowerCase()
+        || (expectedCanonicalReportId !== null && (typeof expectedCanonicalReportId !== 'string' || !REPORT_UUID.test(expectedCanonicalReportId)))) {
+        throw new ReportError('validation', 'Choose a valid canonical report.', { canonicalReportId: 'Choose another report in this project.' })
+      }
+      return reportRow(await rpc('link_duplicate_report', { p_report_id: id, p_canonical_report_id: canonicalReportId, p_expected_canonical_report_id: expectedCanonicalReportId }))
     },
     async listReportComments(id) {
       if (!REPORT_UUID.test(id)) throw new ReportError('not_found', 'The report could not be found.')

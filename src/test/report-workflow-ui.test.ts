@@ -17,7 +17,7 @@ const id = '20000000-0000-4000-8000-000000000001'
 const projectId = '30000000-0000-4000-8000-000000000001'
 const time = '2026-11-07T09:30:00Z'
 const assignedTime = '2026-11-07T10:00:00Z'
-const open: Report = { id, projectId, title: 'Workflow report', description: 'Failure', version: '1', reproductionSteps: 'Open', expectedResults: 'Works', actualResults: 'Fails', severity: 'low', testEnvironment: '', reporterId: tester.id, reporterUsername: 'tester', reporterDisplayName: 'Tester', projectName: 'Project', projectArchivedAt: null, state: 'Open', assignedDeveloperId: null, assignedAt: null, assignedDeveloperUsername: null, assignedDeveloperDisplayName: null, createdAt: time, updatedAt: time }
+const open: Report = { id, projectId, title: 'Workflow report', description: 'Failure', version: '1', reproductionSteps: 'Open', expectedResults: 'Works', actualResults: 'Fails', severity: 'low', testEnvironment: '', reporterId: tester.id, reporterUsername: 'tester', reporterDisplayName: 'Tester', projectName: 'Project', projectArchivedAt: null, resolution: null, canonicalReport: null, state: 'Open', assignedDeveloperId: null, assignedAt: null, assignedDeveloperUsername: null, assignedDeveloperDisplayName: null, createdAt: time, updatedAt: time }
 const accepted: Report = { ...open, state: 'Accepted', assignedDeveloperId: developer.id, assignedAt: assignedTime, assignedDeveloperUsername: 'dev', assignedDeveloperDisplayName: 'Developer', updatedAt: assignedTime }
 const progressing: Report = { ...accepted, state: 'In progress' }
 function deferred<T>() {
@@ -30,7 +30,7 @@ function setup(initial = open, actor = developer) {
   const repository = {
     listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn(), createReport: vi.fn(),
     getReport: vi.fn().mockResolvedValue(initial), listReportHistory: vi.fn().mockResolvedValue([]), listProjectReports: vi.fn().mockResolvedValue([initial]),
-    awaitTesterInformation: vi.fn().mockResolvedValue({ ...progressing, state: 'Awaiting tester information' }), resumeInvestigation: vi.fn().mockResolvedValue(progressing), listReportComments: vi.fn().mockResolvedValue([]), postReportComment: vi.fn(), acceptReport: vi.fn().mockResolvedValue(accepted), startInvestigation: vi.fn().mockResolvedValue(progressing),
+    resolveReport: vi.fn(), linkDuplicate: vi.fn(), awaitTesterInformation: vi.fn().mockResolvedValue({ ...progressing, state: 'Awaiting tester information' }), resumeInvestigation: vi.fn().mockResolvedValue(progressing), listReportComments: vi.fn().mockResolvedValue([]), postReportComment: vi.fn(), acceptReport: vi.fn().mockResolvedValue(accepted), startInvestigation: vi.fn().mockResolvedValue(progressing),
   } satisfies ReportRepository
   const router = createMemoryRouter([{ path: '/reports/:reportId', element: createElement(ReportDetailsPage, { reportRepository: repository, user: actor }) }, { path: '/projects', element: createElement('h1', null, 'Projects destination') }], { initialEntries: [`/reports/${id}`] })
   const view = render(createElement(MantineProvider, { env: 'test' }, createElement(RouterProvider, { router })))

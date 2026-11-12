@@ -84,6 +84,10 @@ it('developerDependencies_missingReportDuringDiscussion_returns404WithoutCharge'
 it.each([
   ['reassigned', { ...row, assigned_developer_id: '10000000-0000-4000-8000-000000000099' }, 403],
   ['archived', { ...row, project_archived_at: time }, 409],
+  ['resolved', { ...row, state: 'Resolved', canonical_report: null, resolution: {
+    kind: 'invalid', explanation: 'Expected behavior', author_id: actorId,
+    author_username: 'dev', author_display_name: 'Developer', resolved_at: time,
+  } }, 409],
   ['deleted', null, 404],
 ] as const)('developerDependencies_report%sDuringGeneration_suppressesOutputWithoutReauthentication', async (_name, changed, status) => {
   const { getUser, profileRead, rpc, fetch, quota } = setup()

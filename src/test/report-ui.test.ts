@@ -32,7 +32,7 @@ const input = {
 }
 const saved: Report = {
   ...input, id: reportId, reporterId: user.id, createdAt: time, updatedAt: time,
-  state: 'Open', assignedDeveloperId: null, assignedAt: null, assignedDeveloperUsername: null, assignedDeveloperDisplayName: null, projectName: 'Test project', projectArchivedAt: null,
+  resolution: null, canonicalReport: null, state: 'Open', assignedDeveloperId: null, assignedAt: null, assignedDeveloperUsername: null, assignedDeveloperDisplayName: null, projectName: 'Test project', projectArchivedAt: null,
   reporterDisplayName: user.displayName, reporterUsername: user.username,
 }
 
@@ -51,8 +51,8 @@ function setup() {
     getProject: vi.fn(), listProjectHistory: vi.fn(), createProject: vi.fn(), updateProject: vi.fn(),
   }
   const reportRepository = {
-    awaitTesterInformation: vi.fn(), resumeInvestigation: vi.fn(), listReportComments: vi.fn().mockResolvedValue([]), postReportComment: vi.fn(), acceptReport: vi.fn(), startInvestigation: vi.fn(), listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn().mockResolvedValue(saved),
-    listProjectReports: vi.fn(),
+    resolveReport: vi.fn(), linkDuplicate: vi.fn(), awaitTesterInformation: vi.fn(), resumeInvestigation: vi.fn(), listReportComments: vi.fn().mockResolvedValue([]), postReportComment: vi.fn(), acceptReport: vi.fn(), startInvestigation: vi.fn(), listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn().mockResolvedValue(saved),
+    listProjectReports: vi.fn().mockResolvedValue([]),
     createReport: vi.fn().mockResolvedValue(saved), getReport: vi.fn().mockResolvedValue(saved),
     listReportHistory: vi.fn().mockResolvedValue([{
       id: 'history', reportId, actorId: user.id, actorDisplayName: 'Named history actor', occurredAt: time,

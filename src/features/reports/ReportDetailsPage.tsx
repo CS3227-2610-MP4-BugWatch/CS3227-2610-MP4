@@ -1,11 +1,11 @@
-import { Badge, Button, Group, Tabs, Textarea } from '@mantine/core'
+import { Badge, Button, Group, NativeSelect, Tabs, Textarea, TextInput } from '@mantine/core'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useParams } from 'react-router'
 import type { SessionUser } from '../projects/types'
 import { ReportError } from './types'
-import type { Report, ReportComment, ReportHistoryEntry, ReportInput, ReportRepository, ReportSeverity } from './types'
-import { COMMENT_TEXT_LIMIT, REPORT_SEVERITIES, REPORT_TEXT_FIELDS, REPORT_TEXT_KEYS, validateCommentInput } from './validation'
+import type { ProjectReportSummary, Report, ReportComment, ReportHistoryEntry, ReportInput, ReportRepository, ReportResolution, ReportSeverity, ResolutionFieldErrors, ResolutionInput } from './types'
+import { COMMENT_TEXT_LIMIT, REPORT_SEVERITIES, REPORT_TEXT_FIELDS, REPORT_TEXT_KEYS, RESOLUTION_TEXT_LIMIT, RESOLUTION_VERSION_LIMIT, RESOLUTION_URL_LIMIT, validateCommentInput, validateResolutionInput } from './validation'
 import { requestTesterQuestions } from './testerQuestionClient'
 import type { GenerateTesterQuestions } from './testerQuestionClient'
 import { questionContextVersion, TESTER_QUESTION_ELIGIBLE_STATES } from './testerQuestionTypes'
@@ -38,6 +38,10 @@ const actionSuccess: Record<WorkflowAction, string> = {
   accept: 'Report accepted.', start: 'Investigation started.', await: 'Report is awaiting tester information.', resume: 'Investigation resumed.',
 }
 
+const resolutionLabels: Record<ResolutionInput['kind'], string> = {
+  fixed: 'Fixed', duplicate: 'Duplicate', invalid: 'Invalid', cannot_reproduce: 'Cannot reproduce', will_not_fix: 'Will not fix',
+}
+
 export function ReportDetailsPage(props: DetailProps) {
   const { reportId } = useParams()
   return <ReportDetails key={`${reportId}:${props.user.id}:${props.user.role}`} {...props} reportId={reportId} />
@@ -50,14 +54,22 @@ function ReportDetails({ reportRepository, user, reportId, generateTesterQuestio
   const [tab, setTab] = useState<string | null>('conversation')
   const [body, setBody] = useState('')
   const [replyTo, setReplyTo] = useState<ReportComment | null>(null)
-  const [pending, setPending] = useState<'workflow' | 'comment' | null>(null)
+  const [pending, setPending] = useState<'workflow' | 'comment' | 'resolution' | 'link' | null>(null)
   const [feedback, setFeedback] = useState('')
   const [commentFeedback, setCommentFeedback] = useState('')
   const [uncertain, setUncertain] = useState(false)
   const [commentUncertain, setCommentUncertain] = useState(false)
   const [focusTarget, setFocusTarget] = useState<{ id: string } | null>(null)
   const [copyFeedback, setCopyFeedback] = useState('')
-  const request = useRef({ generation: 0, pending: false, reportRead: 0, historyRead: 0, commentsRead: 0 })
+  const [resolutionOpen, setResolutionOpen] = useState(false)
+  const [resolutionKind, setResolutionKind] = useState<ResolutionInput['kind']>('fixed')
+  const [resolutionFields, setResolutionFields] = useState({ fixSummary: '', affectedVersion: '', commitUrl: '', pullRequestUrl: '', explanation: '' })
+  const [resolutionErrors, setResolutionErrors] = useState<ResolutionFieldErrors>({})
+  const [canonicalId, setCanonicalId] = useState('')
+  const [canonicalError, setCanonicalError] = useState('')
+  const [targets, setTargets] = useState<SectionRead<ProjectReportSummary>>({ status: 'loading' })
+  const [targetAttempt, setTargetAttempt] = useState(0)
+  const request = useRef({ generation: 0, pending: false, reportRead: 0, historyRead: 0, commentsRead: 0, targetsRead: 0 })
   const composer = useRef<HTMLTextAreaElement>(null)
 
   const loadHistory = useCallback(async () => {
@@ -126,6 +138,7 @@ function ReportDetails({ reportRepository, user, reportId, generateTesterQuestio
         if (scope.generation !== generation) return
         if (!report) { setState({ status: 'missing' }); return }
         setState({ status: 'ready', report })
+        setCanonicalId(report.canonicalReport?.id ?? '')
         void loadHistory()
         void loadComments()
       } catch {
@@ -135,6 +148,22 @@ function ReportDetails({ reportRepository, user, reportId, generateTesterQuestio
     void load()
     return () => { scope.generation++ }
   }, [reportId, reportRepository, loadHistory, loadComments])
+
+  const targetProjectId = state.status === 'ready' && user.role === 'developer' && !state.report.projectArchivedAt
+    && state.report.assignedDeveloperId?.toLowerCase() === user.id.toLowerCase() ? state.report.projectId : null
+  useEffect(() => {
+    if (!targetProjectId) return
+    const scope = request.current
+    const generation = scope.generation
+    const read = ++scope.targetsRead
+    reportRepository.listProjectReports(targetProjectId).then(values => {
+      if (scope.generation !== generation || scope.targetsRead !== read) return
+      setTargets({ status: 'ready', values: values.filter(value => value.id.toLowerCase() !== reportId?.toLowerCase()) })
+    }).catch(() => {
+      if (scope.generation === generation && scope.targetsRead === read) setTargets({ status: 'error' })
+    })
+    return () => { scope.targetsRead++ }
+  }, [targetProjectId, reportRepository, reportId, targetAttempt])
 
   useEffect(() => {
     if (tab !== 'conversation' || !focusTarget) return
@@ -226,6 +255,64 @@ function ReportDetails({ reportRepository, user, reportId, generateTesterQuestio
     }
   }
 
+  async function saveResolutionOrLink(action: 'resolution' | 'link', operation: () => Promise<Report>) {
+    if (request.current.pending || state.status !== 'ready' || uncertain || commentUncertain) return
+    request.current.pending = true
+    const generation = request.current.generation
+    setPending(action)
+    setFeedback('')
+    try {
+      await operation()
+      if (request.current.generation !== generation) return
+      setFeedback(action === 'resolution' ? 'Report resolved. Reloading the saved report.' : 'Canonical link saved. Reloading the saved report.')
+      setUncertain(true)
+      await loadReport(false)
+    } catch (error) {
+      if (request.current.generation !== generation) return
+      if (error instanceof ReportError && error.code === 'validation') {
+        setFeedback(error.message)
+        if (action === 'resolution') setResolutionErrors(error.fieldErrors ?? {})
+        else setCanonicalError(error.message)
+      } else if (error instanceof ReportError && ['state_conflict', 'archived', 'already_assigned'].includes(error.code)) {
+        setFeedback(error.message)
+        setUncertain(true)
+        await loadReport(false)
+      } else if (error instanceof ReportError && ['forbidden', 'not_found', 'unauthenticated'].includes(error.code)) {
+        setFeedback(error.message)
+        setUncertain(true)
+      } else {
+        setFeedback('The action could not be confirmed. It may have been saved. Reload the report before trying another action.')
+        setUncertain(true)
+      }
+    } finally {
+      if (request.current.generation === generation) {
+        request.current.pending = false
+        setPending(null)
+      }
+    }
+  }
+
+  function resolve(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (state.status !== 'ready') return
+    const input: ResolutionInput = resolutionKind === 'fixed'
+      ? { kind: 'fixed', fixSummary: resolutionFields.fixSummary, affectedVersion: resolutionFields.affectedVersion,
+        commitUrl: resolutionFields.commitUrl, pullRequestUrl: resolutionFields.pullRequestUrl }
+      : resolutionKind === 'duplicate' ? { kind: 'duplicate', explanation: resolutionFields.explanation, canonicalReportId: state.report.canonicalReport?.id ?? '' }
+        : { kind: resolutionKind, explanation: resolutionFields.explanation }
+    const result = validateResolutionInput(input)
+    if (!result.valid) { setResolutionErrors(result.errors); return }
+    setResolutionErrors({})
+    void saveResolutionOrLink('resolution', () => reportRepository.resolveReport(state.report.id, result.value))
+  }
+
+  function saveCanonicalLink() {
+    if (state.status !== 'ready') return
+    if (!canonicalId) { setCanonicalError('Choose a canonical report.'); return }
+    setCanonicalError('')
+    void saveResolutionOrLink('link', () => reportRepository.linkDuplicate(state.report.id, canonicalId, state.report.canonicalReport?.id ?? null))
+  }
+
   const report = state.status === 'ready' ? state.report : null
   const eligible = report && user.role === 'developer' && !report.projectArchivedAt
   const assigned = report?.assignedDeveloperId?.toLowerCase() === user.id.toLowerCase()
@@ -265,10 +352,49 @@ function ReportDetails({ reportRepository, user, reportId, generateTesterQuestio
       <ReportHeader report={report} />
       <Group className="report-header-actions" gap="sm" role="group" aria-label="Report actions" aria-busy={Boolean(pending)}>
         {workflowAction && <Button type="button" disabled={mutationBlocked} onClick={() => void act(workflowAction)}>{actionLabels[workflowAction]}</Button>}
+        {eligible && assigned && report.state === 'In progress' && !resolutionOpen && <Button type="button" disabled={mutationBlocked} onClick={() => {
+          setResolutionOpen(true)
+          setResolutionFields(fields => ({ ...fields, affectedVersion: report.version }))
+        }}>Resolve report</Button>}
         <Button type="button" variant="subtle" onClick={() => jumpTo('report-discussion')}>Discussion{commentCount === null ? '' : ` (${commentCount})`}</Button>
         {(uncertain || commentUncertain) && !pending && <Button type="button" variant="default" onClick={() => void loadReport(true)}>Reload</Button>}
-        {pending === 'workflow' && <p role="status">Saving report action…</p>}
+        {(pending === 'workflow' || pending === 'resolution' || pending === 'link') && <p role="status">Saving report action…</p>}
       </Group>
+      {eligible && assigned && report.state === 'In progress' && resolutionOpen && <form className="report-resolution-form" aria-label="Resolve report" aria-describedby="report-resolution-unsaved-note" onSubmit={resolve} aria-busy={pending === 'resolution'} noValidate>
+        <h3>Resolve report</h3>
+        <p id="report-resolution-unsaved-note">Unsaved resolution text is lost when you leave this page or your session ends.</p>
+        <NativeSelect label="Resolution outcome" value={resolutionKind} onChange={event => {
+          setResolutionKind(event.currentTarget.value as ResolutionInput['kind'])
+          setResolutionErrors({})
+        }} data={Object.entries(resolutionLabels).map(([value, label]) => ({ value, label }))} error={resolutionErrors.kind} disabled={Boolean(pending)} />
+        {resolutionKind === 'fixed' ? <>
+          <Textarea label="Fix summary" required value={resolutionFields.fixSummary} onChange={event => { const value = event.currentTarget.value; setResolutionFields(fields => ({ ...fields, fixSummary: value })) }} error={resolutionErrors.fixSummary} description={`Up to ${RESOLUTION_TEXT_LIMIT.toLocaleString('en-US')} characters.`} rows={3} resize="vertical" disabled={Boolean(pending)} />
+          <TextInput label="Affected version" required value={resolutionFields.affectedVersion} onChange={event => { const value = event.currentTarget.value; setResolutionFields(fields => ({ ...fields, affectedVersion: value })) }} error={resolutionErrors.affectedVersion} description={`Up to ${RESOLUTION_VERSION_LIMIT} characters. The submitted report version stays unchanged.`} disabled={Boolean(pending)} />
+          <TextInput label="Commit URL" required value={resolutionFields.commitUrl} onChange={event => { const value = event.currentTarget.value; setResolutionFields(fields => ({ ...fields, commitUrl: value })) }} error={resolutionErrors.commitUrl} description={`An HTTP(S) URL, up to ${RESOLUTION_URL_LIMIT.toLocaleString('en-US')} characters.`} disabled={Boolean(pending)} />
+          <TextInput label="Pull request URL" required value={resolutionFields.pullRequestUrl} onChange={event => { const value = event.currentTarget.value; setResolutionFields(fields => ({ ...fields, pullRequestUrl: value })) }} error={resolutionErrors.pullRequestUrl} description={`An HTTP(S) URL, up to ${RESOLUTION_URL_LIMIT.toLocaleString('en-US')} characters. Any provider is accepted.`} disabled={Boolean(pending)} />
+        </> : <>
+          <Textarea label="Explanation" required value={resolutionFields.explanation} onChange={event => { const value = event.currentTarget.value; setResolutionFields(fields => ({ ...fields, explanation: value })) }} error={resolutionErrors.explanation} description={`Up to ${RESOLUTION_TEXT_LIMIT.toLocaleString('en-US')} characters.`} rows={3} resize="vertical" disabled={Boolean(pending)} />
+          {resolutionKind === 'duplicate' && <div>
+            <p>Duplicate resolution uses the saved canonical report. Select and save its link separately before resolving.</p>
+            {targets.status === 'loading' && <p role="status">Loading canonical reports…</p>}
+            {targets.status === 'error' && <>
+              <p role="alert">Canonical reports could not be loaded. Report details are still available.</p>
+              <Button type="button" variant="default" disabled={Boolean(pending)} onClick={() => { setTargets({ status: 'loading' }); setTargetAttempt(attempt => attempt + 1) }}>Retry canonical reports</Button>
+            </>}
+            {targets.status === 'ready' && (targets.values.length === 0 ? <p>No other reports in this project are available to link.</p> : <>
+              <NativeSelect label="Canonical report" description="Choose the original report by its title and ID. Resolved and Closed reports are eligible." value={canonicalId} onChange={event => { setCanonicalId(event.currentTarget.value); setCanonicalError('') }} error={canonicalError || resolutionErrors.canonicalReportId} disabled={Boolean(pending)} data={[
+                { value: '', label: 'Choose a canonical report' }, ...targets.values.map(target => ({ value: target.id, label: `${target.title} (${target.id})` })),
+              ]} />
+              <Button type="button" mt="sm" disabled={mutationBlocked} onClick={saveCanonicalLink}>Save canonical link</Button>
+            </>)}
+            {report.canonicalReport ? <p>Saved canonical report: <CanonicalReportLink id={report.canonicalReport.id} title={report.canonicalReport.title} /></p> : <p>No canonical report has been saved.</p>}
+          </div>}
+        </>}
+        <Group mt="sm" gap="sm">
+          <Button type="submit" disabled={mutationBlocked}>Save resolution</Button>
+          <Button type="button" variant="default" disabled={Boolean(pending)} onClick={() => { setResolutionOpen(false); setResolutionErrors({}) }}>Cancel resolution</Button>
+        </Group>
+      </form>}
       {report.state === 'Awaiting tester information' && <p className="report-waiting-note">Waiting for tester information. Comments do not change this state; the assigned developer resumes investigation manually.</p>}
       <Tabs value={tab} onChange={setTab} keepMounted className="report-tabs">
         <Tabs.List aria-label="Report sections">
@@ -298,6 +424,14 @@ function ReportDetails({ reportRepository, user, reportId, generateTesterQuestio
               </li>)}
             </ol> : <p role="status">No useful follow-up questions were identified.</p>)}
             {copyFeedback && <p role="status">{copyFeedback}</p>}
+          </section>}
+          {report.canonicalReport && <p className="project-description">Current canonical report: <CanonicalReportLink id={report.canonicalReport.id} title={report.canonicalReport.title} /></p>}
+          {report.resolution && <section className="report-resolution" aria-labelledby="report-resolution-heading">
+            <h3 id="report-resolution-heading">Resolution</h3>
+            <ResolutionValues resolution={report.resolution} />
+            {report.resolution.kind === 'fixed'
+              ? <p>The original Tester must retest this fix before closure. Tester retesting, closure, and reopening are not available yet.</p>
+              : <p>No retest is required for this outcome. Tester closure and reopening are not available yet.</p>}
           </section>}
           <section id="report-discussion" className="report-discussion" tabIndex={-1} aria-labelledby="report-discussion-heading">
             <Group justify="space-between" align="center" gap="sm">
@@ -401,6 +535,7 @@ function ActivityHistory({ report, history }: { report: Report; history: ReportH
   const labels: Record<ReportHistoryEntry['event'], string> = {
     created: 'created this report', accepted: 'accepted this report', investigation_started: 'started investigation',
     tester_information_requested: 'requested tester information', investigation_resumed: 'resumed investigation',
+    resolved: 'resolved this report', duplicate_linked: 'changed the canonical report link',
   }
   return history.length ? <ol className="project-history report-activity">{history.map(entry => <li key={entry.id}>
     <p><strong>{identityLabel(entry.actorDisplayName, entry.actorUsername || (entry.actorId === report.reporterId ? report.reporterUsername : null))}</strong>{' '}
@@ -410,12 +545,17 @@ function ActivityHistory({ report, history }: { report: Report; history: ReportH
 }
 
 function HistoryChanges({ entry, report }: { entry: ReportHistoryEntry; report: Report }) {
+  if (entry.event === 'duplicate_linked') return <dl>
+    <div><dt>Previous canonical report</dt><dd>{entry.changes.canonicalReportId.before ? <CanonicalReportLink id={entry.changes.canonicalReportId.before} /> : 'None'}</dd></div>
+    <div><dt>New canonical report</dt><dd><CanonicalReportLink id={entry.changes.canonicalReportId.after} /></dd></div>
+  </dl>
   if (entry.event !== 'created') return <dl>
     <div><dt>State</dt><dd>{entry.changes.state.before} → {entry.changes.state.after}</dd></div>
     {entry.event === 'accepted' && <>
       <div><dt>Assigned developer</dt><dd>Unassigned → {identityLabel(entry.assignedDeveloperDisplayName, entry.assignedDeveloperUsername)}</dd></div>
       <div><dt>Assigned</dt><dd><time dateTime={entry.changes.assignedAt.after}>{dateLabel(entry.changes.assignedAt.after)}</time></dd></div>
     </>}
+    {entry.event === 'resolved' && <div><dt>Resolution snapshot</dt><dd><ResolutionValues resolution={entry.changes.resolution.after} /></dd></div>}
   </dl>
   return <dl>{(Object.keys(entry.changes) as (keyof ReportInput)[]).map(field => {
     const value = entry.changes[field]?.after ?? ''
@@ -423,4 +563,25 @@ function HistoryChanges({ entry, report }: { entry: ReportHistoryEntry; report: 
       : field === 'severity' && Object.hasOwn(REPORT_SEVERITIES, value) ? REPORT_SEVERITIES[value as ReportSeverity] : value
     return <div key={field}><dt>{historyLabel(field)}</dt><dd className="project-description">{label || 'Not provided'}</dd></div>
   })}</dl>
+}
+
+function CanonicalReportLink({ id, title }: { id: string; title?: string }) {
+  return <Link to={`/reports/${id}`}>{title ? `${title} (${id})` : id}</Link>
+}
+
+function ResolutionValues({ resolution }: { resolution: ReportResolution }) {
+  return <dl className="report-resolution-values">
+    <div><dt>Outcome</dt><dd>{resolutionLabels[resolution.kind]}</dd></div>
+    {resolution.kind === 'fixed' ? <>
+      <div><dt>Fix summary</dt><dd className="project-description">{resolution.fixSummary}</dd></div>
+      <div><dt>Affected version</dt><dd className="project-description">{resolution.affectedVersion}</dd></div>
+      <div><dt>Commit URL</dt><dd><a href={resolution.commitUrl} target="_blank" rel="noreferrer noopener">{resolution.commitUrl}</a></dd></div>
+      <div><dt>Pull request URL</dt><dd><a href={resolution.pullRequestUrl} target="_blank" rel="noreferrer noopener">{resolution.pullRequestUrl}</a></dd></div>
+    </> : <>
+      <div><dt>Explanation</dt><dd className="project-description">{resolution.explanation}</dd></div>
+      {resolution.kind === 'duplicate' && <div><dt>Canonical report at resolution</dt><dd><CanonicalReportLink id={resolution.canonicalReportId} /></dd></div>}
+    </>}
+    <div><dt>Resolved by</dt><dd>{identityLabel(resolution.authorDisplayName, resolution.authorUsername)}</dd></div>
+    <div><dt>Resolved at</dt><dd><time dateTime={resolution.resolvedAt}>{dateLabel(resolution.resolvedAt)}</time></dd></div>
+  </dl>
 }

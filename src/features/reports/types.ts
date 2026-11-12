@@ -1,5 +1,29 @@
 export type ReportSeverity = 'very_low' | 'low' | 'medium' | 'high'
-export type ReportState = 'Open' | 'Accepted' | 'In progress' | 'Awaiting tester information'
+export type ReportState = 'Open' | 'Accepted' | 'In progress' | 'Awaiting tester information' | 'Resolved' | 'Closed'
+
+export type ResolutionInput = {
+  kind: 'fixed'
+  fixSummary: string
+  affectedVersion: string
+  commitUrl: string
+  pullRequestUrl: string
+} | {
+  kind: 'duplicate'
+  explanation: string
+  canonicalReportId: string
+} | {
+  kind: 'invalid' | 'cannot_reproduce' | 'will_not_fix'
+  explanation: string
+}
+
+export type ReportResolution = ResolutionInput & {
+  authorId: string
+  authorUsername: string | null
+  authorDisplayName: string | null
+  resolvedAt: string
+}
+
+export type ResolutionFieldErrors = Partial<Record<'kind' | 'fixSummary' | 'affectedVersion' | 'commitUrl' | 'pullRequestUrl' | 'explanation' | 'canonicalReportId', string>>
 
 export interface ReportInput {
   projectId: string
@@ -19,6 +43,8 @@ export interface ValidatedReportInput extends ReportInput {
 }
 
 export interface Report extends ValidatedReportInput {
+  resolution: ReportResolution | null
+  canonicalReport: { id: string; title: string } | null
   id: string
   reporterId: string
   createdAt: string
@@ -91,6 +117,15 @@ export type ReportHistoryEntry = ReportHistoryIdentity & ({
 } | {
   event: 'investigation_resumed'
   changes: { state: { before: 'Awaiting tester information'; after: 'In progress' } }
+} | {
+  event: 'resolved'
+  changes: {
+    state: { before: 'In progress'; after: 'Resolved' }
+    resolution: { before: null; after: ReportResolution }
+  }
+} | {
+  event: 'duplicate_linked'
+  changes: { canonicalReportId: { before: string | null; after: string } }
 })
 
 export type ProjectReportSummary = Pick<Report,
@@ -102,9 +137,9 @@ export type ReportFieldErrors = Partial<Record<keyof ReportInput, string>>
 
 export class ReportError extends Error {
   readonly code: ReportErrorCode
-  readonly fieldErrors?: ReportFieldErrors
+  readonly fieldErrors?: ReportFieldErrors & ResolutionFieldErrors
 
-  constructor(code: ReportErrorCode, message: string, fieldErrors?: ReportFieldErrors) {
+  constructor(code: ReportErrorCode, message: string, fieldErrors?: ReportFieldErrors & ResolutionFieldErrors) {
     super(message)
     this.name = 'ReportError'
     this.code = code
@@ -124,6 +159,8 @@ export interface ReportRepository {
   startInvestigation(id: string): Promise<Report>
   awaitTesterInformation(id: string): Promise<Report>
   resumeInvestigation(id: string): Promise<Report>
+  resolveReport(id: string, input: ResolutionInput): Promise<Report>
+  linkDuplicate(id: string, canonicalReportId: string, expectedCanonicalReportId: string | null): Promise<Report>
   listReportComments(id: string): Promise<ReportComment[]>
   postReportComment(id: string, input: CommentInput): Promise<ReportComment>
   listReportHistory(id: string): Promise<ReportHistoryEntry[]>

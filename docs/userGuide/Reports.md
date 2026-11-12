@@ -55,7 +55,7 @@ Open a project and select its **Reports** tab. The table lists that project's su
 
 The saved page shows the project, reporter, state, assigned developer, and severity above the report tabs. **Conversation** is selected first: its **Report details** section shows the report fields and timestamps, including the assignment time once a Developer accepts the report. Select **Report details** to collapse or expand it. Discussion follows below. The **Discussion** button near the header jumps to that section, and **Jump to latest** takes you to the newest comment when comments exist.
 
-Select **Activity** to see who created or accepted the report, started investigation, requested tester information, or resumed investigation. The selected tab has an accent underline and stronger text. Select an entry's **Recorded changes** to inspect its saved values, including the original submission fields. The report header and available actions remain above either tab. Select the **Project** link in the report facts to visit its overview, or select **Back to project reports** to return to the listing. The return button highlights on hover and shows a focus outline when using the keyboard. If a saved report cannot be loaded, select **Retry**. If only discussion or activity cannot be loaded, use **Retry discussion** or **Retry activity** in that section. A missing report shows **Report not found**.
+Select **Activity** to see who created or accepted the report, started investigation, requested tester information, resumed investigation, resolved it, or changed its canonical report link. The selected tab has an accent underline and stronger text. Select an entry's **Recorded changes** to inspect its saved values, including the original submission fields, resolution snapshot, or previous and new canonical report IDs. The report header and available actions remain above either tab. Select the **Project** link in the report facts to visit its overview, or select **Back to project reports** to return to the listing. The return button highlights on hover and shows a focus outline when using the keyboard. If a saved report cannot be loaded, select **Retry**. If only discussion or activity cannot be loaded, use **Retry discussion** or **Retry activity** in that section. A missing report shows **Report not found**.
 
 ## Discuss a report
 
@@ -99,4 +99,40 @@ If another Developer accepts the report first, the page explains that it is alre
 
 The two state changes appear in **Activity** with the actor and time. As with other report actions, unavailable, archived, conflicting, or uncertain outcomes are explained on the page; reload when prompted before another action.
 
-Releasing or transferring an assignment is not available. Report editing, resolution, and attachments are also unavailable in this feature.
+## Link a duplicate report
+
+The canonical report is the original submitted report that another report duplicates. Its selection field appears only inside the resolution form when the assigned Developer chooses **Duplicate** on an active-project **In progress** report.
+
+1. Open the assigned report's details page, select **Resolve report**, and choose **Duplicate** in **Resolution outcome**.
+2. Choose another report in **Canonical report**. Each choice includes its title and ID. The choices include all submitted reports in the same project except this report, including **Resolved** and **Closed** targets; private drafts and other projects are excluded.
+3. Select **Save canonical link**. This saves the link and records the previous and new targets in **Activity**. It keeps both reports' states and assignments unchanged and does not resolve the report.
+
+For example, link a second checkout-discount report to the first report before resolving the second as **Duplicate**. Saving the already saved target again adds no activity. A saved link can be replaced, but link removal is not available. If choices fail to load, select **Retry canonical reports**; the report remains readable. An empty list means there are no other reports in that project to link.
+
+Both roles can follow **Current canonical report** on the **Conversation** tab. A Duplicate resolution also retains **Canonical report at resolution**. Saved links remain readable after resolution, but the canonical selection controls are hidden once the resolution form closes or another outcome is selected. The link cannot be edited through this form after the report becomes **Resolved**.
+
+## Resolve an investigated report
+
+Only the assigned Developer can resolve an **In progress** report in an active project. Open its details page and select **Resolve report** above the tabs. Resolution records a Developer outcome and changes the report to **Resolved**, preserving its assignee, assignment time, and original submitted version.
+
+To record a fix:
+
+1. Leave **Resolution outcome** set to **Fixed**.
+2. Enter a **Fix summary**, check or edit the **Affected version** prefilled from the report's version, and enter both **Commit URL** and **Pull request URL**. The affected version is stored separately from the submitted version; there is no fixed-version field.
+3. Select **Save resolution**.
+
+To record a non-fix outcome:
+
+1. Choose **Duplicate**, **Invalid**, **Cannot reproduce**, or **Will not fix** in **Resolution outcome**.
+2. Enter an **Explanation**. Fix fields do not apply to these outcomes. For **Duplicate**, choose a **Canonical report** within this form and select **Save canonical link** before **Save resolution**; choosing a target without saving it is insufficient. The canonical field is hidden for every other outcome.
+3. Select **Save resolution**. For example, **Cannot reproduce** can explain the environment and steps tried.
+
+Fix summary and explanation each require 1–5,000 Unicode code points; affected version requires 1–100. Both fix URLs are required, allow at most 2,048 code points each, and must be absolute HTTP or HTTPS URLs with a host. They can use different repository providers or hosts from the project's repository. Surrounding whitespace is removed before validation. BugWatch stores ordinary links without fetching or checking the commit or pull request. Only fields applicable to the selected outcome are saved.
+
+Choose **Cancel resolution** to close the form without saving a resolution. Validation feedback keeps your applicable input for correction. Resolution text is temporary: leaving or reloading the page, signing out, or losing your session discards unsaved text. It is not saved as a draft.
+
+After saving, either role can reload and read **Resolution** on the **Conversation** tab, including its outcome, applicable values, author, and time. **Activity** retains the captured values under **Recorded changes**. Fixed outcomes explain that the original Tester must retest before closure; non-fix outcomes require no retest. Tester retesting, closure, and reopening controls are not available yet, and Developers cannot close a report. Discussion remains available on active-project Resolved reports. Archived reports retain readable details, resolution, links, and activity, but have no mutation controls.
+
+Resolution, linking, commenting, and other report actions share a save guard, so only one runs at a time. A state or link conflict refreshes authoritative data before another attempt. If a save or readback cannot be confirmed, it may already have been saved: select **Reload** and inspect the report and **Activity** before trying again. BugWatch does not automatically repeat the mutation. Applicable unsaved resolution text stays available while you remain on the page, though a confirmed Resolved state hides the form.
+
+Releasing or transferring an assignment, report editing, and attachments are not available in this feature.
