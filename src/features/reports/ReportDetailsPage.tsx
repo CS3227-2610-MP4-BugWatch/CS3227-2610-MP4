@@ -8,7 +8,7 @@ import type { Report, ReportComment, ReportHistoryEntry, ReportInput, ReportRepo
 import { COMMENT_TEXT_LIMIT, REPORT_SEVERITIES, REPORT_TEXT_FIELDS, REPORT_TEXT_KEYS, validateCommentInput } from './validation'
 import { requestTesterQuestions } from './testerQuestionClient'
 import type { GenerateTesterQuestions } from './testerQuestionClient'
-import { questionContextVersion } from './testerQuestionTypes'
+import { questionContextVersion, TESTER_QUESTION_ELIGIBLE_STATES } from './testerQuestionTypes'
 import { useTesterQuestions } from './useTesterQuestions'
 
 type ReportRead = { status: 'loading' | 'missing' | 'error' } | { status: 'ready'; report: Report }
@@ -238,7 +238,7 @@ function ReportDetails({ reportRepository, user, reportId, generateTesterQuestio
   const commentCount = comments.status === 'ready' ? comments.values.length : null
   const latestComment = comments.status === 'ready' ? comments.values.at(-1) : undefined
   const questionsEligible = Boolean(eligible && assigned && report
-    && ['Accepted', 'In progress', 'Awaiting tester information'].includes(report.state))
+    && TESTER_QUESTION_ELIGIBLE_STATES.includes(report.state))
   const contextVersion = report && comments.status === 'ready'
     ? questionContextVersion({ report, discussion: comments.values }) : null
   const questions = useTesterQuestions(generateTesterQuestions, reportId, questionsEligible, contextVersion)

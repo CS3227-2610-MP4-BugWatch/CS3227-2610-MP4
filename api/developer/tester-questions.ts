@@ -1,4 +1,4 @@
-import { questionContext, questionContextVersion, parseTesterQuestions, serializeQuestionContext } from '../../src/features/reports/testerQuestionTypes.js'
+import { questionContext, questionContextVersion, parseTesterQuestions, serializeQuestionContext, TESTER_QUESTION_ELIGIBLE_STATES } from '../../src/features/reports/testerQuestionTypes.js'
 import type { QuestionContext } from '../../src/features/reports/testerQuestionTypes.js'
 import { REPORT_UUID } from '../../src/features/reports/validation.js'
 import { createTesterQuestionDependencies } from '../_lib/_tester-question-dependencies.js'
@@ -46,7 +46,7 @@ export function questionContextByteLength(context: QuestionContext): number {
 
 export function questionEligibility(context: LoadedQuestionContext, actorId: string): QuestionEligibility {
   if (context.assignedDeveloperId?.toLowerCase() !== actorId.toLowerCase()) return 'forbidden'
-  if (context.projectArchived || !['Accepted', 'In progress', 'Awaiting tester information'].includes(context.state)) {
+  if (context.projectArchived || !TESTER_QUESTION_ELIGIBLE_STATES.some(state => state === context.state)) {
     return 'ineligible_report'
   }
   return 'eligible'

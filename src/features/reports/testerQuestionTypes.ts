@@ -1,4 +1,10 @@
-import type { Report } from './types.js'
+import type { Report, ReportState } from './types.js'
+
+export const TESTER_QUESTION_ELIGIBLE_STATES: readonly ReportState[] = Object.freeze([
+  'Accepted',
+  'In progress',
+  'Awaiting tester information',
+])
 
 export type TesterQuestionRequest = { reportId: string }
 export type TesterQuestionResult = { questions: string[]; contextVersion: string }

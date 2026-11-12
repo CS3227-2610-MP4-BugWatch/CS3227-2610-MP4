@@ -56,7 +56,6 @@ export function createTesterQuestionDependencies(env: NodeJS.ProcessEnv): Tester
       return { allowed: data.allowed as boolean, retryAfterMs: data.retryAfterMs as number }
     },
     generate: context => requestSoCLaaS(apiKey, model, testerQuestionMessages(context), {
-      // Tentative operational bounds: manual model review is required before feature completion.
       timeoutMs: 15_000, maxOutputTokens: 1_500, temperature: 0.7, topP: 0.8,
     }),
   }
