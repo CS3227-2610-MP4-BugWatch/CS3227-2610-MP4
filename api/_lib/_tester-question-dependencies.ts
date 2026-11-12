@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { createReportRepository } from '../../src/features/reports/reportRepository.js'
+import { ReportError } from '../../src/features/reports/types.js'
 import { questionContext } from '../../src/features/reports/testerQuestionTypes.js'
 import { questionEligibility, testerQuestionMessages } from '../developer/tester-questions.js'
 import type { TesterQuestionDependencies } from '../developer/tester-questions.js'
@@ -34,15 +35,20 @@ export function createTesterQuestionDependencies(env: NodeJS.ProcessEnv): Tester
     authenticate,
     async loadContext(token, reportId) {
       const repository = createReportRepository(userClient(token))
-      const report = await repository.getReport(reportId)
-      if (!report) return null
-      const discussion = await repository.listReportComments(reportId)
-      return { ...questionContext({ report, discussion }), assignedDeveloperId: report.assignedDeveloperId,
-        state: report.state, projectArchived: report.projectArchivedAt !== null }
+      try {
+        const discussion = await repository.listReportComments(reportId)
+        // Read eligibility metadata after pagination, immediately before admission checks.
+        const report = await repository.getReport(reportId)
+        if (!report) return null
+        return { ...questionContext({ report, discussion }), assignedDeveloperId: report.assignedDeveloperId,
+          state: report.state, projectArchived: report.projectArchivedAt !== null }
+      } catch (error) {
+        if (error instanceof ReportError && error.code === 'not_found') return null
+        throw error
+      }
     },
     async checkEligibility(token, reportId, actorId) {
-      const actor = await authenticate(token)
-      if (!actor || actor.id.toLowerCase() !== actorId.toLowerCase() || actor.role !== 'developer') return 'forbidden'
+      // The handler supplies the actor authenticated for this request; reload mutable report access.
       const report = await createReportRepository(userClient(token)).getReport(reportId)
       if (!report) return 'not_found'
       return questionEligibility({ report, discussion: [], assignedDeveloperId: report.assignedDeveloperId,

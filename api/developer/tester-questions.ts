@@ -101,8 +101,6 @@ export async function handleTesterQuestions(request: Request, dependencies: Test
     if (initialFailure) return initialFailure
     const context = questionContext(loaded)
     if (questionContextByteLength(context) > MAX_QUESTION_CONTEXT_BYTES) return reply(413, { code: 'context_too_large' })
-    const beforeFailure = eligibilityFailure(await dependencies.checkEligibility(token, reportId, actor.id))
-    if (beforeFailure) return beforeFailure
     const quota = await dependencies.reserve(actor.id)
     if (typeof quota.allowed !== 'boolean' || !Number.isSafeInteger(quota.retryAfterMs)
       || (quota.allowed ? quota.retryAfterMs !== 0 : quota.retryAfterMs <= 0)) throw new Error('Invalid quota result')

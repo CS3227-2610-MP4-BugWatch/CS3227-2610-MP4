@@ -34,6 +34,71 @@ function setup() {
 function request() { return endpoint.fetch(new Request('https://example.test/api/developer/tester-questions', { method: 'POST', headers: { Authorization: 'Bearer session-token' }, body: JSON.stringify({ reportId, actorId: 'forged', temperature: 2 }) })) }
 afterEach(() => { vi.resetAllMocks(); vi.restoreAllMocks(); vi.unstubAllEnvs(); vi.unstubAllGlobals() })
 
+it('developerDependencies_success_authenticatesOncePerRequestAndChecksReportAfterGeneration', async () => {
+  const { getUser, profileRead, rpc, quota, fetch } = setup()
+  fetch.mockImplementation(async () => Response.json({ choices: [{ message: { content: JSON.stringify({ questions: ['Which browser version?'] }) } }] }))
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    expect((await request()).status).toBe(200)
+    expect(getUser).toHaveBeenCalledTimes(attempt)
+    expect(profileRead).toHaveBeenCalledTimes(attempt)
+    expect(quota).toHaveBeenCalledTimes(attempt)
+    expect(rpc.mock.calls.slice((attempt - 1) * 3).map(([name]) => name)).toEqual([
+      'list_report_comments', 'get_report', 'get_report',
+    ])
+    const calls = rpc.mock.invocationCallOrder.slice((attempt - 1) * 3)
+    expect(calls[1]).toBeLessThan(quota.mock.invocationCallOrder[attempt - 1])
+    expect(quota.mock.invocationCallOrder[attempt - 1]).toBeLessThan(fetch.mock.invocationCallOrder[attempt - 1])
+    expect(calls[2]).toBeGreaterThan(fetch.mock.invocationCallOrder[attempt - 1])
+  }
+})
+
+it.each([
+  ['reassigned', { ...row, assigned_developer_id: '10000000-0000-4000-8000-000000000099' }, 403],
+  ['archived', { ...row, project_archived_at: time }, 409],
+  ['returned to Open', { ...row, state: 'Open', assigned_developer_id: null, assigned_at: null, assigned_developer_username: null, assigned_developer_display_name: null }, 403],
+  ['deleted', null, 404],
+] as const)('developerDependencies_report%sDuringPagination_deniesBeforeQuotaAndProvider', async (_name, changed, status) => {
+  const { rpc, quota, fetch } = setup()
+  let discussionLoaded = false
+  rpc.mockImplementation(async (name, params) => {
+    if (name === 'get_report') return { data: discussionLoaded ? changed : row, error: null }
+    if (!params.p_after_id) return { data: Array.from({ length: 100 }, (_, i) => comment(i + 1)), error: null }
+    discussionLoaded = true
+    return { data: [comment(101)], error: null }
+  })
+  expect((await request()).status).toBe(status)
+  expect(rpc.mock.calls.map(([name]) => name)).toEqual(['list_report_comments', 'list_report_comments', 'get_report'])
+  expect(quota).not.toHaveBeenCalled()
+  expect(fetch).not.toHaveBeenCalled()
+})
+
+it('developerDependencies_missingReportDuringDiscussion_returns404WithoutCharge', async () => {
+  const { rpc, quota, fetch } = setup()
+  rpc.mockResolvedValue({ data: null, error: { code: 'P2005' } })
+  expect((await request()).status).toBe(404)
+  expect(rpc).toHaveBeenCalledExactlyOnceWith('list_report_comments', { p_report_id: reportId })
+  expect(quota).not.toHaveBeenCalled()
+  expect(fetch).not.toHaveBeenCalled()
+})
+
+it.each([
+  ['reassigned', { ...row, assigned_developer_id: '10000000-0000-4000-8000-000000000099' }, 403],
+  ['archived', { ...row, project_archived_at: time }, 409],
+  ['deleted', null, 404],
+] as const)('developerDependencies_report%sDuringGeneration_suppressesOutputWithoutReauthentication', async (_name, changed, status) => {
+  const { getUser, profileRead, rpc, fetch, quota } = setup()
+  fetch.mockImplementation(async () => {
+    rpc.mockResolvedValue({ data: changed, error: null })
+    return Response.json({ choices: [{ message: { content: JSON.stringify({ questions: ['Hidden question?'] }) } }] })
+  })
+  const response = await request()
+  expect(response.status).toBe(status)
+  expect(await response.text()).not.toContain('Hidden question')
+  expect(getUser).toHaveBeenCalledTimes(1)
+  expect(profileRead).toHaveBeenCalledTimes(1)
+  expect(quota).toHaveBeenCalledTimes(1)
+})
+
 it('developerDependencies_completePaginatedDiscussion_usesScopedReadsAndDeveloperOptions', async () => {
   const { rpc, quota, fetch, profileFilter } = setup()
   const timeout = vi.spyOn(AbortSignal, 'timeout')

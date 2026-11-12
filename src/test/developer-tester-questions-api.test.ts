@@ -37,7 +37,8 @@ it('testerQuestions_validRequest_usesOnlyTrustedAllowlistedContextAndReturnsDige
   expect(deps.loadContext).toHaveBeenCalledExactlyOnceWith('session-token', reportId)
   expect(deps.generate).toHaveBeenCalledExactlyOnceWith({ report: loaded.report, discussion: loaded.discussion })
   expect(deps.reserve).toHaveBeenCalledExactlyOnceWith(actorId)
-  expect(deps.checkEligibility).toHaveBeenCalledWith('session-token', reportId, actorId)
+  expect(deps.checkEligibility).toHaveBeenCalledExactlyOnceWith('session-token', reportId, actorId)
+  expect(deps.checkEligibility.mock.invocationCallOrder[0]).toBeGreaterThan(deps.generate.mock.invocationCallOrder[0])
 })
 
 it.each(['Accepted', 'In progress', 'Awaiting tester information'])('testerQuestions_assignedDeveloperIn%s_admits', async state => {
@@ -112,13 +113,6 @@ it('testerQuestions_quotaDenied_returnsPositiveRetryWithoutProvider', async () =
   expect(await response.json()).toEqual({ code: 'rate_limited', retryAfterMs: 1501 })
   expect(deps.generate).not.toHaveBeenCalled()
 })
-it.each(['forbidden', 'not_found', 'ineligible_report'] as const)('testerQuestions_lostEligibilityBeforeDispatch%s_doesNotCharge', async outcome => {
-  const { deps, request } = setup()
-  deps.checkEligibility.mockResolvedValue(outcome)
-  expect((await request()).status).toBe({ forbidden: 403, not_found: 404, ineligible_report: 409 }[outcome])
-  expect(deps.reserve).not.toHaveBeenCalled()
-  expect(deps.generate).not.toHaveBeenCalled()
-})
 it.each(['forbidden', 'not_found', 'ineligible_report'] as const)('testerQuestions_lostEligibilityDuringGeneration%s_suppressesContent', async outcome => {
   const { deps, request } = setup()
   deps.generate.mockImplementation(async () => { deps.checkEligibility.mockResolvedValue(outcome); return { questions: ['Secret question?'] } })
@@ -150,7 +144,7 @@ it.each(['authenticate', 'loadContext', 'checkEligibility', 'reserve', 'generate
   expect(response.status).toBe(502)
   expect(await response.json()).toEqual({ code: 'unavailable' })
   expect(deps[dependency]).toHaveBeenCalledTimes(1)
-  expect(deps.generate).toHaveBeenCalledTimes(dependency === 'generate' ? 1 : 0)
+  expect(deps.generate).toHaveBeenCalledTimes(['generate', 'checkEligibility'].includes(dependency) ? 1 : 0)
 })
 it('testerQuestions_disabledDefaultHandler_doesNotCallNetwork', async () => {
   vi.stubEnv('DEVELOPER_QUESTIONS_ENABLED', 'false')
@@ -203,7 +197,7 @@ it.each(credentialSolicitations.flatMap(question => [question, question.toUpperC
   expect(await response.json()).toEqual({ code: 'unavailable' })
   expect(deps.reserve).toHaveBeenCalledExactlyOnceWith(actorId)
   expect(deps.generate).toHaveBeenCalledTimes(1)
-  expect(deps.checkEligibility).toHaveBeenCalledTimes(2)
+  expect(deps.checkEligibility).toHaveBeenCalledTimes(1)
 })
 
 it.each(benignCredentialQuestions.flatMap(question => [question, question.toUpperCase(), question.replaceAll(' ', '\t  '), Array.from(question, character => {
