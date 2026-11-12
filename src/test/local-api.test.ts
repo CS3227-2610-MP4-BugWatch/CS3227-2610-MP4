@@ -8,6 +8,7 @@ let origin: string
 
 beforeAll(async () => {
   vi.stubEnv('TESTER_SUGGESTIONS_ENABLED', 'false')
+  vi.stubEnv('DEVELOPER_QUESTIONS_ENABLED', 'false')
   server = await createServer({
     mode: 'test',
     server: { host: '127.0.0.1', port: 0, hmr: false },
@@ -71,4 +72,35 @@ it('localApi_frontendRoute_stillServesTheApp', async () => {
   const response = await fetch(`${origin}/projects`)
   expect(response.status).toBe(200)
   expect(await response.text()).toContain('id="root"')
+})
+
+it('localDeveloperApi_get_reachesDeveloperMethodGuard', async () => {
+  const response = await fetch(`${origin}/api/developer/tester-questions`)
+  expect(response.status).toBe(405)
+  expect(response.headers.get('Allow')).toBe('POST')
+  expect(await response.json()).toEqual({ code: 'method_not_allowed' })
+})
+
+it('localDeveloperApi_disabledPost_returnsSafeJson', async () => {
+  const response = await fetch(`${origin}/api/developer/tester-questions`, { method: 'POST', body: JSON.stringify({ reportId: 'synthetic' }) })
+  expect(response.status).toBe(503)
+  expect(response.headers.get('Cache-Control')).toBe('no-store')
+  expect(await response.json()).toEqual({ code: 'unavailable' })
+})
+
+it('localDeveloperApi_post_dispatchesDeveloperModuleAndPreservesResponse', async () => {
+  const handler = vi.fn(async (request: Request) => {
+    expect(request.headers.get('Authorization')).toBe('Bearer developer-token')
+    expect(await request.json()).toEqual({ reportId: 'synthetic-id' })
+    return Response.json({ questions: [] }, { headers: { 'Cache-Control': 'no-store' } })
+  })
+  const load = vi.spyOn(server, 'ssrLoadModule').mockResolvedValue({ default: { fetch: handler } })
+  try {
+    const response = await fetch(`${origin}/api/developer/tester-questions`, { method: 'POST', headers: { Authorization: 'Bearer developer-token' }, body: JSON.stringify({ reportId: 'synthetic-id' }) })
+    expect(load).toHaveBeenCalledExactlyOnceWith('/api/developer/tester-questions.ts')
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ questions: [] })
+    expect(response.headers.get('Cache-Control')).toBe('no-store')
+    expect(handler).toHaveBeenCalledTimes(1)
+  } finally { load.mockRestore() }
 })
