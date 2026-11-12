@@ -19,5 +19,5 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src"],
-  "exclude": ["src/test/report-suggestions-api.test.ts", "src/test/report-suggestions-dependencies.test.ts", "src/test/local-api.test.ts", "src/test/report-suggestion-quota.test.ts"]
+  "exclude": ["src/test/report-suggestions-api.test.ts", "src/test/report-suggestions-dependencies.test.ts", "src/test/local-api.test.ts", "src/test/report-suggestion-quota.test.ts", "src/test/developer-tester-questions-api.test.ts", "src/test/developer-tester-questions-dependencies.test.ts", "src/test/developer-question-quota.test.ts", "src/test/developer-tester-questions-policy.test.ts"]
 }

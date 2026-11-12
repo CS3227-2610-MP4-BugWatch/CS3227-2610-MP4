@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { ReportError } from './types'
-import type { DraftSummary, ReportComment, ReportDraft, ProjectReportSummary, Report, ReportFieldErrors, ReportHistoryEntry, ReportInput, ReportRepository, ReportResolution, ReportSeverity, ResolutionFieldErrors, ResolutionInput } from './types'
-import { REPORT_SEVERITIES, REPORT_TEXT_FIELDS, REPORT_UUID, validateCommentInput, validateDraftInput, validateReportInput, validateResolutionInput } from './validation'
+import { ReportError } from './types.js'
+import type { DraftSummary, ReportComment, ReportDraft, ProjectReportSummary, Report, ReportFieldErrors, ReportHistoryEntry, ReportInput, ReportRepository, ReportResolution, ReportSeverity, ResolutionFieldErrors, ResolutionInput } from './types.js'
+import { REPORT_SEVERITIES, REPORT_TEXT_FIELDS, REPORT_UUID, validateCommentInput, validateDraftInput, validateReportInput, validateResolutionInput } from './validation.js'
 
 const PROJECT_REPORT_PAGE_SIZE = 100
 const DRAFT_PAGE_SIZE = 100

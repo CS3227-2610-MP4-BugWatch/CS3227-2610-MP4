@@ -67,6 +67,20 @@ Comments must contain 1–5,000 Unicode code points after surrounding whitespace
 
 If a post cannot be confirmed, BugWatch keeps your text and explains that the comment may have been saved. Select **Reload** and check the conversation before posting again. BugWatch does not automatically repeat the post. Commenting does not change the report state.
 
+## Suggest questions for a tester
+
+When the assistant is enabled, the assigned Developer can use **Suggested tester questions** on an active project's report in **Accepted**, **In progress**, or **Awaiting tester information**. The full discussion must finish loading before generation is available.
+
+1. On the report's **Conversation** tab, select **Generate tester questions**. The assistant uses the saved report and its saved discussion to suggest up to five questions, or tells you when it finds no useful follow-up questions.
+2. Review the labeled suggestions. Select **Copy** beside a question, then paste and edit it in **Comment** if you want to ask it. Posting remains a separate action. For example, you could copy a question asking which browser version reproduced the problem, edit it, and post it as an ordinary discussion comment.
+3. Select **Generate again** to request a new set. If the saved report or discussion changes and the page loads those changes, the previous suggestions remain visible and are marked outdated. A generation failure retains previous suggestions unless your access or eligibility has been lost. If copying fails, select and copy the question text manually.
+
+Suggestions are temporary: switching tabs or reloading the discussion keeps them on the current report page, but leaving or refreshing the page, changing accounts, or losing eligibility clears them. Generating or copying a question does not post it, replace your comment or reply target, or change the report state.
+
+BugWatch checks generated questions for certain explicit requests to disclose credentials. If one is found, the entire new set is withheld and the page shows the usual generation failure. Previous suggestions, your comment text, and reply target remain available unless you lose eligibility. The check does not catch every possible unsafe request, so review suggestions before copying or posting them. Suggestions are displayed as text; copying and posting remain manual actions.
+
+The assistant uses the full saved discussion. If the report and discussion are too large, it explains that it cannot generate questions; continue the discussion manually. Each Developer has a separate allowance of five admitted attempts in a rolling five-minute window. A failed generation or an empty result still counts after an attempt is admitted. If generation is unavailable or the allowance is exhausted, you can continue the ordinary discussion.
+
 ## Accept a report and start investigation
 
 1. Log in as a Developer, open an active project's **Reports** tab, and select an **Open**, unassigned report. Any Developer can accept an available report, including one in a project created by someone else.

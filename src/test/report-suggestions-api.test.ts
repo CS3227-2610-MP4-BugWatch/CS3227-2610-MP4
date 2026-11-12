@@ -185,6 +185,8 @@ it('soCLaaSGenerator_untrustedContext_sendsItOnlyInUserMessage', async () => {
   expect(body.messages[0].content).not.toContain(project.description)
   expect(JSON.parse(body.messages[1].content)).toEqual(context)
   expect(body).not.toHaveProperty('tools')
+  expect(body).not.toHaveProperty('temperature')
+  expect(body).not.toHaveProperty('top_p')
 })
 
 it.each([

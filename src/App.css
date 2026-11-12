@@ -95,6 +95,19 @@
 .report-timestamps { display: flex; flex-wrap: wrap; gap: .5rem 2rem; margin-bottom: 1.5rem; }
 .report-detail-page .report-timestamps dt { margin-top: .75rem; }
 .report-detail-page .report-timestamps dd { margin-bottom: 0; font-size: .85rem; color: var(--text); }
+.report-tester-questions { min-width: 0; margin-top: 1.5rem; padding: 1.25rem; border: 1px solid var(--border); border-radius: .65rem; background: var(--accent-bg); }
+.report-tester-questions-header h3 { min-width: 0; margin: 0; font-size: 1rem; overflow-wrap: anywhere; }
+.report-tester-questions-header .mantine-Badge-root { flex-shrink: 0; }
+.report-tester-questions-description { margin: .75rem 0 1rem; color: var(--text); line-height: 1.6; }
+.report-tester-questions .report-tester-questions-generate { max-width: 100%; height: auto; min-height: 2.25rem; padding-block: .6rem; }
+.report-tester-questions-generate .mantine-Button-label { white-space: normal; overflow-wrap: anywhere; text-align: left; }
+.report-tester-questions > [role="status"], .report-tester-questions > [role="alert"] { margin-bottom: 0; overflow-wrap: anywhere; }
+.report-tester-question-list { margin: 1.25rem 0 0; padding-left: 1.5rem; }
+.report-tester-question-list li { min-width: 0; padding: .85rem 1rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--bg); }
+.report-tester-question-list li + li { margin-top: .75rem; }
+.report-tester-question-list li::marker { color: var(--text); font-weight: 600; }
+.report-tester-question-text { margin: 0 0 .5rem; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+.report-tester-questions .report-tester-question-copy { min-height: 2.25rem; }
 .report-discussion { margin-top: 2rem; scroll-margin-top: 1rem; }
 .report-comments { list-style: none; margin: 1rem 0; padding: 0; display: grid; gap: 1rem; }
 .report-comment { min-width: 0; padding: 1rem 1.25rem; border: 1px solid var(--border); border-radius: .65rem; scroll-margin-top: 1rem; }
