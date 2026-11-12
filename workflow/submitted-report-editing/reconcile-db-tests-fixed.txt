@@ -1,0 +1,106 @@
+
+ RUN  v5.0.5 E:/CS3227-2610-MP4
+
+ ❯ src/test/report-edit-database.test.ts (36 tests | 1 failed) 8161ms
+   ❯ isolated submitted report editing persistence (36)
+     × editReport_normalizedNoop_changesNoReportTimestampHistoryOrMailbox 172ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/test/report-edit-database.test.ts > isolated submitted report editing persistence > editReport_normalizedNoop_changesNoReportTimestampHistoryOrMailbox
+AssertionError: expected { report: { …(28) }, …(3) } to deeply equal { report: { …(28) }, …(3) }
+
+- Expected
++ Received
+
+@@ -46,11 +46,72 @@
+        "project_names": null,
+        "report_id": "ab00de68-c41f-47bb-bb68-1e434f8a2378",
+      },
+    ],
+    "mailbox": [],
+-   "receipts": [],
++   "receipts": [
++     {
++       "actor_id": "8af5acd6-4794-4194-9c1b-8cac7ed66a7f",
++       "payload": {
++         "expectedSeverityRevision": 0,
++         "input": {
++           "actual_results": "Fails",
++           "description": "Description",
++           "expected_results": "Works",
++           "project_id": "e7d5ab8f-3f72-4ac3-9913-72ec4060f2f8",
++           "reproduction_steps": "Open",
++           "severity": "low",
++           "test_environment": "",
++           "title": "Original title",
++           "version": "1",
++         },
++       },
++       "report_id": "ab00de68-c41f-47bb-bb68-1e434f8a2378",
++       "request_id": "0b7e4d9a-90fd-477d-8f30-c8436b73e983",
++       "result": {
++         "outcome": "unchanged",
++         "report": {
++           "actual_results": "Fails",
++           "affected_version": null,
++           "assigned_at": null,
++           "assigned_developer_display_name": null,
++           "assigned_developer_id": null,
++           "assigned_developer_username": null,
++           "canonical_report": null,
++           "canonical_report_id": null,
++           "commit_url": null,
++           "created_at": "2026-11-12T15:41:34.565687+00:00",
++           "description": "Description",
++           "expected_results": "Works",
++           "fix_summary": null,
++           "id": "ab00de68-c41f-47bb-bb68-1e434f8a2378",
++           "project_archived_at": null,
++           "project_id": "e7d5ab8f-3f72-4ac3-9913-72ec4060f2f8",
++           "project_name": "Edit fixture ac4f4887-82e4-452f-a088-7a31e18bb66a",
++           "pull_request_url": null,
++           "reporter_display_name": "Synthetic TESTER",
++           "reporter_id": "8af5acd6-4794-4194-9c1b-8cac7ed66a7f",
++           "reporter_username": "editing_tester",
++           "reproduction_steps": "Open",
++           "resolution": null,
++           "resolution_author_id": null,
++           "resolution_canonical_report_id": null,
++           "resolution_explanation": null,
++           "resolution_kind": null,
++           "resolved_at": null,
++           "severity": "low",
++           "severity_actor_role": null,
++           "severity_revision": 0,
++           "state": "Open",
++           "test_environment": "",
++           "title": "Original title",
++           "updated_at": "2026-11-12T15:41:34.565687+00:00",
++           "version": "1",
++         },
++       },
++     },
++   ],
+    "report": {
+      "actual_results": "Fails",
+      "affected_version": null,
+      "assigned_at": null,
+      "assigned_developer_id": null,
+
+ ❯ src/test/report-edit-database.test.ts:191:39
+    189|     expect(result.error).toBeNull()
+    190|     expect(result.data.outcome).toBe('unchanged')
+    191|     expect(await snapshot(report.id)).toEqual(before)
+       |                                       ^
+    192|   })
+    193|   it.each(['anonymous', 'developer', 'other Tester', 'missing profile'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 5 passed (6)
+      Tests  1 failed | 151 passed (152)
+   Start at  23:41:31
+   Duration  41.28s (tests 98%, import 2%)
+

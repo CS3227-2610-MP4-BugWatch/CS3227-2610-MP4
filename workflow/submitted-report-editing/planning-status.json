@@ -1,0 +1,105 @@
+{
+  "changeName": "edit-submitted-reports",
+  "schemaName": "spec-driven",
+  "planningHome": {
+    "kind": "repo",
+    "root": "E:\\CS3227-2610-MP4",
+    "changesDir": "E:\\CS3227-2610-MP4\\openspec\\changes",
+    "defaultSchema": "spec-driven"
+  },
+  "changeRoot": "E:\\CS3227-2610-MP4\\openspec\\changes\\edit-submitted-reports",
+  "artifactPaths": {
+    "proposal": {
+      "outputPath": "proposal.md",
+      "resolvedOutputPath": "E:\\CS3227-2610-MP4\\openspec\\changes\\edit-submitted-reports\\proposal.md",
+      "existingOutputPaths": [
+        "E:\\CS3227-2610-MP4\\openspec\\changes\\edit-submitted-reports\\proposal.md"
+      ]
+    },
+    "specs": {
+      "outputPath": "specs/**/*.md",
+      "resolvedOutputPath": "E:\\CS3227-2610-MP4\\openspec\\changes\\edit-submitted-reports\\specs\\**\\*.md",
+      "existingOutputPaths": [
+        "E:\\CS3227-2610-MP4\\openspec\\changes\\edit-submitted-reports\\specs\\attention-mailbox\\spec.md",
+        "E:\\CS3227-2610-MP4\\openspec\\changes\\edit-submitted-reports\\specs\\report-editing\\spec.md"
+      ]
+    },
+    "design": {
+      "outputPath": "design.md",
+      "resolvedOutputPath": "E:\\CS3227-2610-MP4\\openspec\\changes\\edit-submitted-reports\\design.md",
+      "existingOutputPaths": [
+        "E:\\CS3227-2610-MP4\\openspec\\changes\\edit-submitted-reports\\design.md"
+      ]
+    },
+    "tasks": {
+      "outputPath": "tasks.md",
+      "resolvedOutputPath": "E:\\CS3227-2610-MP4\\openspec\\changes\\edit-submitted-reports\\tasks.md",
+      "existingOutputPaths": [
+        "E:\\CS3227-2610-MP4\\openspec\\changes\\edit-submitted-reports\\tasks.md"
+      ]
+    }
+  },
+  "isPlanningComplete": true,
+  "isComplete": true,
+  "applyRequires": [
+    "tasks"
+  ],
+  "nextSteps": [
+    "All planning artifacts are complete. Run openspec instructions apply --change \"edit-submitted-reports\" --json to inspect implementation progress."
+  ],
+  "actionContext": {
+    "mode": "repo-local",
+    "sourceOfTruth": "repo",
+    "planningArtifacts": [
+      "proposal",
+      "specs",
+      "design",
+      "tasks"
+    ],
+    "linkedContext": [],
+    "allowedEditRoots": [
+      "E:\\CS3227-2610-MP4"
+    ],
+    "requiresAffectedAreaSelection": false,
+    "constraints": [
+      "Repo-local change artifacts and implementation edits are scoped to this project."
+    ]
+  },
+  "artifacts": [
+    {
+      "id": "proposal",
+      "outputPath": "proposal.md",
+      "status": "done",
+      "requires": []
+    },
+    {
+      "id": "specs",
+      "outputPath": "specs/**/*.md",
+      "status": "done",
+      "requires": [
+        "proposal"
+      ]
+    },
+    {
+      "id": "design",
+      "outputPath": "design.md",
+      "status": "done",
+      "requires": [
+        "proposal"
+      ]
+    },
+    {
+      "id": "tasks",
+      "outputPath": "tasks.md",
+      "status": "done",
+      "requires": [
+        "specs",
+        "design"
+      ]
+    }
+  ],
+  "root": {
+    "path": "E:\\CS3227-2610-MP4",
+    "source": "nearest"
+  }
+}

@@ -1,0 +1,18 @@
+
+> bugwatch@0.0.0 build
+> tsc -b && vite build
+
+vite v8.3.5 building client environment for production...
+transforming...
+✓ 1012 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                             0.47 kB │ gzip:   0.30 kB
+dist/assets/index-Bw-LWowv.css            261.58 kB │ gzip:  38.54 kB
+dist/assets/supabaseClient-CF26kIwV.js      0.05 kB │ gzip:   0.07 kB
+dist/assets/index-D-VQUVVw.js             247.54 kB │ gzip:  77.14 kB
+dist/assets/AuthenticatedApp-DjvZVOhP.js  487.07 kB │ gzip: 134.53 kB
+
+[INEFFECTIVE_DYNAMIC_IMPORT] src/shared/lib/supabaseClient.js is dynamically imported by src/features/reports/reportSuggestionClient.ts but also statically imported by src/features/auth/AuthenticatedApp.tsx, dynamic import will not move module into another chunk.
+
+✓ built in 1.65s

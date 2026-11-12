@@ -1,0 +1,262 @@
+diff --git a/src/App.css b/src/App.css
+index fdd56be..1fd6da2 100644
+--- a/src/App.css
++++ b/src/App.css
+@@ -129,3 +129,20 @@
+   .report-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+ }
+ @media (max-width: 25em) { .report-facts { grid-template-columns: 1fr; } }
++
++.report-edit-page .severity-conflict { border: 2px solid var(--mantine-color-orange-6); }
++#severity-conflict:focus { outline: 2px solid var(--mantine-color-orange-4); outline-offset: 4px; }
++.mailbox-items { list-style: none; padding: 0; display: grid; gap: 1rem; }
++.mailbox-item { border: 1px solid var(--mantine-color-dark-4); border-radius: 8px; padding: 1rem; overflow-wrap: anywhere; }
++.mailbox-item h3 { margin-block: .5rem; }
++.mailbox-page .project-toolbar { justify-content: flex-start; gap: .65rem; }
++.mailbox-page button[aria-pressed="true"] { background: var(--accent-bg); border-color: var(--accent); color: var(--mantine-primary-color-light-color); font-weight: 700; }
++.mailbox-item { border-color: var(--border); padding: 1.25rem; }
++.mailbox-item > p { margin-block: .65rem; }
++.mailbox-item .project-toolbar { margin-top: 1rem; margin-bottom: 0; }
++.report-edit-page .project-form > .project-toolbar { justify-content: flex-start; margin-top: 1.25rem; }
++.report-edit-page .severity-conflict { border-radius: .65rem; padding: 0 1rem 1rem; }
++@media (max-width: 47.99em) {
++  .project-workspace { padding-inline: var(--mantine-spacing-md); }
++  .mailbox-item { padding: 1rem; }
++}
+diff --git a/src/features/auth/AuthenticatedApp.tsx b/src/features/auth/AuthenticatedApp.tsx
+index 5d332da..9211a2a 100644
+--- a/src/features/auth/AuthenticatedApp.tsx
++++ b/src/features/auth/AuthenticatedApp.tsx
+@@ -12,25 +12,31 @@ import { createReportRepository } from '../reports/reportRepository'
+ import { ReportError } from '../reports/types'
+ import type { ReportRepository } from '../reports/types'
+ 
++import { createMailboxRepository } from '../mailbox/mailboxRepository'
++import { MailboxError } from '../mailbox/types'
++import type { MailboxRepository } from '../mailbox/types'
++
+ const SignOutContext = createContext({ onSignOut: () => {}, signOutPending: false, signOutError: '' })
+ 
+ const service = createAuthService(supabase)
+ const projectRepository = createProjectRepository(supabase)
+ const reports = createReportRepository(supabase)
++const mailbox = createMailboxRepository(supabase)
+ 
+ function AuthenticatedContent() {
+   const auth = useAuth()
+   const retryAuth = auth.retryIfCurrent
+   const [pending, setPending] = useState(false)
+   const [error, setError] = useState('')
+-  const { repository, reportRepository } = useMemo<{
++  const { repository, reportRepository, mailboxRepository } = useMemo<{
+     repository: ProjectRepository
++    mailboxRepository: MailboxRepository
+     reportRepository: ReportRepository
+   }>(() => {
+     async function withSession<T>(operation: () => Promise<T>): Promise<T> {
+       try { return await operation() }
+       catch (reason) {
+-        if ((reason instanceof ProjectError || reason instanceof ReportError)
++        if ((reason instanceof ProjectError || reason instanceof ReportError || reason instanceof MailboxError)
+           && reason.code === 'unauthenticated') retryAuth()
+         throw reason
+       }
+@@ -43,7 +49,13 @@ function AuthenticatedContent() {
+         createProject: input => withSession(() => projectRepository.createProject(input)),
+         updateProject: (id, revision, input) => withSession(() => projectRepository.updateProject(id, revision, input)),
+       },
++      mailboxRepository: {
++        listItems: filter => withSession(() => mailbox.listItems(filter)),
++        markRead: id => withSession(() => mailbox.markRead(id)),
++        deleteItem: id => withSession(() => mailbox.deleteItem(id)),
++      },
+       reportRepository: {
++        editReport: (id, request) => withSession(() => reports.editReport(id, request)),
+         listDrafts: () => withSession(() => reports.listDrafts()),
+         getDraft: id => withSession(() => reports.getDraft(id)),
+         saveDraft: (input, id) => withSession(() => reports.saveDraft(input, id)),
+@@ -79,7 +91,7 @@ function AuthenticatedContent() {
+   if (auth.status === 'loading') return <p role="status">Loading your account…</p>
+ 
+   if (auth.status === 'authenticated') return <SignOutContext.Provider value={{ onSignOut: () => { void logout() }, signOutPending: pending, signOutError: error }}>
+-    <AuthenticatedRouter key={auth.user.id} repository={repository} reportRepository={reportRepository} user={auth.user} />
++    <AuthenticatedRouter key={auth.user.id} repository={repository} reportRepository={reportRepository} mailboxRepository={mailboxRepository} user={auth.user} />
+   </SignOutContext.Provider>
+   return <main className="auth-page"><section className="project-panel"><h1>BugWatch</h1>
+     {auth.status === 'incomplete_profile' ? <p role="alert">Account setup incomplete - contact the administrator.</p> : <>
+@@ -95,17 +107,17 @@ export default function AuthenticatedApp() {
+   return <AuthProvider service={service}><AuthenticatedContent /></AuthProvider>
+ }
+ 
+-function AuthenticatedRouter({ repository, reportRepository, user }: { repository: ProjectRepository; reportRepository: ReportRepository; user: SessionUser }) {
+-  const store = useMemo(() => createRouterStore(repository, reportRepository, user), [repository, reportRepository, user])
++function AuthenticatedRouter({ repository, reportRepository, mailboxRepository, user }: { repository: ProjectRepository; reportRepository: ReportRepository; mailboxRepository: MailboxRepository; user: SessionUser }) {
++  const store = useMemo(() => createRouterStore(repository, reportRepository, mailboxRepository, user), [repository, reportRepository, mailboxRepository, user])
+   const router = useSyncExternalStore(store.subscribe, store.getSnapshot)
+   return router ? <RouterProvider router={router} /> : null
+ }
+ 
+-function createRouterStore(repository: ProjectRepository, reportRepository: ReportRepository, user: SessionUser) {
++function createRouterStore(repository: ProjectRepository, reportRepository: ReportRepository, mailboxRepository: MailboxRepository, user: SessionUser) {
+   let router: ReturnType<typeof createBrowserRouter> | null = null
+   return {
+     subscribe(notify: () => void) {
+-      router = createBrowserRouter([{ path: '*', element: <RoutedWorkspace repository={repository} reportRepository={reportRepository} user={user} /> }])
++      router = createBrowserRouter([{ path: '*', element: <RoutedWorkspace repository={repository} reportRepository={reportRepository} mailboxRepository={mailboxRepository} user={user} /> }])
+       notify()
+       return () => { router?.dispose(); router = null }
+     },
+@@ -113,7 +125,7 @@ function createRouterStore(repository: ProjectRepository, reportRepository: Repo
+   }
+ }
+ 
+-function RoutedWorkspace(props: { repository: ProjectRepository; reportRepository: ReportRepository; user: SessionUser }) {
++function RoutedWorkspace(props: { repository: ProjectRepository; reportRepository: ReportRepository; mailboxRepository: MailboxRepository; user: SessionUser }) {
+   const signOut = useContext(SignOutContext)
+   return <ProjectsApp {...props} {...signOut} />
+ }
+diff --git a/src/features/projects/ProjectsApp.tsx b/src/features/projects/ProjectsApp.tsx
+index ac8123c..0fd4a07 100644
+--- a/src/features/projects/ProjectsApp.tsx
++++ b/src/features/projects/ProjectsApp.tsx
+@@ -9,10 +9,13 @@ import { DraftListPage } from '../reports/DraftListPage'
+ import { DraftEditPage } from '../reports/DraftEditPage'
+ import { ReportCreatePage } from '../reports/ReportCreatePage'
+ import { ReportDetailsPage } from '../reports/ReportDetailsPage'
++import { ReportEditPage } from '../reports/ReportEditPage'
++import { MailboxPage } from '../mailbox/MailboxPage'
++import type { MailboxRepository } from '../mailbox/types'
+ import type { ReportDraft, ReportRepository } from '../reports/types'
+ 
+-export function ProjectsApp({ repository, reportRepository, user, onSignOut = () => {}, signOutPending = false, signOutError = '' }: {
+-  repository: ProjectRepository; reportRepository: ReportRepository; user: SessionUser
++export function ProjectsApp({ repository, reportRepository, mailboxRepository, user, onSignOut = () => {}, signOutPending = false, signOutError = '' }: {
++  repository: ProjectRepository; reportRepository: ReportRepository; mailboxRepository?: MailboxRepository; user: SessionUser
+   onSignOut?: () => void; signOutPending?: boolean; signOutError?: string
+ }) {
+   const draftCache = useMemo(() => ({ userId: user.id, drafts: new Map<string, ReportDraft>() }), [user.id])
+@@ -28,6 +31,8 @@ export function ProjectsApp({ repository, reportRepository, user, onSignOut = ()
+     <Route path="/drafts" element={<DraftListPage key={pageKey} repository={reportRepository} user={user} />} />
+     <Route path="/drafts/:draftId" element={<DraftEditPage key={pageKey} projectRepository={repository} reportRepository={reportRepository} user={user} savedDrafts={savedDrafts} />} />
+     <Route path="/reports/new" element={<ReportCreatePage key={pageKey} projectRepository={repository} reportRepository={reportRepository} user={user} savedDrafts={savedDrafts} />} />
++    <Route path="/reports/:reportId/edit" element={<ReportEditPage key={pageKey} projectRepository={repository} reportRepository={reportRepository} user={user} />} />
++    <Route path="/mailbox" element={mailboxRepository ? <MailboxPage key={pageKey} repository={mailboxRepository} user={user} /> : <p role="alert">Mailbox is unavailable.</p>} />
+     <Route path="/reports/:reportId" element={<ReportDetailsPage key={pageKey} reportRepository={reportRepository} user={user} />} />
+     <Route path="*" element={<section className="project-panel"><h2>Page not found</h2><Link to="/projects">Back to projects</Link></section>} />
+   </Routes></WorkspaceShell>
+diff --git a/src/features/reports/ReportDetailsPage.tsx b/src/features/reports/ReportDetailsPage.tsx
+index 401ff0a..7c4d14c 100644
+--- a/src/features/reports/ReportDetailsPage.tsx
++++ b/src/features/reports/ReportDetailsPage.tsx
+@@ -244,6 +244,7 @@ function ReportDetails({ reportRepository, user, reportId }: DetailProps & { rep
+     </>}
+     {report && <>
+       <ReportHeader report={report} />
++      {user.role === 'tester' && user.id === report.reporterId && !report.projectArchivedAt && ['Open', 'Accepted', 'In progress', 'Awaiting tester information'].includes(report.state) && <Button component={Link} to={`/reports/${report.id}/edit`} variant="default" disabled={Boolean(pending)}>Edit report</Button>}
+       <Group className="report-header-actions" gap="sm" role="group" aria-label="Report actions" aria-busy={Boolean(pending)}>
+         {workflowAction && <Button type="button" disabled={mutationBlocked} onClick={() => void act(workflowAction)}>{actionLabels[workflowAction]}</Button>}
+         <Button type="button" variant="subtle" onClick={() => jumpTo('report-discussion')}>Discussion{commentCount === null ? '' : ` (${commentCount})`}</Button>
+@@ -358,7 +359,7 @@ function Comment({ comment, comments, archived, onJump, onReply }: {
+ 
+ function ActivityHistory({ report, history }: { report: Report; history: ReportHistoryEntry[] }) {
+   const labels: Record<ReportHistoryEntry['event'], string> = {
+-    created: 'created this report', accepted: 'accepted this report', investigation_started: 'started investigation',
++    report_edited: 'edited this report', created: 'created this report', accepted: 'accepted this report', investigation_started: 'started investigation',
+     tester_information_requested: 'requested tester information', investigation_resumed: 'resumed investigation',
+   }
+   return history.length ? <ol className="project-history report-activity">{history.map(entry => <li key={entry.id}>
+@@ -369,6 +370,17 @@ function ActivityHistory({ report, history }: { report: Report; history: ReportH
+ }
+ 
+ function HistoryChanges({ entry, report }: { entry: ReportHistoryEntry; report: Report }) {
++  if (entry.event === 'report_edited') return <dl>{(Object.keys(entry.changes) as (keyof ReportInput)[]).map(field => {
++    const change = entry.changes[field]
++    if (!change) return null
++    const projectNames = entry.projectNames
++    function valueLabel(value: string, side: 'before' | 'after') {
++      if (field === 'projectId') return projectNames?.[side] ?? (value === report.projectId ? report.projectName : value)
++      if (field === 'severity' && Object.hasOwn(REPORT_SEVERITIES, value)) return REPORT_SEVERITIES[value as ReportSeverity]
++      return value || 'Not provided'
++    }
++    return <div key={field}><dt>{historyLabel(field)}</dt><dd className="project-description">{valueLabel(change.before, 'before')} → {valueLabel(change.after, 'after')}</dd></div>
++  })}</dl>
+   if (entry.event !== 'created') return <dl>
+     <div><dt>State</dt><dd>{entry.changes.state.before} → {entry.changes.state.after}</dd></div>
+     {entry.event === 'accepted' && <>
+diff --git a/src/features/reports/ReportForm.tsx b/src/features/reports/ReportForm.tsx
+index e555f29..3ffe169 100644
+--- a/src/features/reports/ReportForm.tsx
++++ b/src/features/reports/ReportForm.tsx
+@@ -5,7 +5,7 @@ import type { Project } from '../projects/types'
+ import { requestReportSuggestions } from './reportSuggestionClient'
+ import type { GenerateReportSuggestions } from './reportSuggestionClient'
+ import type { SuggestedField } from './reportSuggestionTypes'
+-import type { ReportFieldErrors, ReportInput } from './types'
++import type { ReportFieldErrors, ReportInput, ReportSeverityConflict } from './types'
+ import { suggestionPrerequisites, suggestionRequest, useReportSuggestions } from './useReportSuggestions'
+ import type { ReportSuggestionSession } from './useReportSuggestions'
+ import { REPORT_SEVERITIES, REPORT_TEXT_FIELDS, REPORT_TEXT_KEYS, validateDraftInput, validateReportInput } from './validation'
+@@ -17,9 +17,12 @@ type Props = {
+   onSubmit: (input: ReportInput) => void; onSaveDraft: (input: ReportInput) => void; onCancel: (projectId: string) => void
+   generateSuggestions?: GenerateReportSuggestions
+   suggestionSession?: ReportSuggestionSession
++  mode?: 'create' | 'edit'
++  severityConflict?: ReportSeverityConflict
+ }
+ 
+-export function ReportForm({ projects, initialProjectId, initialInput, projectsAvailable, pending, error, fieldErrors, archivedProjectId, archivedProjectName, savedInput, isDraft, confirmation, allowNavigation, onSubmit, onSaveDraft, onCancel, generateSuggestions = requestReportSuggestions, suggestionSession }: Props) {
++export function ReportForm({ projects, initialProjectId, initialInput, projectsAvailable, pending, error, fieldErrors, archivedProjectId, archivedProjectName, savedInput, isDraft, confirmation, allowNavigation, onSubmit, onSaveDraft, onCancel, generateSuggestions = requestReportSuggestions, suggestionSession, mode = 'create', severityConflict }: Props) {
++  useEffect(() => { if (severityConflict) document.getElementById('severity-conflict')?.focus() }, [severityConflict])
+   const [input, setInput] = useState<ReportInput>(initialInput ?? {
+     projectId: initialProjectId, title: '', description: '', version: '', reproductionSteps: '',
+     expectedResults: '', actualResults: '', severity: '', testEnvironment: '',
+@@ -87,6 +90,7 @@ export function ReportForm({ projects, initialProjectId, initialInput, projectsA
+   }
+   return <>
+     {blocker.state === 'blocked' && <div role="dialog" aria-modal="true" aria-label="Unsaved changes"><p>You have unsaved changes.</p><button type="button" onClick={() => blocker.reset()}>Keep editing</button><button type="button" onClick={() => blocker.proceed()}>Leave without saving</button></div>}
++    {severityConflict && <div id="severity-conflict" role="alert" tabIndex={-1}><p>{severityConflict.actorRole === 'developer' ? 'A Developer changed the severity' : 'Severity changed'} since you opened this report. Current severity: {REPORT_SEVERITIES[severityConflict.latestSeverity]}. Your selected severity: {input.severity ? REPORT_SEVERITIES[input.severity] : 'Not selected'}.</p><p>Your changes have not been saved. Review the severity, then choose Save changes again to use your selected value.</p></div>}
+     <form className="project-form" onSubmit={submit} noValidate>
+       <p>All fields are required except Test environment.</p>
+       {archived ? <div role="alert">{isDraft ? <p>This project has been archived. Select an active project to save or submit.</p> : <><p>This project has been archived. Your report wasn’t submitted.</p><p>If the bug still needs attention, contact the Developer who created this project outside BugWatch.</p></>}</div> : error && <p role="alert">{error}</p>}
+@@ -107,7 +111,8 @@ export function ReportForm({ projects, initialProjectId, initialInput, projectsA
+           {(key === 'title' || key === 'description' || key === 'reproductionSteps') && suggestion(key)}
+         </>)
+       })}</fieldset>)}
+-      <fieldset className="form-section"><legend>Impact</legend>
++      <fieldset className={`form-section${severityConflict ? ' severity-conflict' : ''}`}><legend>Impact</legend>
++      {severityConflict && <p>Current severity: {REPORT_SEVERITIES[severityConflict.latestSeverity]}. Your selected severity: {input.severity ? REPORT_SEVERITIES[input.severity] : 'Not selected'}.</p>}
+       {field('severity', 'Severity', <select {...accessibility('severity')} required value={input.severity} onChange={event => change('severity', event.target.value as ReportInput['severity'])}><option value="">Choose a severity</option>{Object.entries(REPORT_SEVERITIES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>)}
+       </fieldset>
+       {assistant.suggestions && (assistant.suggestions.source.projectId !== input.projectId
+@@ -132,7 +137,7 @@ export function ReportForm({ projects, initialProjectId, initialInput, projectsA
+         onClick={() => assistant.requestGeneration(request, input)}>
+         {assistant.generating ? 'Generating…' : 'Generate suggestions'}
+       </button>}
+-      <div className="project-toolbar"><button type="submit" disabled={pending || archived || !projectsAvailable}>{pending ? 'Please wait…' : 'Submit report'}</button><button type="button" disabled={pending || archived || !projectsAvailable} onClick={() => validate(true)}>Save draft</button><button type="button" disabled={pending} onClick={() => onCancel(input.projectId)}>{archived ? 'Discard report' : 'Cancel'}</button></div>
++      <div className="project-toolbar"><button type="submit" disabled={pending || archived || !projectsAvailable}>{pending ? 'Please wait…' : mode === 'edit' ? 'Save changes' : 'Submit report'}</button>{mode !== 'edit' && <button type="button" disabled={pending || archived || !projectsAvailable} onClick={() => validate(true)}>Save draft</button>}<button type="button" disabled={pending} onClick={() => onCancel(input.projectId)}>{mode !== 'edit' && archived ? 'Discard report' : 'Cancel'}</button></div>
+     </form>
+   </>
+ }
+diff --git a/src/shared/components/WorkspaceShell.tsx b/src/shared/components/WorkspaceShell.tsx
+index 90a7002..90a726f 100644
+--- a/src/shared/components/WorkspaceShell.tsx
++++ b/src/shared/components/WorkspaceShell.tsx
+@@ -13,6 +13,7 @@ export function WorkspaceShell({ user, onSignOut, signOutPending, signOutError,
+     setMenu({ locationKey: location.key, opened: false })
+   }
+   const opened = menu.locationKey === location.key && menu.opened
++  const mailbox = location.pathname.startsWith('/mailbox')
+   const drafts = location.pathname.startsWith('/drafts')
+   return <AppShell header={{ height: { base: 112, sm: 76 } }} navbar={{ width: 232, breakpoint: 'sm', collapsed: { mobile: !opened } }} padding="lg">
+     <AppShell.Header className="workspace-header">
+@@ -31,8 +32,9 @@ export function WorkspaceShell({ user, onSignOut, signOutPending, signOutError,
+       onKeyDown={event => { if (event.key === 'Escape') { setMenu({ locationKey: location.key, opened: false }); document.querySelector<HTMLButtonElement>('.navigation-toggle')?.focus() } }}>
+       <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb="sm">Workspace</Text>
+       <nav aria-label="Workspace navigation">
+-        <Link to="/projects" aria-current={!drafts ? 'page' : undefined}>Projects</Link>
++        <Link to="/projects" aria-current={!drafts && !mailbox ? 'page' : undefined}>Projects</Link>
+         {user.role === 'tester' && <Link to="/drafts" aria-current={drafts ? 'page' : undefined}>My drafts</Link>}
++        <Link to="/mailbox" aria-current={mailbox ? 'page' : undefined}>Mailbox</Link>
+       </nav>
+     </AppShell.Navbar>
+     <AppShell.Main className="project-workspace">

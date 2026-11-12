@@ -1,0 +1,28 @@
+
+ RUN  v5.0.5 E:/CS3227-2610-MP4
+
+ ❯ src/test/report-edit-concurrency.test.ts (9 tests | 1 failed) 26395ms
+   ❯ isolated local SQL report edit concurrency (9)
+     × editReport_inverseMovesWaitingOnSameProject_bothCommitWithoutDeadlock 10052ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/test/report-edit-concurrency.test.ts > isolated local SQL report edit concurrency > editReport_inverseMovesWaitingOnSameProject_bothCommitWithoutDeadlock
+Error: Required PostgreSQL blocking relationship was not observed
+ ❯ blocked src/test/report-edit-concurrency.test.ts:117:11
+    115|       if (waiter.closed) throw new Error(`Expected blocked session exi…
+    116|     }
+    117|     throw new Error('Required PostgreSQL blocking relationship was not…
+       |           ^
+    118|   }
+    119|   async function snapshot(report: string) {
+ ❯ src/test/report-edit-concurrency.test.ts:176:32
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  12:30:55
+   Duration  26.73s (tests 100%)
+

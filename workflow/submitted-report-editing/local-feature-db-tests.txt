@@ -1,0 +1,54 @@
+
+ RUN  v5.0.5 E:/CS3227-2610-MP4
+
+ ❯ src/test/report-edit-database.test.ts (14 tests | 2 failed) 3776ms
+   ❯ isolated submitted report editing persistence (14)
+     × editReport_receiptReplayAfterarchive_rechecksCurrentAuthorization 232ms
+     × editReport_receiptReplayAfterreporter changed_rechecksCurrentAuthorization 198ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/test/report-edit-database.test.ts > isolated submitted report editing persistence > editReport_receiptReplayAfterarchive_rechecksCurrentAuthorization
+AssertionError: expected undefined to be 'P2004' // Object.is equality
+
+- Expected:
+"P2004"
+
++ Received:
+undefined
+
+ ❯ src/test/report-edit-database.test.ts:158:32
+    156|     const before = await snapshot(report.id)
+    157|     const replay = await edit(tester, report.id, value, 0, key)
+    158|     expect(replay.error?.code).toBe(condition === 'archive' ? 'P2004' …
+       |                                ^
+    159|     expect(replay.data).toBeNull()
+    160|     expect(await snapshot(report.id)).toEqual(before)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/test/report-edit-database.test.ts > isolated submitted report editing persistence > editReport_receiptReplayAfterreporter changed_rechecksCurrentAuthorization
+AssertionError: expected undefined to be 'P2002' // Object.is equality
+
+- Expected:
+"P2002"
+
++ Received:
+undefined
+
+ ❯ src/test/report-edit-database.test.ts:158:32
+    156|     const before = await snapshot(report.id)
+    157|     const replay = await edit(tester, report.id, value, 0, key)
+    158|     expect(replay.error?.code).toBe(condition === 'archive' ? 'P2004' …
+       |                                ^
+    159|     expect(replay.data).toBeNull()
+    160|     expect(await snapshot(report.id)).toEqual(before)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 17 passed (19)
+   Start at  12:26:56
+   Duration  6.77s (tests 95%, import 4%)
+

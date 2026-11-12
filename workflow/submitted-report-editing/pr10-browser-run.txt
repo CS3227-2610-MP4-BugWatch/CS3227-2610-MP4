@@ -1,0 +1,18 @@
+capture 01-project-rejection-desktop
+capture 02-project-rejection-narrow
+capture 03-retained-title-narrow
+Real linked-project move rejected; title retained; database unchanged
+capture 04-same-project-edit-narrow
+Same-project edit saved and canonical link retained
+capture 05-resolution-narrow
+capture 06-resolution-desktop
+capture 07-combined-history-desktop
+capture 08-combined-history-narrow
+capture 12-duplicate-history-narrow
+capture 13-duplicate-history-desktop
+Three combined histories render; resolved report has no Edit link
+capture 09-mailbox-unread-narrow
+capture 14-mailbox-keyboard-focus
+capture 10-mailbox-read-narrow
+capture 11-mailbox-open-narrow
+Mailbox mark read and open report succeeded

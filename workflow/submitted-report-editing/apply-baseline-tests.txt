@@ -1,0 +1,16 @@
+
+> bugwatch@0.0.0 test
+> vitest --run --maxWorkers=2
+
+
+ RUN  v5.0.5 E:/CS3227-2610-MP4
+
+
+ Test Files  26 passed | 6 skipped (32)
+      Tests  679 passed | 166 skipped (845)
+   Start at  01:09:04
+   Duration  28.71s (import 39%, tests 34%, environment 25%, transform 2%)
+
+    Isolate  32 workers spawned · ~562ms startup each (spawn + environment, per file)
+             at least ~8.43s faster with isolate: false — reuses workers across files instead of one per file
+

@@ -1,0 +1,25 @@
+
+> bugwatch@0.0.0 test:coverage
+> vitest run --coverage.enabled --maxWorkers=2 --coverage.include=src/features/reports/ReportEditPage.tsx --coverage.include=src/features/reports/ReportForm.tsx --coverage.include=src/features/reports/ReportDetailsPage.tsx --coverage.include=src/features/reports/reportRepository.ts --coverage.include=src/features/reports/types.ts --coverage.include=src/features/reports/validation.ts --coverage.include=src/features/mailbox/*.ts --coverage.include=src/features/mailbox/*.tsx --coverage.include=src/features/projects/ProjectsApp.tsx --coverage.include=src/features/auth/AuthenticatedApp.tsx --coverage.include=src/shared/components/WorkspaceShell.tsx --coverage.thresholds.perFile=true --coverage.thresholds.lines=80 --coverage.thresholds.branches=80
+
+
+ RUN  v5.0.5 C:/Users/jonat/AppData/Local/Temp/bugwatch-editing-pr-candidate-v2
+      Coverage enabled with v8
+
+
+ Test Files  36 passed | 11 skipped (47)
+      Tests  1122 passed | 251 skipped (1373)
+   Start at  07:11:54
+   Duration  53.26s (tests 45%, import 32%, environment 20%, transform 2%, worker 2%)
+
+    Isolate  47 workers spawned · ~588ms startup each (spawn + environment, per file)
+             at least ~13.22s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 93.84% ( 1143/1218 )
+Branches     : 91.32% ( 1148/1257 )
+Functions    : 92.6% ( 263/284 )
+Lines        : 98.26% ( 908/924 )
+================================================================================

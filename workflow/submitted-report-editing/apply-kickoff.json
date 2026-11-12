@@ -1,0 +1,28 @@
+{
+  "recordedAt": "2026-11-12T04:19:24.248119+00:00",
+  "anchorMatches": [
+    {
+      "timestamp": "2026-11-11T17:07:22.365Z",
+      "precedingRootCounter": {
+        "timestamp": "2026-11-11T17:01:03.170Z",
+        "totalUsage": {
+          "input_tokens": 421581141,
+          "cached_input_tokens": 415690624,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 741716,
+          "reasoning_output_tokens": 215837,
+          "total_tokens": 422322857
+        }
+      }
+    }
+  ],
+  "sourceSessionFile": "rollout-2026-11-04T18-26-53-01a1a618-eca6-7952-8f6c-313043a3b710.jsonl",
+  "sourceCommit": "50d6c30984b3693afbb122a382d61cd6fba6d2fe",
+  "planRevision": 3,
+  "branch": "codex/edit-submitted-reports",
+  "limits": [
+    "Apply includes interruption/restarts; elapsed interval is not active coding time.",
+    "Cumulative root counters are boundaries, not totals to sum.",
+    "Include original/resumed agents, review, fixes and documentation; tool/system usage and charges may be unknown."
+  ]
+}
