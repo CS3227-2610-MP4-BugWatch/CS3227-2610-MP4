@@ -6,10 +6,14 @@ import type { SessionUser } from '../projects/types'
 import { ReportError } from './types'
 import type { Report, ReportComment, ReportHistoryEntry, ReportInput, ReportRepository, ReportSeverity } from './types'
 import { COMMENT_TEXT_LIMIT, REPORT_SEVERITIES, REPORT_TEXT_FIELDS, REPORT_TEXT_KEYS, validateCommentInput } from './validation'
+import { requestTesterQuestions } from './testerQuestionClient'
+import type { GenerateTesterQuestions } from './testerQuestionClient'
+import { questionContextVersion } from './testerQuestionTypes'
+import { useTesterQuestions } from './useTesterQuestions'
 
 type ReportRead = { status: 'loading' | 'missing' | 'error' } | { status: 'ready'; report: Report }
 type SectionRead<T> = { status: 'loading' | 'error' } | { status: 'ready'; values: T[] }
-type DetailProps = { reportRepository: ReportRepository; user: SessionUser }
+type DetailProps = { reportRepository: ReportRepository; user: SessionUser; generateTesterQuestions?: GenerateTesterQuestions }
 type WorkflowAction = 'accept' | 'start' | 'await' | 'resume'
 
 function dateLabel(value: string) {
@@ -39,7 +43,7 @@ export function ReportDetailsPage(props: DetailProps) {
   return <ReportDetails key={`${reportId}:${props.user.id}:${props.user.role}`} {...props} reportId={reportId} />
 }
 
-function ReportDetails({ reportRepository, user, reportId }: DetailProps & { reportId?: string }) {
+function ReportDetails({ reportRepository, user, reportId, generateTesterQuestions = requestTesterQuestions }: DetailProps & { reportId?: string }) {
   const [state, setState] = useState<ReportRead>({ status: 'loading' })
   const [history, setHistory] = useState<SectionRead<ReportHistoryEntry>>({ status: 'loading' })
   const [comments, setComments] = useState<SectionRead<ReportComment>>({ status: 'loading' })
@@ -52,6 +56,7 @@ function ReportDetails({ reportRepository, user, reportId }: DetailProps & { rep
   const [uncertain, setUncertain] = useState(false)
   const [commentUncertain, setCommentUncertain] = useState(false)
   const [focusTarget, setFocusTarget] = useState<{ id: string } | null>(null)
+  const [copyFeedback, setCopyFeedback] = useState('')
   const request = useRef({ generation: 0, pending: false, reportRead: 0, historyRead: 0, commentsRead: 0 })
   const composer = useRef<HTMLTextAreaElement>(null)
 
@@ -232,6 +237,20 @@ function ReportDetails({ reportRepository, user, reportId }: DetailProps & { rep
   const mutationBlocked = Boolean(pending) || uncertain || commentUncertain
   const commentCount = comments.status === 'ready' ? comments.values.length : null
   const latestComment = comments.status === 'ready' ? comments.values.at(-1) : undefined
+  const questionsEligible = Boolean(eligible && assigned && report
+    && ['Accepted', 'In progress', 'Awaiting tester information'].includes(report.state))
+  const contextVersion = report && comments.status === 'ready'
+    ? questionContextVersion({ report, discussion: comments.values }) : null
+  const questions = useTesterQuestions(generateTesterQuestions, reportId, questionsEligible, contextVersion)
+
+  async function copyQuestion(text: string) {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopyFeedback('Question copied. Paste and edit it in the comment composer when ready.')
+    } catch {
+      setCopyFeedback('Could not copy the question. Select its text and copy it manually.')
+    }
+  }
 
   return <section className="project-panel report-detail-page">
     {state.status !== 'ready' && <Button component={Link} to="/projects" variant="default">Back to projects</Button>}
@@ -258,6 +277,28 @@ function ReportDetails({ reportRepository, user, reportId }: DetailProps & { rep
         </Tabs.List>
         <Tabs.Panel value="conversation" pt="lg">
           <ReportFields report={report} />
+          {questionsEligible && <section className="report-tester-questions" aria-labelledby="tester-questions-heading" aria-busy={questions.generating}>
+            <Group justify="space-between" align="center" gap="sm" className="report-tester-questions-header">
+              <h3 id="tester-questions-heading">Suggested tester questions</h3>
+              <Badge variant="light" color="gray">Read-only</Badge>
+            </Group>
+            <p id="tester-questions-description" className="report-tester-questions-description">Optional AI-generated, read-only suggestions based on this saved report and its discussion. Review each question, then copy, edit and post it yourself. Nothing is posted automatically.</p>
+            <Button type="button" variant="default" className="report-tester-questions-generate" aria-describedby="tester-questions-description" disabled={questions.generating || Boolean(questions.retryAfterMs) || comments.status !== 'ready'} onClick={() => {
+              setCopyFeedback('')
+              questions.generate()
+            }}>{questions.result ? 'Generate again' : 'Generate tester questions'}</Button>
+            {comments.status !== 'ready' && <p>Load the full discussion before generating tester questions.</p>}
+            {questions.generating && <p role="status">Generating tester questions…</p>}
+            {questions.error && <p role="alert">{questions.error}</p>}
+            {questions.outdated && <p role="status">These suggestions are outdated because the saved report or discussion has changed. Generate again to use the current context.</p>}
+            {questions.result && (questions.result.questions.length ? <ol className="report-tester-question-list">
+              {questions.result.questions.map((question, index) => <li key={`${index}:${question}`}>
+                <p className="report-tester-question-text">{question}</p>
+                <Button type="button" variant="subtle" size="compact-sm" className="report-tester-question-copy" aria-label={`Copy question ${index + 1}`} onClick={() => void copyQuestion(question)}>Copy</Button>
+              </li>)}
+            </ol> : <p role="status">No useful follow-up questions were identified.</p>)}
+            {copyFeedback && <p role="status">{copyFeedback}</p>}
+          </section>}
           <section id="report-discussion" className="report-discussion" tabIndex={-1} aria-labelledby="report-discussion-heading">
             <Group justify="space-between" align="center" gap="sm">
               <h3 id="report-discussion-heading">Discussion{commentCount === null ? '' : ` (${commentCount})`}</h3>
