@@ -16,7 +16,7 @@ const id = '20000000-0000-4000-8000-000000000001'
 const targetId = '20000000-0000-4000-8000-000000000002'
 const otherTargetId = '20000000-0000-4000-8000-000000000003'
 const time = '2026-11-08T10:00:00Z'
-const report: Report = { id, projectId: '30000000-0000-4000-8000-000000000001', title: 'Resolution report', description: 'Original description', version: 'Original 1.0', reproductionSteps: 'Open', expectedResults: 'Works', actualResults: 'Fails', severity: 'high', testEnvironment: '', reporterId: tester.id, reporterUsername: 'tester', reporterDisplayName: 'Tester', projectName: 'Project', projectArchivedAt: null, state: 'In progress', resolution: null, canonicalReport: null, assignedDeveloperId: developer.id, assignedAt: time, assignedDeveloperUsername: 'dev', assignedDeveloperDisplayName: 'Developer', createdAt: time, updatedAt: time }
+const report: Report = { id, projectId: '30000000-0000-4000-8000-000000000001', title: 'Resolution report', description: 'Original description', version: 'Original 1.0', reproductionSteps: 'Open', expectedResults: 'Works', actualResults: 'Fails', severity: 'high', testEnvironment: '', severityRevision: 0, reporterId: tester.id, reporterUsername: 'tester', reporterDisplayName: 'Tester', projectName: 'Project', projectArchivedAt: null, state: 'In progress', resolution: null, canonicalReport: null, assignedDeveloperId: developer.id, assignedAt: time, assignedDeveloperUsername: 'dev', assignedDeveloperDisplayName: 'Developer', createdAt: time, updatedAt: time }
 const fixed = { kind: 'fixed', fixSummary: 'Fixed <script>literal()</script>', affectedVersion: 'Affected 1.1', commitUrl: 'https://git.example/commit/abc', pullRequestUrl: 'http://other.example/pr/1' } satisfies ResolutionInput
 const metadata = { authorId: developer.id, authorUsername: 'dev', authorDisplayName: '<img src=x>', resolvedAt: time }
 const resolution: ReportResolution = { ...fixed, ...metadata }
@@ -29,7 +29,7 @@ function deferred<T>() {
 }
 function setup(initial = report, user = developer) {
   const repository = {
-    listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn(), createReport: vi.fn(),
+    listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn(), editReport: vi.fn(), createReport: vi.fn(),
     getReport: vi.fn().mockResolvedValue(initial), listReportHistory: vi.fn().mockResolvedValue([]),
     listProjectReports: vi.fn().mockResolvedValue([report, { ...report, id: targetId, title: 'Canonical target', state: 'Resolved' }, { ...report, id: otherTargetId, title: 'Closed target', state: 'Closed' }]),
     resolveReport: vi.fn().mockResolvedValue(resolved), linkDuplicate: vi.fn().mockResolvedValue({ ...initial, canonicalReport: { id: targetId, title: 'Canonical target' } }),
@@ -200,9 +200,10 @@ describe('independent canonical linking and shared readback', () => {
     expect(screen.getByRole('link', { name: /Changed current target/ }).getAttribute('href')).toBe(`/reports/${otherTargetId}`)
     expect(screen.getByRole('link', { name: targetId }).getAttribute('href')).toBe(`/reports/${targetId}`)
   })
-  it('activity_newEvents_disclosesResolutionSnapshotAndLinkHistory', async () => {
+  it('activity_mixedEditingResolutionAndLinkEvents_disclosesEachRecordedChange', async () => {
     const { repository } = setup(resolved)
     const history: ReportHistoryEntry[] = [
+      { id: 'edit', reportId: id, actorId: tester.id, actorDisplayName: 'Tester', occurredAt: time, event: 'report_edited', projectNames: { before: 'Earlier project', after: 'Current project' }, changes: { title: { before: 'Earlier title', after: 'Edited title' }, projectId: { before: targetId, after: report.projectId } } },
       { id: 'resolution', reportId: id, actorId: developer.id, actorDisplayName: 'Developer', occurredAt: time, event: 'resolved', changes: { state: { before: 'In progress', after: 'Resolved' }, resolution: { before: null, after: resolution } } },
       { id: 'link', reportId: id, actorId: developer.id, actorDisplayName: 'Developer', occurredAt: time, event: 'duplicate_linked', changes: { canonicalReportId: { before: targetId, after: otherTargetId } } },
     ]
@@ -210,10 +211,12 @@ describe('independent canonical linking and shared readback', () => {
     await screen.findByRole('heading', { name: 'Resolution' })
     fireEvent.click(screen.getByRole('tab', { name: 'Activity' }))
     const disclosures = await screen.findAllByText('Recorded changes', { selector: 'summary' })
-    expect(disclosures).toHaveLength(2)
+    expect(disclosures).toHaveLength(3)
     for (const summary of disclosures) { expect(summary.closest('details')!.open).toBe(false); fireEvent.click(summary) }
-    expect(within(disclosures[0].closest('details')!).getByText(fixed.fixSummary)).toBeTruthy()
-    expect(within(disclosures[1].closest('details')!).getByRole('link', { name: targetId }).getAttribute('href')).toBe(`/reports/${targetId}`)
+    expect(within(disclosures[0].closest('details')!).getByText('Earlier title → Edited title')).toBeTruthy()
+    expect(within(disclosures[0].closest('details')!).getByText('Earlier project → Current project')).toBeTruthy()
+    expect(within(disclosures[1].closest('details')!).getByText(fixed.fixSummary)).toBeTruthy()
+    expect(within(disclosures[2].closest('details')!).getByRole('link', { name: targetId }).getAttribute('href')).toBe(`/reports/${targetId}`)
   })
   it('link_loadFailureAndRetry_preservesReadableReportAndUnsavedResolution', async () => {
     const { repository } = setup()

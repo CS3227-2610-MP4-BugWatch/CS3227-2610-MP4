@@ -15,7 +15,7 @@ const otherDeveloper = { ...developer, id: '10000000-0000-4000-8000-000000000003
 const otherTester = { ...tester, id: '10000000-0000-4000-8000-000000000004' }
 const id = '20000000-0000-4000-8000-000000000001'
 const time = '2026-11-07T10:00:00Z'
-const report: Report = { id, projectId: '30000000-0000-4000-8000-000000000001', title: 'Discussion report', description: 'Current report description', version: '1', reproductionSteps: 'Open', expectedResults: 'Works', actualResults: 'Fails', severity: 'high', testEnvironment: 'Chrome', reporterId: tester.id, reporterUsername: 'tester', reporterDisplayName: 'Tester', projectName: 'Project', projectArchivedAt: null, resolution: null, canonicalReport: null, state: 'In progress', assignedDeveloperId: developer.id, assignedAt: time, assignedDeveloperUsername: 'dev', assignedDeveloperDisplayName: 'Developer', createdAt: time, updatedAt: time }
+const report: Report = { id, projectId: '30000000-0000-4000-8000-000000000001', title: 'Discussion report', description: 'Current report description', version: '1', reproductionSteps: 'Open', expectedResults: 'Works', actualResults: 'Fails', severity: 'high', testEnvironment: 'Chrome', severityRevision: 0, reporterId: tester.id, reporterUsername: 'tester', reporterDisplayName: 'Tester', projectName: 'Project', projectArchivedAt: null, resolution: null, canonicalReport: null, state: 'In progress', assignedDeveloperId: developer.id, assignedAt: time, assignedDeveloperUsername: 'dev', assignedDeveloperDisplayName: 'Developer', createdAt: time, updatedAt: time }
 const waiting: Report = { ...report, state: 'Awaiting tester information' }
 const first: ReportComment = { id: '40000000-0000-4000-8000-000000000001', reportId: id, authorId: developer.id, authorUsername: 'dev', authorDisplayName: 'Question author', body: 'Which browser?', replyToCommentId: null, createdAt: time }
 const second: ReportComment = { ...first, id: '40000000-0000-4000-8000-000000000002', authorId: tester.id, authorDisplayName: 'Answer author', body: 'Chrome\n<script>literal()</script>', replyToCommentId: first.id }
@@ -27,7 +27,7 @@ function deferred<T>() {
 }
 function setup(initial = report, user = developer, comments: ReportComment[] = []) {
   const repository = {
-    listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn(), createReport: vi.fn(),
+    listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn(), editReport: vi.fn(), createReport: vi.fn(),
     getReport: vi.fn().mockResolvedValue(initial), listReportHistory: vi.fn().mockResolvedValue([]), listProjectReports: vi.fn().mockResolvedValue([]),
     acceptReport: vi.fn(), startInvestigation: vi.fn(), resolveReport: vi.fn(), linkDuplicate: vi.fn(), awaitTesterInformation: vi.fn().mockResolvedValue(waiting), resumeInvestigation: vi.fn().mockResolvedValue(report),
     listReportComments: vi.fn().mockResolvedValue(comments), postReportComment: vi.fn().mockResolvedValue(second),

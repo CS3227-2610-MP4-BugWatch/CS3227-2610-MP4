@@ -28,11 +28,13 @@
   * [Authentication]({{ baseUrl }}/docs/userGuide/Authentication.html)
   * [Projects]({{ baseUrl }}/docs/userGuide/Projects.html)
   * [Bug reports]({{ baseUrl }}/docs/userGuide/Reports.html)
+  * [Mailbox]({{ baseUrl }}/docs/userGuide/Mailbox.html)
 * [Developer Guide]({{ baseUrl }}/developerGuide/DeveloperGuide.html) :expanded:
   * [Authentication and account setup]({{ baseUrl }}/docs/developerGuide/Authentication.html)
   * [Multi-Agent Workflow]({{ baseUrl }}/docs/developerGuide/AgentWorkflow.html)
   * [Project development and Supabase handoff]({{ baseUrl }}/docs/developerGuide/Projects.html)
   * [Bug report development]({{ baseUrl }}/docs/developerGuide/Reports.html)
+  * [Mailbox development]({{ baseUrl }}/docs/developerGuide/Mailbox.html)
   * [Continuous integration]({{ baseUrl }}/docs/developerGuide/ContinuousIntegration.html)
       </site-nav>
     </div>

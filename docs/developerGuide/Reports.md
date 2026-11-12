@@ -64,6 +64,16 @@ For migration `012`, stage a compatible-reader release before the schema and act
 
 Rollback by disabling the new controls or revoking execution of `resolve_report(uuid,jsonb)` and `link_duplicate_report(uuid,uuid,uuid)`, while retaining compatible readers and recorded resolution/link/history data. Do not revert to readers that reject Resolved or Closed, delete records, or drop columns as a routine rollback. Use a forward corrective migration; a destructive downgrade needs a separately reviewed data-preservation plan.
 
+## Submitted report editing
+
+Apply `014_report_editing_mailbox.sql` after `013_developer_question_quota.sql` in the isolated project, checking migration history first. This additive migration extends report editing and mailbox persistence and replaces existing comment and workflow RPC definitions to recheck the current project after locking. Coordinate compatible readers and migration rollout as with `011`; do not edit historical migrations or apply fixtures to production.
+
+`ReportEditPage` loads a prefilled form for the original Tester. The database independently requires that actor, an eligible report state, and active source and destination projects. A move retains the report ID and related discussion, history, state, and assignment. A project change is rejected when the report has an incoming or outgoing current canonical reference or a canonical reference captured at resolution. Eligible same-project edits remain allowed. Migration `014` locks projects and report in a consistent order and rechecks the current project in existing comment and workflow mutations.
+
+`edit_report` normalizes and validates inputs and compares the observed severity revision. A mismatch returns a conflict before writing, including a change that was later reversed. The editor keeps input and requires another explicit save after displaying the latest severity. A real edit commits report changes, a `report_edited` history event, and, when assigned, an item for the Developer assigned at commit time in one transaction. A normalized no-op changes neither report timestamps nor history or mailbox. Request receipts bind the actor, request ID, report and payload to the result, allowing a retry after an uncertain response without duplicating side effects. The server rechecks current authorization under lock before returning a cached result. See [Mailbox development](Mailbox.md).
+
+The editor reuses the existing assistant and explicit per-field application. Generation and application do not persist report changes; a separate save is required.
+
 ## Tester assistant
 
 For local development, fill the ignored `.env` or `.env.local` from `.env.example` and run `npm run dev`. Vite's development middleware runs the existing suggestion endpoint at `/api/tester/report-suggestions` on the same local address as the app. Restart the dev server after editing env settings. The middleware loads the server keys into the Node process and exposes only Vite's normal public variables to browser code.
@@ -102,6 +112,8 @@ For disposable PostgreSQL quota checks, set `QUOTA_TEST_DOCKER=true` and `QUOTA_
 
 ## Verification
 
+For this feature, evaluate ESLint and TypeScript/build results alongside meaningful assertions and scoped per-file targets of 80% lines and 80% branches. Coverage does not establish database authorization, transactions, or actual browser behavior: run guarded isolated database scenarios and signed-in browser checks separately and report skips and gaps. With migrations `001` through `014` applied in order to the isolated project, `src/features/reports/database/verify_report_editing_mailbox.sql` exercises transaction behavior with rolled-back fixtures; never run fixture scripts against production. Check editing permissions, moves, conflict and retry, mailbox privacy and actions in the isolated environment.
+
 Run local checks from the repository root:
 
 ```sh
@@ -117,7 +129,7 @@ The ordinary suite skips hosted database tests when isolated settings are absent
 npm run test:report-db
 ```
 
-This selects `src/test/report-database.test.ts`, `src/test/report-workflow-database.test.ts`, `src/test/report-discussion-database.test.ts`, and `src/test/report-resolution-database.test.ts` through `run-project-db-tests.ps1`; it obtains fresh Tester and two Developer tokens and restores process environment values afterward. First apply migrations through `012` manually, only to the separately configured isolated project. The suites create temporary projects, reports, comments, and an Auth user without a profile, then remove their fixtures. Fixture setup and cleanup require the test-project elevated key. Resolution permission assertions use ordinary clients and cover permitted outcomes, invalid targets, direct-write denial, archive/state/assignment rejection, stale links, immutable snapshots, and competing resolution/clarification/link requests. A skipped hosted suite is not a hosted pass.
+This selects `src/test/report-database.test.ts`, `src/test/report-workflow-database.test.ts`, `src/test/report-discussion-database.test.ts`, `src/test/report-resolution-database.test.ts`, `src/test/report-edit-database.test.ts`, and `src/test/mailbox-database.test.ts` through `run-project-db-tests.ps1`. It obtains fresh Tester and two Developer tokens and restores process environment values afterward. First apply migrations `001` through `014` in order, only to the separately configured isolated project. The suites create temporary projects, reports, comments, and test accounts, then remove their fixtures. Fixture setup and cleanup require the test-project elevated key. Resolution permission assertions use ordinary clients and cover permitted outcomes, invalid targets, direct-write denial, archive/state, assignment, stale links, immutable snapshots, and competing requests. The Docker-only multi-session concurrency suite has separate local gates and is not selected by this hosted runner. A skipped hosted suite is not a hosted pass.
 
 To run transactional resolution/link failure-injection checks as well as the report integration suites, install PostgreSQL `psql` on `PATH` and add the isolated connection settings to the ignored `.env.project-test.local`:
 

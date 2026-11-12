@@ -48,8 +48,22 @@ function fail(error: unknown, status?: number, comment = false): never {
     case 'P2005': throw new ReportError('not_found', 'The report or project could not be found.')
     case 'P2006': throw new ReportError('already_assigned', 'This report is already assigned to a Developer.')
     case 'P2007': throw new ReportError('state_conflict', 'The report state has changed. Reload the current report before continuing.')
+    case 'P2011': throw new ReportError('validation', 'This report is linked to another report as a duplicate and must stay in this project. You can still edit its other fields.', { projectId: 'Duplicate-linked reports must stay in their current project.' })
+    case 'P2010': {
+      try {
+        const detail = JSON.parse(String((error as { details?: unknown }).details)) as Record<string, unknown>
+        if (typeof detail.latestSeverity !== 'string' || !Object.hasOwn(REPORT_SEVERITIES, detail.latestSeverity)
+          || !Number.isSafeInteger(detail.latestSeverityRevision) || Number(detail.latestSeverityRevision) < 0
+          || (detail.actorRole !== null && detail.actorRole !== 'tester' && detail.actorRole !== 'developer')) break
+        throw new ReportError('severity_conflict', 'Severity changed. Review the latest severity before saving again.', undefined, {
+          latestSeverity: detail.latestSeverity as ReportSeverity, latestSeverityRevision: Number(detail.latestSeverityRevision), actorRole: detail.actorRole,
+        })
+      } catch (parsed) { if (parsed instanceof ReportError) throw parsed }
+      break
+    }
     default: throw new ReportError('unavailable', 'Report storage is unavailable. Please try again.')
   }
+  throw new ReportError('unavailable', 'Report storage is unavailable. Please try again.')
 }
 
 function record(value: unknown): Record<string, unknown> {
@@ -128,11 +142,13 @@ function reportRow(value: unknown): Report {
   }
   if (resolution?.kind === 'duplicate' && resolution.canonicalReportId.toLowerCase() === uuid(row.id).toLowerCase()) fail(null)
   if (resolution?.kind === 'duplicate' && !canonicalReport) fail(null)
+  if (!Number.isSafeInteger(row.severity_revision) || Number(row.severity_revision) < 0) fail(null)
   for (const field of Object.values(reportFields)) {
     if (result.value[field] !== input[field]) fail(null)
   }
   return {
     ...result.value,
+    severityRevision: Number(row.severity_revision),
     id: uuid(row.id),
     reporterId: uuid(row.reporter_id),
     ...ownership,
@@ -194,6 +210,21 @@ function historyRow(value: unknown): ReportHistoryEntry {
     const after = uuid(change.after)
     if (before?.toLowerCase() === after.toLowerCase() || after.toLowerCase() === identity.reportId.toLowerCase()) fail(null)
     return { ...identity, event: 'duplicate_linked', changes: { canonicalReportId: { before, after } } }
+  }
+  if (row.event === 'report_edited') {
+    const changes: Extract<ReportHistoryEntry, { event: 'report_edited' }>['changes'] = {}
+    if (!Object.keys(source).length) fail(null)
+    for (const [databaseField, raw] of Object.entries(source)) {
+      if (!Object.hasOwn(reportFields, databaseField)) fail(null)
+      const change = record(raw)
+      const before = text(change.before)
+      const after = text(change.after)
+      if (before === after) fail(null)
+      changes[reportFields[databaseField as keyof typeof reportFields]] = { before, after }
+    }
+    const names = row.project_names === undefined || row.project_names === null ? undefined : record(row.project_names)
+    return { ...identity, event: 'report_edited', changes,
+      ...(names ? { projectNames: { before: text(names.before), after: text(names.after) } } : {}) }
   }
   const state = record(source.state)
   if (row.event === 'resolved') {
@@ -282,6 +313,21 @@ export function createReportRepository(client: SupabaseClient): ReportRepository
   }
 
   return {
+    async editReport(id, request) {
+      if (!REPORT_UUID.test(id)) throw new ReportError('not_found', 'The report could not be found.')
+      const result = validateReportInput(request?.input)
+      if (!result.valid) throw new ReportError('validation', 'Check the report fields.', result.errors)
+      if (!Number.isSafeInteger(request.expectedSeverityRevision) || request.expectedSeverityRevision < 0
+        || typeof request.requestId !== 'string' || !REPORT_UUID.test(request.requestId)) {
+        throw new ReportError('validation', 'Reload the report before saving.')
+      }
+      const data = record(await rpc('edit_report', { p_report_id: id, p_input: result.value,
+        p_expected_severity_revision: request.expectedSeverityRevision, p_request_id: request.requestId }))
+      if (data.outcome !== 'saved' && data.outcome !== 'unchanged') fail(null)
+      const report = reportRow(data.report)
+      if (report.id.toLowerCase() !== id.toLowerCase()) fail(null)
+      return { outcome: data.outcome, report }
+    },
     async listDrafts() {
       const summaries: DraftSummary[] = []
       const seen = new Set<string>()

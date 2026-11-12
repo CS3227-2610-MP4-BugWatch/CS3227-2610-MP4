@@ -20,7 +20,7 @@ function render(element: ReactElement) {
 }
 
 const reportRepository: ReportRepository = {
-  createReport: vi.fn(),
+  editReport: vi.fn(), createReport: vi.fn(),
   getReport: vi.fn(),
   listReportHistory: vi.fn(),
   resolveReport: vi.fn(), linkDuplicate: vi.fn(), awaitTesterInformation: vi.fn(), resumeInvestigation: vi.fn(), listReportComments: vi.fn().mockResolvedValue([]), postReportComment: vi.fn(), acceptReport: vi.fn(), startInvestigation: vi.fn(), listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn(),

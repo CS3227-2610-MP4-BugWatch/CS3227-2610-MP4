@@ -5,7 +5,7 @@ import type { Project } from '../projects/types'
 import { requestReportSuggestions } from './reportSuggestionClient'
 import type { GenerateReportSuggestions } from './reportSuggestionClient'
 import type { SuggestedField } from './reportSuggestionTypes'
-import type { ReportFieldErrors, ReportInput } from './types'
+import type { ReportFieldErrors, ReportInput, ReportSeverityConflict } from './types'
 import { suggestionPrerequisites, suggestionRequest, useReportSuggestions } from './useReportSuggestions'
 import type { ReportSuggestionSession } from './useReportSuggestions'
 import { REPORT_SEVERITIES, REPORT_TEXT_FIELDS, REPORT_TEXT_KEYS, validateDraftInput, validateReportInput } from './validation'
@@ -17,9 +17,12 @@ type Props = {
   onSubmit: (input: ReportInput) => void; onSaveDraft: (input: ReportInput) => void; onCancel: (projectId: string) => void
   generateSuggestions?: GenerateReportSuggestions
   suggestionSession?: ReportSuggestionSession
+  mode?: 'create' | 'edit'
+  severityConflict?: ReportSeverityConflict
 }
 
-export function ReportForm({ projects, initialProjectId, initialInput, projectsAvailable, pending, error, fieldErrors, archivedProjectId, archivedProjectName, savedInput, isDraft, confirmation, allowNavigation, onSubmit, onSaveDraft, onCancel, generateSuggestions = requestReportSuggestions, suggestionSession }: Props) {
+export function ReportForm({ projects, initialProjectId, initialInput, projectsAvailable, pending, error, fieldErrors, archivedProjectId, archivedProjectName, savedInput, isDraft, confirmation, allowNavigation, onSubmit, onSaveDraft, onCancel, generateSuggestions = requestReportSuggestions, suggestionSession, mode = 'create', severityConflict }: Props) {
+  useEffect(() => { if (severityConflict) document.getElementById('severity-conflict')?.focus() }, [severityConflict])
   const [input, setInput] = useState<ReportInput>(initialInput ?? {
     projectId: initialProjectId, title: '', description: '', version: '', reproductionSteps: '',
     expectedResults: '', actualResults: '', severity: '', testEnvironment: '',
@@ -87,6 +90,7 @@ export function ReportForm({ projects, initialProjectId, initialInput, projectsA
   }
   return <>
     {blocker.state === 'blocked' && <div role="dialog" aria-modal="true" aria-label="Unsaved changes"><p>You have unsaved changes.</p><button type="button" onClick={() => blocker.reset()}>Keep editing</button><button type="button" onClick={() => blocker.proceed()}>Leave without saving</button></div>}
+    {severityConflict && <div id="severity-conflict" role="alert" tabIndex={-1}><p>{severityConflict.actorRole === 'developer' ? 'A Developer changed the severity' : 'Severity changed'} since you opened this report. Current severity: {REPORT_SEVERITIES[severityConflict.latestSeverity]}. Your selected severity: {input.severity ? REPORT_SEVERITIES[input.severity] : 'Not selected'}.</p><p>Your changes have not been saved. Review the severity, then choose Save changes again to use your selected value.</p></div>}
     <form className="project-form" onSubmit={submit} noValidate>
       <p>All fields are required except Test environment.</p>
       {archived ? <div role="alert">{isDraft ? <p>This project has been archived. Select an active project to save or submit.</p> : <><p>This project has been archived. Your report wasn’t submitted.</p><p>If the bug still needs attention, contact the Developer who created this project outside BugWatch.</p></>}</div> : error && <p role="alert">{error}</p>}
@@ -107,7 +111,8 @@ export function ReportForm({ projects, initialProjectId, initialInput, projectsA
           {(key === 'title' || key === 'description' || key === 'reproductionSteps') && suggestion(key)}
         </>)
       })}</fieldset>)}
-      <fieldset className="form-section"><legend>Impact</legend>
+      <fieldset className={`form-section${severityConflict ? ' severity-conflict' : ''}`}><legend>Impact</legend>
+      {severityConflict && <p>Current severity: {REPORT_SEVERITIES[severityConflict.latestSeverity]}. Your selected severity: {input.severity ? REPORT_SEVERITIES[input.severity] : 'Not selected'}.</p>}
       {field('severity', 'Severity', <select {...accessibility('severity')} required value={input.severity} onChange={event => change('severity', event.target.value as ReportInput['severity'])}><option value="">Choose a severity</option>{Object.entries(REPORT_SEVERITIES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>)}
       </fieldset>
       {assistant.suggestions && (assistant.suggestions.source.projectId !== input.projectId
@@ -132,7 +137,7 @@ export function ReportForm({ projects, initialProjectId, initialInput, projectsA
         onClick={() => assistant.requestGeneration(request, input)}>
         {assistant.generating ? 'Generating…' : 'Generate suggestions'}
       </button>}
-      <div className="project-toolbar"><button type="submit" disabled={pending || archived || !projectsAvailable}>{pending ? 'Please wait…' : 'Submit report'}</button><button type="button" disabled={pending || archived || !projectsAvailable} onClick={() => validate(true)}>Save draft</button><button type="button" disabled={pending} onClick={() => onCancel(input.projectId)}>{archived ? 'Discard report' : 'Cancel'}</button></div>
+      <div className="project-toolbar"><button type="submit" disabled={pending || archived || !projectsAvailable}>{pending ? 'Please wait…' : mode === 'edit' ? 'Save changes' : 'Submit report'}</button>{mode !== 'edit' && <button type="button" disabled={pending || archived || !projectsAvailable} onClick={() => validate(true)}>Save draft</button>}<button type="button" disabled={pending} onClick={() => onCancel(input.projectId)}>{mode !== 'edit' && archived ? 'Discard report' : 'Cancel'}</button></div>
     </form>
   </>
 }
