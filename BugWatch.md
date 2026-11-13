@@ -1,12 +1,12 @@
 # BugWatch Application Specification
 
-Status: Product decisions recorded. Confirmed scope, exclusions, and explicit deferrals are documented; release prioritization and scheduling are deferred.
+Status: Product decisions recorded. Confirmed scope, exclusions and explicit deferrals are documented. Section 10 records the Tester retest/closure delivery deferral; other scheduling remains open.
 
 ## 1. Purpose and Scope
 
 BugWatch is a web application that helps testers report bugs and developers track the work needed to fix them. It connects a report, its reporter, the developer handling it, clarification discussions, and the eventual resolution.
 
-This document describes intended behaviour, not currently available functionality. The current application is a React and TypeScript frontend built with Vite; the inspected application screen only displays the BugWatch heading.
+This document describes intended product behaviour rather than an inventory of implemented features. See the user guide for available functionality and the release plans for delivery scope.
 
 ### Requirement status
 
@@ -285,9 +285,11 @@ Every brainstorm feature below has an explicit decision. Deferred and excluded f
 | Workload/ageing dashboard | Deferred | No metrics dashboard selected. |
 | Stale-report reminders | Excluded | A report awaiting a reply stays waiting; no reminder feature or automatic state change. |
 
-## 10. Release Planning — Deferred
+## 10. Release Planning
 
-Release prioritization and scheduling are explicitly deferred. No initial-release subset, deadline, or delivery schedule has been selected. The confirmed requirements describe agreed product behaviour, not an approved release sequence.
+On 13 November 2026, the product owner deferred Tester retesting, closure and return from Resolved to In progress (T-05) to planned future features. The current release ends at the Developer resolution. The intended ownership, reason, retest and final-Closed rules remain product requirements for that future workflow, not claims of current implementation. Retest detail decisions must be resolved before that later implementation.
+
+The release-planning files record this delivery decision. Other recommendations and unscheduled features do not become implementation authorization merely by appearing in a plan.
 
 Future release planning must consider the complete confirmed scope: authentication; project creation/editing/archive/restore; reports, private drafts and editing; search/filter/sort; profile status tabs and display-name editing; discussions; mailbox; activity history; assignment/release/transfer; fixed/non-fix resolution and original-tester closure; duplicate linking; and both LLM assistants.
 
@@ -299,7 +301,7 @@ Every original proposed feature or product decision has been confirmed, excluded
 
 | Deferred item | Boundary already agreed |
 | --- | --- |
-| Release prioritization | Confirmed product scope is recorded; no release subset/order selected. |
+| Release prioritization | Tester retest/closure/return to investigation deferred to future features on 13 November 2026; other unscheduled details remain open. |
 | Scheduling/deadline | Vercel is the deployment target; no delivery schedule selected. |
 | Evidence submission | No upload/link submission mechanism, file formats, counts, or size limits approved. |
 | Severity meanings and defaults | Names are Very Low, Low, Medium, High; severity is required. |

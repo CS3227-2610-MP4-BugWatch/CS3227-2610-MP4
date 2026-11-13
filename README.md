@@ -1,6 +1,6 @@
 # BugWatch
 
-BugWatch is a bug tracker for administrator-provisioned Tester and Developer accounts. Users work with projects and bug reports, including drafts, report discussions and updates in a private mailbox. See the [User Guide](docs/userGuide/UserGuide.md) for workflows.
+BugWatch is a bug tracker for administrator-provisioned Tester and Developer accounts. Users work with projects and bug reports, including drafts, report discussions and updates in a private mailbox. See the [User Guide](docs/UserGuide.md) for workflows.
 
 ## Local setup
 

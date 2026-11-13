@@ -5,8 +5,8 @@
 <header sticky>
   <navbar type="dark">
     <a slot="brand" href="{{baseUrl}}/index.html" title="Home" class="navbar-brand">BugWatch</a>
-    <li><a highlight-on="sibling-or-child" href="{{baseUrl}}/docs/userGuide/UserGuide.html" class="nav-link">User Guide</a></li>
-    <li><a highlight-on="sibling-or-child" href="{{baseUrl}}/docs/developerGuide/DeveloperGuide.html" class="nav-link">Developer Guide</a></li>
+    <li><a highlight-on="sibling-or-child" href="{{baseUrl}}/docs/UserGuide.html" class="nav-link">User Guide</a></li>
+    <li><a highlight-on="sibling-or-child" href="{{baseUrl}}/docs/DeveloperGuide.html" class="nav-link">Developer Guide</a></li>
     <li><a href="{{baseUrl}}/docs/developerGuide/AgentWorkflow.html" class="nav-link">Agent Workflow</a></li>
     <li><a highlight-on="sibling-or-child" href="{{baseUrl}}/team/AboutUs.html" class="nav-link">About Us</a></li>
     <li><a href="https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4" target="_blank" class="nav-link"><md>:fab-github:</md></a>
@@ -25,12 +25,12 @@
       <site-nav>
 * [Home]({{ baseUrl }}/index.html)
 * [Reflections]({{ baseUrl }}/docs/Reflections.html)
-* [User Guide]({{ baseUrl }}/docs/userGuide/UserGuide.html) :expanded:
+* [User Guide]({{ baseUrl }}/docs/UserGuide.html) :expanded:
   * [Authentication]({{ baseUrl }}/docs/userGuide/Authentication.html)
   * [Projects]({{ baseUrl }}/docs/userGuide/Projects.html)
   * [Bug reports]({{ baseUrl }}/docs/userGuide/Reports.html)
   * [Mailbox]({{ baseUrl }}/docs/userGuide/Mailbox.html)
-* [Developer Guide]({{ baseUrl }}/docs/developerGuide/DeveloperGuide.html) :expanded:
+* [Developer Guide]({{ baseUrl }}/docs/DeveloperGuide.html) :expanded:
   * [Authentication and account setup]({{ baseUrl }}/docs/developerGuide/Authentication.html)
   * [Multi-Agent Workflow]({{ baseUrl }}/docs/developerGuide/AgentWorkflow.html)
   * [Project development and Supabase handoff]({{ baseUrl }}/docs/developerGuide/Projects.html)
