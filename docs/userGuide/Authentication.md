@@ -18,6 +18,15 @@ If the email or password is incorrect, check the details and try again. If authe
 
 When the app renews your session in the background or you return to its browser tab, your current account screen stays open. Any unsaved project form text remains in place. Signing out or losing the session still returns you to the login screen.
 
+### Provided Accounts for MP4
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Developer | developerdavid@mail.com | d3vDavid |
+| Developer | developerdanielle@mail.com | d3vDanielle |
+| Tester | testerterence@mail.com | t3stTerence |
+| Tester | testertrisha@mail.com | t3stTrisha |
+
 ## Navigate the workspace
 
 The header shows your display name, role, and **Log out**. On wider screens, the sidebar offers **Projects** and **Mailbox** to both roles and **My drafts** to Testers. On a narrow screen, select **Menu** to open or close those destinations. With focus on **Menu** or its navigation, press Escape to close the menu. The current destination is highlighted. See [Projects](Projects.md), [Bug reports](Reports.md), and [Mailbox](Mailbox.md) for the available workflows.

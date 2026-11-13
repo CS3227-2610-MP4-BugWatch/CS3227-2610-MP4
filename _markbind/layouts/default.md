@@ -31,12 +31,15 @@
   * [Bug reports]({{ baseUrl }}/docs/userGuide/Reports.html)
   * [Mailbox]({{ baseUrl }}/docs/userGuide/Mailbox.html)
 * [Developer Guide]({{ baseUrl }}/docs/DeveloperGuide.html) :expanded:
+  * [Application architecture]({{ baseUrl }}/docs/developerGuide/Architecture.html)
   * [Authentication and account setup]({{ baseUrl }}/docs/developerGuide/Authentication.html)
   * [Multi-Agent Workflow]({{ baseUrl }}/docs/developerGuide/AgentWorkflow.html)
   * [Project development and Supabase handoff]({{ baseUrl }}/docs/developerGuide/Projects.html)
   * [Bug report development]({{ baseUrl }}/docs/developerGuide/Reports.html)
   * [Mailbox development]({{ baseUrl }}/docs/developerGuide/Mailbox.html)
   * [Continuous integration]({{ baseUrl }}/docs/developerGuide/ContinuousIntegration.html)
+  * [Appendix: User stories]({{ baseUrl }}/docs/developerGuide/UserStories.html)
+  * [Appendix: Use cases]({{ baseUrl }}/docs/developerGuide/UseCases.html)
       </site-nav>
     </div>
   </nav>

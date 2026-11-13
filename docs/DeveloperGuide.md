@@ -8,6 +8,12 @@
 
 BugWatch uses React, TypeScript, Vite and Mantine for the browser, Supabase Auth and PostgreSQL for identity and persistence, and server-side API functions for SoCLaaS requests. Database permissions and transactions enforce ownership and state rules beyond the UI.
 
+## Design references
+
+- [Application architecture](developerGuide/Architecture.md)
+- [Use cases](developerGuide/UseCases.md)
+- [User stories](developerGuide/UserStories.md)
+
 ## Setup and implementation
 
 - Start with the [README](../README.md) for Node.js 24, locked npm installation, environment configuration and local startup.

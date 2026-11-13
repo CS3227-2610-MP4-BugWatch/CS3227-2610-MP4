@@ -2,6 +2,17 @@
 
 BugWatch is a bug tracker for administrator-provisioned Tester and Developer accounts. Users work with projects and bug reports, including drafts, report discussions and updates in a private mailbox. See the [User Guide](docs/UserGuide.md) for workflows.
 
+### Accounts for MP4 Testing
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Developer | developerdavid@mail.com | d3vDavid |
+| Developer | developerdanielle@mail.com | d3vDanielle |
+| Tester | testerterence@mail.com | t3stTerence |
+| Tester | testertrisha@mail.com | t3stTrisha |
+
+Access the site [here](https://cs-3227-2610-mp-4-ruby.vercel.app)
+
 ## Local setup
 
 Use Node.js 24 and npm. From a fresh clone, run `npm ci`. Copy `.env.example` to `.env` only if `.env` does not already exist, then set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` for your Supabase project. Never put secrets or service-role keys in `VITE_` variables or commit credentials.
