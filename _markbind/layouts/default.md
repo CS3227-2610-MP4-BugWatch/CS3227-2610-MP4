@@ -4,12 +4,10 @@
 
 <header sticky>
   <navbar type="dark">
-    <a slot="brand" href="{{baseUrl}}/index.html" title="Home" class="navbar-brand">ProjectEx</a>
-    <li><a highlight-on="sibling-or-child" href="{{baseUrl}}/userGuide/UserGuide.html" class="nav-link">User Guide</a></li>
-    <li><a highlight-on="sibling-or-child" href="{{baseUrl}}/developerGuide/DeveloperGuide.html" class="nav-link">Developer Guide</a></li>
-    <li><a href="{{baseUrl}}/docs/developerGuide/AgentWorkflow.html" class="nav-link">Agent Workflow</a></li>
-    <li><a highlight-on="sibling-or-child" href="{{baseUrl}}/team/AboutUs.html" class="nav-link">About Us</a></li>
-    <li><a href="https://github.com/se-edu" target="_blank" class="nav-link"><md>:fab-github:</md></a>
+    <a slot="brand" href="{{baseUrl}}/index.html" title="Home" class="navbar-brand">BugWatch</a>
+    <li><a highlight-on="sibling-or-child" href="{{baseUrl}}/docs/userGuide/UserGuide.html" class="nav-link">User Guide</a></li>
+    <li><a highlight-on="sibling-or-child" href="{{baseUrl}}/docs/developerGuide/DeveloperGuide.html" class="nav-link">Developer Guide</a></li>
+    <li><a href="https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4" target="_blank" class="nav-link"><md>:fab-github:</md></a>
     </li>
     <li slot="right">
       <form class="navbar-form">
@@ -24,16 +22,19 @@
     <div class="nav-component slim-scroll">
       <site-nav>
 * [Home]({{ baseUrl }}/index.html)
-* [User Guide]({{ baseUrl }}/userGuide/UserGuide.html) :expanded:
+* [User Guide]({{ baseUrl }}/docs/userGuide/UserGuide.html) :expanded:
   * [Authentication]({{ baseUrl }}/docs/userGuide/Authentication.html)
   * [Projects]({{ baseUrl }}/docs/userGuide/Projects.html)
   * [Bug reports]({{ baseUrl }}/docs/userGuide/Reports.html)
-* [Developer Guide]({{ baseUrl }}/developerGuide/DeveloperGuide.html) :expanded:
+* [Developer Guide]({{ baseUrl }}/docs/developerGuide/DeveloperGuide.html) :expanded:
+  * [Application architecture]({{ baseUrl }}/docs/developerGuide/Architecture.html)
   * [Authentication and account setup]({{ baseUrl }}/docs/developerGuide/Authentication.html)
   * [Multi-Agent Workflow]({{ baseUrl }}/docs/developerGuide/AgentWorkflow.html)
   * [Project development and Supabase handoff]({{ baseUrl }}/docs/developerGuide/Projects.html)
   * [Bug report development]({{ baseUrl }}/docs/developerGuide/Reports.html)
   * [Continuous integration]({{ baseUrl }}/docs/developerGuide/ContinuousIntegration.html)
+  * [Appendix: User stories]({{ baseUrl }}/docs/developerGuide/UserStories.html)
+  * [Appendix: Use cases]({{ baseUrl }}/docs/developerGuide/UseCases.html)
       </site-nav>
     </div>
   </nav>
