@@ -1,0 +1,17 @@
+{
+  "scope": "workflow/evaluation/summarizeExperiment.ts",
+  "sourceSha256": "f03edd6e58cc47354defe3ec8552a4f1e55f9ea1fd3e7a31c0132209addc69ec",
+  "command": "npm run test:coverage -- --run src/test/workflow-evaluation.test.ts --coverage.include=workflow/evaluation/summarizeExperiment.ts --coverage.thresholds.perFile --coverage.thresholds.lines=80 --coverage.thresholds.branches=80 --maxWorkers=2",
+  "provider": "V8",
+  "vitestVersion": "5.0.5",
+  "testsPassed": 61,
+  "perFileThresholds": {
+    "lines": 80,
+    "branches": 80
+  },
+  "cliCoverage": "Not measured: tested in child processes; three CLI behavior tests passed and independent reviewer accepted this exception.",
+  "limits": [
+    "Synthetic reporter fixtures do not establish actual agent performance.",
+    "Coverage does not prove assertions or requirements complete."
+  ]
+}

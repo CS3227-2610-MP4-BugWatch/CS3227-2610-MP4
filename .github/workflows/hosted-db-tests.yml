@@ -1,0 +1,120 @@
+name: Hosted database tests
+
+on:
+  push:
+    branches: [development, master]
+  pull_request:
+    branches: [development, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# All five suites share account fixtures in one isolated project.
+concurrency:
+  group: hosted-database-tests
+  cancel-in-progress: false
+
+jobs:
+  test:
+    # Fork and Dependabot PRs do not receive repository secrets.
+    if: >-
+      github.actor != 'dependabot[bot]' &&
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Authenticate fixtures and run hosted suites
+        env:
+          DB_TEST_URL: ${{ secrets.DB_TEST_URL }}
+          DB_PRODUCTION_URL: ${{ secrets.DB_PRODUCTION_URL }}
+          DB_TEST_PUBLISHABLE_KEY: ${{ secrets.DB_TEST_PUBLISHABLE_KEY }}
+          DB_TEST_SERVICE_ROLE_KEY: ${{ secrets.DB_TEST_SERVICE_ROLE_KEY }}
+          DB_TEST_UNASSIGNED_USER_ID: ${{ secrets.DB_TEST_UNASSIGNED_USER_ID }}
+          DB_TEST_TESTER_EMAIL: ${{ secrets.DB_TEST_TESTER_EMAIL }}
+          DB_TEST_TESTER_PASSWORD: ${{ secrets.DB_TEST_TESTER_PASSWORD }}
+          DB_TEST_DEVELOPER_EMAIL: ${{ secrets.DB_TEST_DEVELOPER_EMAIL }}
+          DB_TEST_DEVELOPER_PASSWORD: ${{ secrets.DB_TEST_DEVELOPER_PASSWORD }}
+          DB_TEST_SECOND_DEVELOPER_EMAIL: ${{ secrets.DB_TEST_SECOND_DEVELOPER_EMAIL }}
+          DB_TEST_SECOND_DEVELOPER_PASSWORD: ${{ secrets.DB_TEST_SECOND_DEVELOPER_PASSWORD }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { createClient } from '@supabase/supabase-js'
+          import { spawnSync } from 'node:child_process'
+
+          function required(name) {
+            const value = process.env[name]
+            if (!value?.trim()) throw new Error(`Missing repository secret: ${name}`)
+            return value
+          }
+
+          const settings = Object.fromEntries(Object.keys(process.env)
+            .filter(name => name.startsWith('DB_TEST_') || name === 'DB_PRODUCTION_URL')
+            .map(name => [name, required(name)]))
+          const testUrl = new URL(required('DB_TEST_URL'))
+          const productionUrl = new URL(required('DB_PRODUCTION_URL'))
+          if (testUrl.protocol !== 'https:' || productionUrl.protocol !== 'https:' || testUrl.origin === productionUrl.origin) {
+            throw new Error('Use distinct HTTPS test and production origins; tests must target the isolated project.')
+          }
+          const key = required('DB_TEST_PUBLISHABLE_KEY')
+          const serviceKey = required('DB_TEST_SERVICE_ROLE_KEY')
+          const unassignedId = required('DB_TEST_UNASSIGNED_USER_ID')
+          if (!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(unassignedId)) {
+            throw new Error('DB_TEST_UNASSIGNED_USER_ID must be an Auth user UUID without a profile.')
+          }
+          const client = createClient(testUrl.href, key, {
+            auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+          })
+          const tokens = {}
+          for (const role of ['TESTER', 'DEVELOPER', 'SECOND_DEVELOPER']) {
+            const { data, error } = await client.auth.signInWithPassword({
+              email: required(`DB_TEST_${role}_EMAIL`),
+              password: required(`DB_TEST_${role}_PASSWORD`),
+            })
+            if (error || !data.session) throw new Error(`Isolated ${role} sign-in failed; check its secrets and confirmed account.`)
+            tokens[role] = data.session.access_token
+            console.log(`::add-mask::${tokens[role]}`)
+          }
+
+          const testEnv = { ...process.env, QUOTA_TEST_DOCKER: 'false' }
+          // Passwords are needed only for sign-in, not by Vitest workers.
+          for (const name of Object.keys(settings)) delete testEnv[name]
+          for (const prefix of ['AUTH_TEST', 'PROJECT_TEST']) {
+            Object.assign(testEnv, {
+              [`${prefix}_ISOLATED`]: 'true',
+              [`${prefix}_URL`]: testUrl.href,
+              [`${prefix}_PUBLISHABLE_KEY`]: key,
+              [`${prefix}_SERVICE_ROLE_KEY`]: serviceKey,
+              [`${prefix}_TESTER_TOKEN`]: tokens.TESTER,
+              [`${prefix}_DEVELOPER_TOKEN`]: tokens.DEVELOPER,
+            })
+          }
+          testEnv.AUTH_TEST_UNASSIGNED_USER_ID = unassignedId
+          testEnv.PROJECT_TEST_PRODUCTION_URL = productionUrl.href
+          testEnv.PROJECT_TEST_SECOND_DEVELOPER_TOKEN = tokens.SECOND_DEVELOPER
+          const result = spawnSync(process.execPath, [
+            'node_modules/vitest/vitest.mjs', '--run', '--no-file-parallelism',
+            'src/test/auth-database.test.ts',
+            'src/test/project-database.test.ts',
+            'src/test/report-database.test.ts',
+            'src/test/report-workflow-database.test.ts',
+            'src/test/report-discussion-database.test.ts',
+          ], { env: testEnv, stdio: 'inherit' })
+          if (result.error) throw new Error('Could not start the hosted test process.')
+          process.exit(result.status ?? 1)
+          NODE

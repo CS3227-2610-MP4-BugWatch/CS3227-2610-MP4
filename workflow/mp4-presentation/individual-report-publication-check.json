@@ -1,0 +1,45 @@
+{
+  "checkedDateSingapore": "2026-11-13",
+  "source": "GitHub gh pr view 12",
+  "pullRequest": {
+    "baseRefName": "development",
+    "headRefOid": "3c6a6c4125879c63357e753e95535e809efe7f5f",
+    "isDraft": true,
+    "number": 12,
+    "state": "OPEN",
+    "statusCheckRollup": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-11-12T23:27:20Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/actions/runs/43328894057/job/131568280477",
+        "name": "test",
+        "startedAt": "2026-11-12T23:26:39Z",
+        "status": "COMPLETED",
+        "workflowName": "Unit tests"
+      },
+      {
+        "__typename": "StatusContext",
+        "context": "Vercel",
+        "startedAt": "2026-11-12T23:26:56Z",
+        "state": "SUCCESS",
+        "targetUrl": "https://vercel.com/jian-ming/cs-3227-2610-mp-4/9fdpcV9xXtWJW6K1A4XKR7Mfzeiq"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-11-12T23:26:57Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://vercel.com/github",
+        "name": "Vercel Preview Comments",
+        "startedAt": "2026-11-12T23:26:57Z",
+        "status": "COMPLETED",
+        "workflowName": ""
+      }
+    ],
+    "url": "https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/pull/12"
+  },
+  "limits": [
+    "Deployment success is not a hosted database migration or signed-in acceptance check.",
+    "Report draft status is checked at this snapshot; later changes require a new check."
+  ]
+}

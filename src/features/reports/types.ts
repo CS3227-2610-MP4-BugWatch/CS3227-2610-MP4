@@ -45,6 +45,7 @@ export interface ValidatedReportInput extends ReportInput {
 export interface Report extends ValidatedReportInput {
   resolution: ReportResolution | null
   canonicalReport: { id: string; title: string } | null
+  severityRevision: number
   id: string
   reporterId: string
   createdAt: string
@@ -100,6 +101,10 @@ export type ReportHistoryEntry = ReportHistoryIdentity & ({
   event: 'created'
   changes: Partial<Record<keyof ReportInput, { before: null; after: string }>>
 } | {
+  event: 'report_edited'
+  changes: Partial<Record<keyof ReportInput, { before: string; after: string }>>
+  projectNames?: { before: string; after: string }
+} | {
   event: 'accepted'
   assignedDeveloperUsername?: string | null
   assignedDeveloperDisplayName?: string | null
@@ -132,22 +137,42 @@ export type ProjectReportSummary = Pick<Report,
   'id' | 'projectId' | 'title' | 'projectName' | 'severity' | 'state' | 'assignedDeveloperId'
   | 'assignedDeveloperUsername' | 'assignedDeveloperDisplayName' | 'reporterDisplayName'>
 
-type ReportErrorCode = 'validation' | 'unauthenticated' | 'forbidden' | 'archived' | 'not_found' | 'unavailable' | 'already_assigned' | 'state_conflict'
+type ReportErrorCode = 'validation' | 'unauthenticated' | 'forbidden' | 'archived' | 'not_found' | 'unavailable' | 'already_assigned' | 'state_conflict' | 'severity_conflict'
 export type ReportFieldErrors = Partial<Record<keyof ReportInput, string>>
+
+export interface ReportSeverityConflict {
+  latestSeverity: ReportSeverity
+  latestSeverityRevision: number
+  actorRole: 'developer' | 'tester' | null
+}
+
+export interface ReportEditRequest {
+  input: ReportInput
+  expectedSeverityRevision: number
+  requestId: string
+}
+
+export interface ReportEditResult {
+  outcome: 'saved' | 'unchanged'
+  report: Report
+}
 
 export class ReportError extends Error {
   readonly code: ReportErrorCode
   readonly fieldErrors?: ReportFieldErrors & ResolutionFieldErrors
+  readonly severityConflict?: ReportSeverityConflict
 
-  constructor(code: ReportErrorCode, message: string, fieldErrors?: ReportFieldErrors & ResolutionFieldErrors) {
+  constructor(code: ReportErrorCode, message: string, fieldErrors?: ReportFieldErrors & ResolutionFieldErrors, severityConflict?: ReportSeverityConflict) {
     super(message)
     this.name = 'ReportError'
     this.code = code
     this.fieldErrors = fieldErrors
+    this.severityConflict = severityConflict
   }
 }
 
 export interface ReportRepository {
+  editReport(id: string, request: ReportEditRequest): Promise<ReportEditResult>
   listDrafts(): Promise<DraftSummary[]>
   getDraft(id: string): Promise<ReportDraft | null>
   saveDraft(input: ReportInput, id?: string): Promise<ReportDraft>

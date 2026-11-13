@@ -181,7 +181,7 @@ it('reportSuggestions_firstDraftSave_keepsPendingSuggestionsUntilLeavingTheDraft
   const reportRepository = {
     saveDraft: vi.fn().mockResolvedValue(draft), getDraft: vi.fn().mockResolvedValue(draft),
     listDrafts: vi.fn().mockResolvedValue([draft]), deleteDraft: vi.fn(), submitDraft: vi.fn(),
-    listProjectReports: vi.fn(), createReport: vi.fn(), getReport: vi.fn(), listReportHistory: vi.fn(),
+    listProjectReports: vi.fn(), editReport: vi.fn(), createReport: vi.fn(), getReport: vi.fn(), listReportHistory: vi.fn(),
     acceptReport: vi.fn(), startInvestigation: vi.fn(),
     resolveReport: vi.fn(), linkDuplicate: vi.fn(), awaitTesterInformation: vi.fn(), resumeInvestigation: vi.fn(),
     listReportComments: vi.fn().mockResolvedValue([]), postReportComment: vi.fn(),

@@ -72,7 +72,6 @@ Add these settings to `.env.auth-test.local` after creating the three Auth accou
 ```dotenv
 VITE_SUPABASE_URL=https://your-isolated-project.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=your-isolated-project-publishable-key
-VITE_ENABLE_SIMULATION=false
 AUTH_TEST_ISOLATED=true
 AUTH_TEST_UNASSIGNED_USER_ID=uuid-of-auth-user-with-no-profile
 AUTH_TEST_TESTER_EMAIL=tester-account@example.com

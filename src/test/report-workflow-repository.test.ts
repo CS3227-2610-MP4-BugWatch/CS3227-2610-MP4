@@ -8,7 +8,7 @@ const developerId = '30000000-0000-4000-8000-000000000001'
 const time = '2026-11-07T09:30:00.000012+00:00'
 const input = { projectId, title: 'Crash', description: 'Failure', version: '1', reproductionSteps: 'Open', expectedResults: 'Works', actualResults: 'Fails', severity: 'low' as const, testEnvironment: '' }
 const open = {
-  id, project_id: projectId, reporter_id: developerId, title: input.title, description: input.description,
+  severity_revision: 0, id, project_id: projectId, reporter_id: developerId, title: input.title, description: input.description,
   version: '1', reproduction_steps: 'Open', expected_results: 'Works', actual_results: 'Fails', severity: 'low', test_environment: '',
   state: 'Open', assigned_developer_id: null, assigned_at: null, assigned_developer_username: null,
   assigned_developer_display_name: null, created_at: time, updated_at: time, project_name: 'Project',

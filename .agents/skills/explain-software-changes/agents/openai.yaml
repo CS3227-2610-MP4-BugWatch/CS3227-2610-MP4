@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plain-English Software Explanations"
+  short_description: "Write clear summaries, artifacts and reflections"
+  default_prompt: "Use $explain-software-changes to write this summary, artifact or individual reflection in plain English, preserving facts and verification limits."

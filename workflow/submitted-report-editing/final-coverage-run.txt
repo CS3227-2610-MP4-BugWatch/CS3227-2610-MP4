@@ -1,0 +1,25 @@
+
+> bugwatch@0.0.0 test:coverage
+> vitest run --coverage.enabled --maxWorkers=2 --coverage.include=src/features/reports/ReportEditPage.tsx --coverage.include=src/features/reports/ReportForm.tsx --coverage.include=src/features/reports/ReportDetailsPage.tsx --coverage.include=src/features/reports/reportRepository.ts --coverage.include=src/features/reports/types.ts --coverage.include=src/features/reports/validation.ts --coverage.include=src/features/mailbox/*.ts --coverage.include=src/features/mailbox/*.tsx --coverage.include=src/features/projects/ProjectsApp.tsx --coverage.include=src/features/auth/AuthenticatedApp.tsx --coverage.include=src/shared/components/WorkspaceShell.tsx --coverage.thresholds.perFile=true --coverage.thresholds.lines=80 --coverage.thresholds.branches=80
+
+
+ RUN  v5.0.5 E:/CS3227-2610-MP4
+      Coverage enabled with v8
+
+
+ Test Files  30 passed | 9 skipped (39)
+      Tests  809 passed | 210 skipped (1019)
+   Start at  12:36:18
+   Duration  75.28s (tests 39%, import 36%, environment 23%, worker 2%)
+
+    Isolate  39 workers spawned · ~1.11s startup each (spawn + environment, per file)
+             at least ~20.52s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 93.48% ( 919/983 )
+Branches     : 90.77% ( 876/965 )
+Functions    : 90.33% ( 215/238 )
+Lines        : 98.12% ( 732/746 )
+================================================================================

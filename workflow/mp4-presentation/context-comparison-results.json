@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "sourceDate": "2026-11-10",
+  "model": "GPT-6.1 Sol",
+  "reasoning": "low",
+  "bothConditionsUseOpenSpec": true,
+  "pairsPerTask": 1,
+  "cases": [
+    {
+      "task": "Rate-limit test design",
+      "broadTotalTokens": 121021,
+      "focusedTotalTokens": 40118,
+      "reductionPercent": 66.9,
+      "quality": "6 categories by inspection",
+      "source": "workflow/2026-11-06-mp4-token-usage-pilot.md"
+    },
+    {
+      "task": "Submission test design",
+      "broadTotalTokens": 122698,
+      "focusedTotalTokens": 62633,
+      "reductionPercent": 49,
+      "quality": "6 categories by inspection",
+      "source": "workflow/2026-11-07-mp4-token-usage-replays.md"
+    },
+    {
+      "task": "Draft test design",
+      "broadTotalTokens": 107718,
+      "focusedTotalTokens": 61484,
+      "reductionPercent": 42.9,
+      "quality": "6 categories by inspection",
+      "source": "workflow/2026-11-07-mp4-token-usage-replays.md"
+    },
+    {
+      "task": "Quota function coding",
+      "broadTotalTokens": 179745,
+      "focusedTotalTokens": 104312,
+      "reductionPercent": 42,
+      "quality": "10/10 checks passed",
+      "source": "workflow/2026-11-07-mp4-coding-token-pilot.md"
+    },
+    {
+      "task": "Endpoint coding + repair",
+      "broadTotalTokens": 280521,
+      "focusedTotalTokens": 187185,
+      "reductionPercent": 33.3,
+      "quality": "18/18 checks passed",
+      "source": "workflow/2026-11-07-mp4-endpoint-token-experiment.md"
+    }
+  ],
+  "limits": [
+    "Five different tasks, not five repetitions of one task.",
+    "Context scope comparison, not OpenSpec versus no OpenSpec.",
+    "Cache and execution order were not controlled.",
+    "Totals include input and output; cached input is already included in input.",
+    "Endpoint totals include one repair per condition.",
+    "No actual credit or currency charges measured."
+  ]
+}

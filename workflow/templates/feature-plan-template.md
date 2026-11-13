@@ -25,6 +25,8 @@
 - **Reusable functionality and dependencies:** {paths, exported contracts, or existing patterns}.
 - **Related tests:** {paths and coverage relevant to this change}.
 - **Test environment:** {runner, mocks, fixtures, external services, configuration, and known limits; never include secrets}.
+- **Visual evidence:** {affected screens/states, actual app theme and viewport targets, isolated fixtures, capture/report paths and reviewer; or N/A with a reason for non-UI work. Follow workflow/instructions/ui-evidence.md}.
+- **Evaluation scope:** {if an instruction-routing experiment is assigned, link the experiment plan, frozen task/checks, conditions, repetitions/order and usage evidence sources; otherwise Not assigned. Follow workflow/instructions/workflow-evaluation.md; do not launch experiments implicitly}.
 
 ## File Ownership
 

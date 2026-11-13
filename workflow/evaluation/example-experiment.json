@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "experimentId": "SYNTHETIC-EXAMPLE-NOT-MEASURED-PERFORMANCE",
+  "runs": [
+    {
+      "runId": "synthetic-broad",
+      "pairId": "synthetic-pair-1",
+      "taskId": "synthetic-accounting-demonstration",
+      "condition": "broad",
+      "order": 1,
+      "startingCommit": "synthetic-start-not-a-real-commit",
+      "instructionRevision": "synthetic-broad-instructions",
+      "modelSetup": "synthetic-same-model-and-reasoning",
+      "toolSetup": "synthetic-same-tools",
+      "acceptanceCheckSet": "synthetic-frozen-checks",
+      "evidence": "Synthetic fixture only. No agent experiment was performed.",
+      "elapsedMs": 1000,
+      "humanReviewMs": null,
+      "repairRounds": 1,
+      "checks": [{ "id": "synthetic-check", "status": "passed" }],
+      "sessions": [
+        { "sessionId": "synthetic-broad-initial", "role": "implementer", "inputTokens": 100, "cachedInputTokens": 40, "outputTokens": 20, "usageEvidence": "Synthetic fixture; not provider usage." },
+        { "sessionId": "synthetic-broad-repair", "role": "implementer-repair", "inputTokens": 50, "cachedInputTokens": 10, "outputTokens": 10, "usageEvidence": "Synthetic fixture; includes a made-up repair session." }
+      ]
+    },
+    {
+      "runId": "synthetic-routed",
+      "pairId": "synthetic-pair-1",
+      "taskId": "synthetic-accounting-demonstration",
+      "condition": "routed",
+      "order": 2,
+      "startingCommit": "synthetic-start-not-a-real-commit",
+      "instructionRevision": "synthetic-routed-instructions",
+      "modelSetup": "synthetic-same-model-and-reasoning",
+      "toolSetup": "synthetic-same-tools",
+      "acceptanceCheckSet": "synthetic-frozen-checks",
+      "evidence": "Synthetic fixture only. No agent experiment was performed.",
+      "elapsedMs": 800,
+      "humanReviewMs": null,
+      "repairRounds": 0,
+      "checks": [{ "id": "synthetic-check", "status": "passed" }],
+      "sessions": [
+        { "sessionId": "synthetic-routed-initial", "role": "implementer", "inputTokens": 100, "cachedInputTokens": 20, "outputTokens": 20, "usageEvidence": "Synthetic fixture; not provider usage." }
+      ]
+    }
+  ]
+}

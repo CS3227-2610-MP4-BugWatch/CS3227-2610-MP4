@@ -12,6 +12,8 @@ context: |
   and tasks. Keep the required coordinator-owned workflow/<feature-name>/feature-plan.md
   record, linking to exact artifact paths and revisions instead of conflicting copies.
   Product proposals in BugWatch.md are not implementation authorization.
+  For feature discovery use workflow/instructions/exploration.md. Delegated assignments use
+  workflow/templates/agent-assignment-template.md without dropping mandatory context or review gates.
 
 rules:
   proposal:
@@ -42,6 +44,8 @@ operations:
       - After functional implementation stabilizes, assign ui_polisher a scoped visual pass for user-facing pages with exclusive presentation-file ownership. Collect every implementer/tester/ui_polisher completion as awaiting review, including fixes. Run applicable repository checks and obtain explicit reviewer decisions for each submission and the final combined work; rereview affected work after later edits, including coordinator fixes.
       - Mark each exact tracked task complete only after its specified work, required verification, and reviewer approval are satisfied. Keep blocked or unapproved work incomplete; never weaken tests, bypass CLI blockers, waive review, or treat all_done as evidence of approval.
       - Finalize required documentation against actual behaviour. After reviewer approval, obtain each participating implementer's and tester's template-based summary file in the feature directory, then record verification, current approvals, and summary checks in the workflow record and the single overall logs/ interaction log before reporting task completion.
+      - Use the existing summary templates to explain function purpose, inputs/results, side effects, failure recovery and linked tests, and to map test partitions and boundaries to actual evidence. Assign workflow/instructions/ui-evidence.md for user-facing visual checks; preserve unverified limitations rather than substituting builds for rendered observations.
+      - When an instruction-routing evaluation is part of the assigned scope, follow workflow/instructions/workflow-evaluation.md for fixed acceptance checks, matched controls, complete session accounting and uncertainty. Ordinary feature work does not automatically launch benchmark runs.
   archive:
     guidance:
       - Before presenting the change as successfully completed, confirm all tracked tasks and required checks are satisfied and every latest implementer/tester/ui_polisher submission and the final combined implementation and tests have current explicit reviewer approval; otherwise keep the task incomplete and report the blocker.

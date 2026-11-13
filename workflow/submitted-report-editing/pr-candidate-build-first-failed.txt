@@ -1,0 +1,14 @@
+
+> bugwatch@0.0.0 build
+> tsc -b && vite build
+
+src/test/report-edit-concurrency.test.ts(1,23): error TS2307: Cannot find module 'node:child_process' or its corresponding type declarations.
+src/test/report-edit-concurrency.test.ts(2,28): error TS2307: Cannot find module 'node:crypto' or its corresponding type declarations.
+src/test/report-edit-concurrency.test.ts(5,17): error TS2591: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+src/test/report-edit-concurrency.test.ts(6,6): error TS2591: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+src/test/report-edit-concurrency.test.ts(7,6): error TS2591: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+src/test/report-edit-concurrency.test.ts(23,34): error TS7006: Parameter 'chunk' implicitly has an 'any' type.
+src/test/report-edit-concurrency.test.ts(24,34): error TS7006: Parameter 'chunk' implicitly has an 'any' type.
+src/test/report-edit-concurrency.test.ts(25,34): error TS7006: Parameter 'error' implicitly has an 'any' type.
+src/test/report-edit-concurrency.test.ts(28,32): error TS7006: Parameter 'code' implicitly has an 'any' type.
+src/test/report-edit-concurrency.test.ts(90,21): error TS2591: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.

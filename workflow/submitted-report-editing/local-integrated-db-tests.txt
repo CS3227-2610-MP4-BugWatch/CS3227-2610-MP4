@@ -1,0 +1,12 @@
+
+ RUN  v5.0.5 E:/CS3227-2610-MP4
+
+
+ Test Files  6 passed (6)
+      Tests  179 passed (179)
+   Start at  12:44:28
+   Duration  33.60s (tests 96%, import 3%)
+
+    Isolate  6 workers spawned · ~359ms startup each (spawn + environment, per file)
+             at least ~1.79s faster with isolate: false — reuses workers across files instead of one per file
+

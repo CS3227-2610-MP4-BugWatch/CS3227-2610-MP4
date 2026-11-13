@@ -1,16 +1,6 @@
 # BugWatch
 
-BugWatch is a web application that helps Testers and Developers report, investigate, and resolve software bugs. It brings project information, bug reports, discussions, and progress history together so everyone can understand a problem and follow the work to address it.
-
-## Get started
-
-1. Ask your administrator for an account and the address of your team's BugWatch application.
-2. Log in with the email address and password supplied for your account.
-3. Browse projects. Developers can create a project if one is needed.
-4. As a Tester, submit a report or save a draft. As a Developer, accept an available report and start investigating when ready.
-5. Use the report's discussion and activity history to exchange information and follow progress.
-
-Save drafts before signing out if you want to keep unfinished report text. Unsent comments and other unsaved changes are discarded when you log out or lose your session.
+BugWatch is a bug tracker for administrator-provisioned Tester and Developer accounts. Users work with projects and bug reports, including drafts, report discussions and updates in a private mailbox. See the [User Guide](docs/UserGuide.md) for workflows.
 
 ### Accounts for MP4 Testing
 
@@ -23,70 +13,33 @@ Save drafts before signing out if you want to keep unfinished report text. Unsen
 
 Access the site [here](https://cs-3227-2610-mp-4-ruby.vercel.app)
 
-## Who is BugWatch for?
+## Local setup
 
-| Role | What you can do |
-| --- | --- |
-| **Tester** | Submit bug reports, save private drafts, describe a bug's severity, and answer clarification questions. |
-| **Developer** | Create and edit projects, accept reports, investigate bugs, request more information, and record resolutions. |
-| **Both roles** | Browse projects and submitted reports, read activity history and resolutions, and participate in report discussions. |
+Use Node.js 24 and npm. From a fresh clone, run `npm ci`. Copy `.env.example` to `.env` only if `.env` does not already exist, then set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` for your Supabase project. Never put secrets or service-role keys in `VITE_` variables or commit credentials.
 
-Accounts are created by an administrator. Each account has an assigned Tester or Developer role.
+Apply migrations `001` through `014` in numerical order and provision accounts and profiles as described in [authentication setup](docs/developerGuide/Authentication.md), [project development](docs/developerGuide/Projects.md), and [bug report development](docs/developerGuide/Reports.md). Use a separate isolated project for hosted tests; these instructions do not establish that a hosted environment has been migrated.
 
-## What can you do?
+The optional assistant endpoints use server-only settings in `.env.example`, including `SUPABASE_SERVICE_ROLE_KEY`, `SOCLAAS_API_KEY`, and `SOCLAAS_MODEL`. Both `TESTER_SUGGESTIONS_ENABLED` and `DEVELOPER_QUESTIONS_ENABLED` default to `false`; enable them only when intentionally configured for use.
 
-### Keep bugs organized by project
+Run `npm run dev` and open the URL printed by Vite. The local Vite server wires the assistant API routes; the Vercel CLI is not needed for local development.
 
-Browse active projects and read their descriptions, repository links, and change history. Each project has its own collection of submitted reports, showing severity, status, assignee, and reporter.
+## Verification
 
-Developers can create projects and update any active project's name, description, or repository URL. Project history records who changed the information and what changed.
+```sh
+npm run test -- --run
+npm run lint
+npm run build
+npm run docs:build
+```
 
-### Write useful bug reports
+The ordinary unit suite does not require Supabase credentials. See the developer guides for isolated database tests and their credentials. The project branch policy is to open a pull request to `development`, verify the Vercel preview deployment, and then open a pull request from `development` to `master`.
 
-Testers can submit a report containing:
+## Structure
 
-- A title and description of the problem.
-- The version tested and steps to reproduce the bug.
-- Expected and actual results.
-- A severity of **Very Low**, **Low**, **Medium**, or **High**.
-- An optional test environment, such as a browser and operating system.
-
-Not ready to submit? Save an incomplete report as a **private draft**, return to it after signing back in, and submit it when ready. Only the draft's author can access it. Drafts can also be deleted when no longer needed.
-
-### Investigate and discuss bugs
-
-Developers can accept an **Open**, unassigned report to take responsibility for it. Acceptance changes the report to **Accepted**; starting investigation changes it to **In progress**.
-
-If more information is needed, the assigned Developer can mark the report as **Awaiting tester information**, ask questions in its discussion, and manually resume investigation later. Posting a comment or reply does not automatically change the report's status.
-
-Both roles can contribute comments, reply with references to earlier messages, and inspect the activity history to see progress and recorded changes.
-
-### Record resolutions and duplicate reports
-
-The assigned Developer can resolve an **In progress** report with one of five outcomes:
-
-- **Fixed**, with a fix summary, affected version, and links to the commit and pull request.
-- **Duplicate**, with an explanation and a saved reference to the original report in the same project.
-- **Invalid**, **Cannot reproduce**, or **Will not fix**, with an explanation.
-
-The report becomes **Resolved**, and both roles can read the outcome and its supporting details. Duplicate references help participants find the original issue.
-
-### Get optional AI assistance
-
-When enabled, BugWatch offers two assistants:
-
-- **For Testers:** suggestions to improve report text and questions about missing details.
-- **For assigned Developers:** suggested follow-up questions based on the saved report and discussion.
-
-You review and choose what to use. AI suggestions do not automatically submit reports, post comments, or change report status. Availability and usage limits apply; you can continue working manually when assistance is unavailable.
-
-## Current scope
-
-Report submission and changes to projects, reports, and discussions require an active project. Information in archived projects remains readable.
-
-BugWatch currently supports investigation through resolution. Tester retesting, closing and reopening reports, editing submitted reports, attachments, and transferring assignments are not yet available. Public self-registration is not supported; contact your administrator for account access.
-
-## Learn more
-
-- [User Guide](docs/userGuide/UserGuide.md): Instructions for using BugWatch.
-- [Developer Guide](docs/developerGuide/DeveloperGuide.md): Technical documentation for contributors and administrators.
+- `src/features/`: authentication, projects, reports, and mailbox features.
+- `src/shared/`: shared components, services, and types.
+- `src/test/`: automated tests.
+- `api/`: server endpoints and their dependencies.
+- `docs/`: user and developer guides and reflections.
+- `workflow/`: feature records, instructions, and templates.
+- `public/`: static assets.

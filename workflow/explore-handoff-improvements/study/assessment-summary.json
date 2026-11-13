@@ -1,0 +1,199 @@
+{
+  "groups": {
+    "exploration": {
+      "baseline": {
+        "runs": 4,
+        "accepted": 4,
+        "checks": 24,
+        "covered": 24,
+        "omitted": 0,
+        "contradicted": 0,
+        "unsupportedAssumptions": 0
+      },
+      "candidate": {
+        "runs": 4,
+        "accepted": 4,
+        "checks": 24,
+        "covered": 24,
+        "omitted": 0,
+        "contradicted": 0,
+        "unsupportedAssumptions": 0
+      }
+    },
+    "handoff": {
+      "baseline": {
+        "runs": 4,
+        "accepted": 4,
+        "checks": 32,
+        "covered": 32,
+        "omitted": 0,
+        "contradicted": 0,
+        "unsupportedAssumptions": 0
+      },
+      "candidate": {
+        "runs": 4,
+        "accepted": 4,
+        "checks": 32,
+        "covered": 32,
+        "omitted": 0,
+        "contradicted": 0,
+        "unsupportedAssumptions": 0
+      }
+    }
+  },
+  "pairs": [
+    {
+      "taskId": "explore-initial",
+      "group": "exploration",
+      "repetition": 1,
+      "baseline": {
+        "runId": "explore-initial-r1-baseline",
+        "accepted": true,
+        "covered": 6,
+        "checks": 6,
+        "words": 96
+      },
+      "candidate": {
+        "runId": "explore-initial-r1-candidate",
+        "accepted": true,
+        "covered": 6,
+        "checks": 6,
+        "words": 167
+      }
+    },
+    {
+      "taskId": "explore-initial",
+      "group": "exploration",
+      "repetition": 2,
+      "baseline": {
+        "runId": "explore-initial-r2-baseline",
+        "accepted": true,
+        "covered": 6,
+        "checks": 6,
+        "words": 107
+      },
+      "candidate": {
+        "runId": "explore-initial-r2-candidate",
+        "accepted": true,
+        "covered": 6,
+        "checks": 6,
+        "words": 174
+      }
+    },
+    {
+      "taskId": "explore-recap",
+      "group": "exploration",
+      "repetition": 1,
+      "baseline": {
+        "runId": "explore-recap-r1-baseline",
+        "accepted": true,
+        "covered": 6,
+        "checks": 6,
+        "words": 148
+      },
+      "candidate": {
+        "runId": "explore-recap-r1-candidate",
+        "accepted": true,
+        "covered": 6,
+        "checks": 6,
+        "words": 180
+      }
+    },
+    {
+      "taskId": "explore-recap",
+      "group": "exploration",
+      "repetition": 2,
+      "baseline": {
+        "runId": "explore-recap-r2-baseline",
+        "accepted": true,
+        "covered": 6,
+        "checks": 6,
+        "words": 160
+      },
+      "candidate": {
+        "runId": "explore-recap-r2-candidate",
+        "accepted": true,
+        "covered": 6,
+        "checks": 6,
+        "words": 194
+      }
+    },
+    {
+      "taskId": "handoff-quota",
+      "group": "handoff",
+      "repetition": 1,
+      "baseline": {
+        "runId": "handoff-quota-r1-baseline",
+        "accepted": true,
+        "covered": 8,
+        "checks": 8,
+        "words": 304
+      },
+      "candidate": {
+        "runId": "handoff-quota-r1-candidate",
+        "accepted": true,
+        "covered": 8,
+        "checks": 8,
+        "words": 300
+      }
+    },
+    {
+      "taskId": "handoff-quota",
+      "group": "handoff",
+      "repetition": 2,
+      "baseline": {
+        "runId": "handoff-quota-r2-baseline",
+        "accepted": true,
+        "covered": 8,
+        "checks": 8,
+        "words": 284
+      },
+      "candidate": {
+        "runId": "handoff-quota-r2-candidate",
+        "accepted": true,
+        "covered": 8,
+        "checks": 8,
+        "words": 315
+      }
+    },
+    {
+      "taskId": "handoff-project",
+      "group": "handoff",
+      "repetition": 1,
+      "baseline": {
+        "runId": "handoff-project-r1-baseline",
+        "accepted": true,
+        "covered": 8,
+        "checks": 8,
+        "words": 336
+      },
+      "candidate": {
+        "runId": "handoff-project-r1-candidate",
+        "accepted": true,
+        "covered": 8,
+        "checks": 8,
+        "words": 346
+      }
+    },
+    {
+      "taskId": "handoff-project",
+      "group": "handoff",
+      "repetition": 2,
+      "baseline": {
+        "runId": "handoff-project-r2-baseline",
+        "accepted": true,
+        "covered": 8,
+        "checks": 8,
+        "words": 333
+      },
+      "candidate": {
+        "runId": "handoff-project-r2-candidate",
+        "accepted": true,
+        "covered": 8,
+        "checks": 8,
+        "words": 337
+      }
+    }
+  ],
+  "scope": "Masked semantic artifact coverage, not code or human outcome. All grades retained."
+}

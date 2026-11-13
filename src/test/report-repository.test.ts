@@ -17,12 +17,13 @@ const row = {
   id, project_id: projectId, title: input.title, description: input.description,
   version: input.version, reproduction_steps: input.reproductionSteps,
   expected_results: input.expectedResults, actual_results: input.actualResults,
-  severity: input.severity, test_environment: '', reporter_id: reporterId,
+  severity: input.severity, severity_revision: 0, test_environment: '', reporter_id: reporterId,
   created_at: time, updated_at: time, state: 'Open', assigned_developer_id: null, assigned_at: null, assigned_developer_username: null, assigned_developer_display_name: null,
   project_name: 'Project', project_archived_at: null,
   reporter_username: 'tester', reporter_display_name: 'Reporter',
 }
 const report: Report = {
+  severityRevision: 0,
   ...input, id, reporterId, createdAt: time, updatedAt: time,
   resolution: null, canonicalReport: null, state: 'Open', assignedDeveloperId: null, assignedAt: null, assignedDeveloperUsername: null, assignedDeveloperDisplayName: null, projectName: 'Project',
   projectArchivedAt: null, reporterUsername: 'tester', reporterDisplayName: 'Reporter',

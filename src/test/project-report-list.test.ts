@@ -33,7 +33,7 @@ const otherProject = { ...project, id: otherProjectId, name: 'Other project' }
 const saved: Report = {
   id: reportId, projectId, title: 'Unexpected crash', description: 'Open page and observe crash',
   version: '1.2', reproductionSteps: 'Open the page', expectedResults: 'Page loads', actualResults: 'Crash',
-  severity: 'high', testEnvironment: '', reporterId: tester.id, createdAt: time, updatedAt: time,
+  severity: 'high', testEnvironment: '', severityRevision: 0, reporterId: tester.id, createdAt: time, updatedAt: time,
   resolution: null, canonicalReport: null, state: 'Open', assignedDeveloperId: null, assignedAt: null, assignedDeveloperUsername: null, assignedDeveloperDisplayName: null, projectName: project.name, projectArchivedAt: null,
   reporterUsername: tester.username, reporterDisplayName: tester.displayName,
 }
@@ -61,7 +61,7 @@ function setup(initialReports: Report[] = [saved, otherSaved]) {
       severity: item.severity, state: item.state, assignedDeveloperId: item.assignedDeveloperId,
       reporterDisplayName: item.reporterDisplayName, assignedDeveloperUsername: item.assignedDeveloperUsername, assignedDeveloperDisplayName: item.assignedDeveloperDisplayName,
     }))),
-    createReport: vi.fn(async (input: ReportInput) => {
+    editReport: vi.fn(), createReport: vi.fn(async (input: ReportInput) => {
       const report = { ...saved, ...input, severity: saved.severity, testEnvironment: input.testEnvironment ?? '' }
       rows.unshift(report)
       return report

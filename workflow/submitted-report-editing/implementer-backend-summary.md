@@ -1,0 +1,88 @@
+# Submitted-report editing and mailbox — Backend Implementation Summary
+
+Revision 8 is independently approved on merged development `39f4f08`, against source manifest `9278a2da997ba3ccb8ffdbbe50b6f465535da2e58fa7dc016f8a6b6ebd33529e`. Apply editing migration `014_report_editing_mailbox.sql` after migrations 001–013.
+
+The exact PR candidate passed 1,122 tests, with 251 skipped. All 12 scoped files meet 80% line and branch targets; aggregate coverage is 98.26% lines and 91.32% branches. Separate local checks passed 152 database tests and 14 race tests. Both SQL verifiers, lint, build, documentation and the 14 new browser captures passed. The coordinator executed these final checks; hosted preview and live AI remain unverified.
+
+PR10 integration changed migration order and two upstream test fixtures. The contribution records below preserve their original authors and historical revision-7 results. See the current feature plan and pr10-* evidence for final acceptance.
+
+This summary preserves the original backend author's EDIT-BACKEND-1 and EDIT-BACKEND-2 contribution and adds the reconciliation implementer's RECON-BACKEND-1 contribution. The coordinator confirmed renewed independent approval of the latest combined work, including RECON-BACKEND-1 and FORMAT1, under plan revision 7 and root source manifest `71324d5f99b77c22e8021b35ae4bf92964596ca0a97603821d844b4685fb5145`. The current integration base is merged development `9909315`. The original revision-5 summary is preserved in [historical-summaries](historical-summaries/). Other agents own the interface, tests and guides.
+
+## User Flow and Decisions
+
+An original reporting Tester can correct an eligible assigned report. An unlinked report can move to another active project. A report with an incoming or outgoing current canonical link or captured resolution reference must stay in its project; its other eligible fields remain editable. The save preserves its identity, discussion, assignment and lifecycle state. Changed inputs, history and the assigned Developer's mailbox item save together or all roll back. Saving normalized identical inputs creates no edit event or notification.
+
+A server-maintained severity revision detects an intervening change even if severity later returns to its original value. The first conflicting save returns a trusted snapshot without saving. A later explicit save can use that revision to deliberately replace severity. A request receipt stores a completed result so retrying after a lost response does not duplicate events. Replay still checks current locked permissions and project eligibility before returning the original result.
+
+The implementation uses existing validation and authenticated RPC conventions. It adds no dependency or notification producer beyond report editing. Hosted deployment and hosted preview verification remain outside the local evidence recorded here.
+
+The reconciliation contribution merges PR9 resolution and canonical-report contracts with editing, preserves all eight history event types, and renumbers the additive editing migration to 013 after the unchanged resolution migration 012. Outgoing captured references exist only on Resolved/Closed reports, which already reject editing with P2007; an editable outgoing-captured P2011 case is therefore not applicable.
+
+## Files Added
+
+- [mailbox/types.ts](../../src/features/mailbox/types.ts) defines mailbox items, typed errors and repository operations.
+- [mailbox/mailboxRepository.ts](../../src/features/mailbox/mailboxRepository.ts) implements private mailbox RPC access, strict record parsing and complete bounded pagination.
+- [014_report_editing_mailbox.sql](../../src/features/reports/database/014_report_editing_mailbox.sql) adds severity tracking, edit receipts, mailbox storage and authorized RPCs. It replaces seven existing mutators to recheck project movement under locks and extends history reads.
+- [verify_report_editing_mailbox.sql](../../src/features/reports/database/verify_report_editing_mailbox.sql) provides isolated transactional fixtures for forced-write rollback, replay, no-op, severity ABA and supplemental legacy guard inspection. Its fixtures and temporary trigger roll back.
+
+## Files Changed
+
+- [reports/types.ts](../../src/features/reports/types.ts) adds the required severity revision, edit request/result, conflict snapshot and edit-history contracts. `ReportError` accepts an optional fourth conflict argument.
+- [reportRepository.ts](../../src/features/reports/reportRepository.ts) implements editing and parses the new revision, error and history shapes. Existing report validation is reused without changing `validation.ts`.
+
+## Functions Created
+
+### Report editing
+
+[Repository `editReport`](../../src/features/reports/reportRepository.ts) takes a report ID and `{ input, expectedSeverityRevision, requestId }`. It validates and normalizes the input, sends only approved fields and returns a canonical saved or unchanged report. Invalid input fails before the network call; malformed responses become unavailable errors. An unavailable save response can represent an uncertain committed outcome, so callers retain the same request identity when retrying. Tests include `editReport_%s_returnsCanonicalReportAndRevision`, Unicode limit families, protected-property filtering, invalid revision/request IDs and `editReport_transportThrows_reportsUncertainStorageFailure` in [report-edit-repository.test.ts](../../src/test/report-edit-repository.test.ts).
+
+[SQL `edit_report`](../../src/features/reports/database/014_report_editing_mailbox.sql) derives the actor and recipient from trusted database state. It requires the original Tester, one of the four editable states and active source/destination projects. Unknown or protected input fields are refused. It locks request identity, then projects in deterministic UUID order, then the report. A changed project observed after locking returns `P2007` so the caller can reload/retry. A severity mismatch returns `P2010` with the latest value, revision and nullable trusted actor role. Validation, authentication, forbidden, archive and missing-record failures retain existing SQL signals.
+
+A real save changes only editable inputs and update time, inserts one changed-field history record and, when assigned, one recipient item. A normalized no-op changes none of those. Matching receipts return the original result only after current authorization checks, before comparing the older revision; a mismatched payload fails validation. Tests include original-Tester state families, archive cases, move continuity, severity ABA/explicit retry, matching replay and `editReport_receiptReplayAfter%s_rechecksCurrentAuthorization` in [report-edit-database.test.ts](../../src/test/report-edit-database.test.ts). The verification SQL separately injects failures into history and mailbox writes and checks complete rollback.
+
+[SQL `track_report_severity`](../../src/features/reports/database/014_report_editing_mailbox.sql) runs before report updates. It increments the revision only for a real severity change and derives nullable actor-role attribution from the authenticated profile. Other updates retain the revision and attribution. It protects revision discipline for future trusted severity writers; the database ABA test verifies change-and-change-back detection.
+
+### Mailbox access
+
+[`createMailboxRepository`](../../src/features/mailbox/mailboxRepository.ts) returns `listItems`, `markRead` and `deleteItem`. `listItems` accepts All or Unread, exhausts 100-record keyset pages and preserves timestamp precision. It rejects duplicate, unordered, malformed or inappropriate unread records instead of returning a misleading partial result. `markRead` and `deleteItem` accept only an item ID. None accepts a recipient. Failures become `MailboxError` authentication, forbidden, not-found or unavailable outcomes; failed loads never become empty success. [mailbox-repository.test.ts](../../src/test/mailbox-repository.test.ts) covers filtering, page boundaries, microsecond precision, repeated pages, nullable attribution and error families.
+
+The mailbox helper functions have separate validation responsibilities: `text` requires strings, `uuid` checks identifiers, `timestamp` checks parseable dates, `itemRow` validates the complete row and changed-field allowlist, `cursorKey` preserves ordering precision, `fail` maps safe domain errors, and the nested `rpc` handles transport failures. They have no database side effects themselves; malformed values fail closed through the same repository tests. `MailboxError` stores the safe code and message without exposing raw database internals.
+
+[SQL `get_mailbox_items`](../../src/features/reports/database/014_report_editing_mailbox.sql) requires an authenticated valid profile and returns only its recipient rows, newest first, with current project context. It validates filter/cursor pairs and returns at most 100 records. `mark_mailbox_item_read` changes only an owned item's read time and preserves an existing read time. Missing/unowned items return `P2005`. `delete_mailbox_item` deletes only an owned item and safely does nothing for a missing/unowned ID. Direct client writes and public execution are revoked; authenticated callers receive only the intended RPC grants. [mailbox-database.test.ts](../../src/test/mailbox-database.test.ts) covers recipient read persistence, cross-recipient operations, repeated deletion, anonymous denial and direct-insert refusal.
+
+The verification-only `report_edit_test_reject_write` deliberately raises `P2999` to prove transaction rollback. It is created inside the verification transaction and removed by rollback; it is not application functionality.
+
+## Functions Changed
+
+[Repository `fail`](../../src/features/reports/reportRepository.ts) now validates `P2010` JSON before producing a structured severity conflict. Invalid details produce unavailable instead of trusting malformed server data. `reportRow` requires a nonnegative safe integer revision; it refuses a missing revision rather than creating an unsafe editing snapshot. `historyRow` maps only approved changed inputs from snake_case to camelCase and carries optional trusted project names. It refuses protected or unchanged history fields. These parsers have no writes. Tests include conflict actor/malformed-detail families, `getReport_invalidSeverityRevision%j_refusesUnsafeEditSnapshot` and edit-history tests in the repository suite.
+
+`ReportError` retains its existing constructor arguments and adds the optional fourth conflict snapshot. Existing callers remain compatible. The edit repository tests exercise the new error shape.
+
+[SQL `accept_report`, `start_report_investigation`, `await_tester_information`, `resume_report_investigation` and `post_report_comment`](../../src/features/reports/database/014_report_editing_mailbox.sql) retain their existing inputs, actor restrictions, results, grants and successful side effects. The reconciliation also replaces `resolve_report` and `link_duplicate_report` with their PR9 signatures, permission/state rules and no-op behavior preserved. Each now compares the report's current project after taking the report lock with the project checked and locked earlier. If movement intervened, it raises retryable `P2007` before writing. Acceptance still assigns the Developer; the next three actions still change only the prescribed lifecycle state/history; comments still create discussion without changing report/history. The parameterized `%s_sourceReadBeforeMoveToArchivedDestination_refusesStaleActionWithoutWrites` family in [report-edit-concurrency.test.ts](../../src/test/report-edit-concurrency.test.ts) exercises all seven using observed blocking relationships. The same suite tests source/destination archival, inverse moves and assignment before editing.
+
+[SQL `get_report_history`](../../src/features/reports/database/014_report_editing_mailbox.sql) adds nullable `project_names` to its result while preserving older events, ordering and actor/assignment labels. Report moves therefore retain readable before/after context. Repository history tests and database move tests cover this behavior. `get_report` itself needed no replacement: its existing `to_jsonb(r)` projection includes the new column automatically.
+
+The reconciliation changes `fail` to map P2011 to the existing validation error code, with a clear duplicate-link message and `projectId` field feedback. `reportRow` retains PR9's resolution and canonical-report validation alongside the required severity revision. `historyRow` retains resolved and duplicate-linked parsing alongside report-edited history. `resolveReport` and `linkDuplicate` keep their PR9 request validation and RPC calls. `ReportError` retains resolution field errors and its optional fourth severity-conflict argument. These adapter changes add no direct writes; the existing repository tests and [resolution repository suite](../../src/test/report-resolution-repository.test.ts) cover the merged contracts. `editReport_duplicateLinkedMove_mapsProjectValidationWithoutLeakingSql` in [report-edit-repository.test.ts](../../src/test/report-edit-repository.test.ts) covers the new error mapping.
+
+SQL `edit_report` now checks both canonical-reference columns on the locked report and incoming references from other reports when the destination differs. Project locks serialize link creation and movement. P2011 rejects a linked move before report, history, mailbox or receipt writes. It does not clear links or alter captured resolution data. Same-project edits still proceed. [Report-edit database tests](../../src/test/report-edit-database.test.ts) cover outgoing current, incoming current, incoming captured-only, same-project edits, unlinked movement and the read-only outgoing-captured partition. [Concurrency tests](../../src/test/report-edit-concurrency.test.ts) cover both link-versus-move orderings and stale-project resolution/link actions.
+
+The verification script's transaction now exercises incoming current and captured references after a resolved duplicate is relinked, confirms rejected moves leave no writes, permits same-project edits and checks all seven mutator guards. Its temporary failure-injection function remains verification-only. Historical migration 012 and `validation.ts` were not edited by the reconciliation implementer.
+
+## Verification and Remaining Limits
+
+The original implementation's receipt authorization correction and its historical results remain in the archived summary and linked historical outputs. The current reconciliation record preserves subsequent fixture and process-helper failures and their repairs in [reconciliation-evidence.md](reconciliation-evidence.md).
+
+| Command or check | Actual outcome | Evidence and scope |
+| --- | --- | --- |
+| `npm run test -- --run src/test/report-edit-repository.test.ts src/test/report-resolution-repository.test.ts` | Passed: 118 tests. | Executed by the reconciliation implementer before final integration. |
+| `npm run lint`; `npm run build` | Passed. | Executed by the reconciliation implementer. Existing build warnings remained. |
+| Implementer full deterministic suite | Interrupted; no final result. | Stopped at coordinator request while the tester edited fixtures. This is not a passing run. |
+| Exact PR candidate deterministic tests and scoped coverage | Passed: 893 tests; 246 skipped. | Coordinator-run [output](pr-candidate-tests-coverage.txt), [summary](pr-candidate-coverage-summary.json) and [detail](pr-candidate-coverage-detail.json). All 12 scoped production files meet 80% lines and branches; totals are 896/912 lines (98.24%) and 1117/1227 branches (91.03%). Skips are not passes. |
+| Clean local database, six selected suites | Passed: 152 tests. | Coordinator/runtime evidence in [accepted database output](reconcile-db-tests-accepted.txt). This implementer did not execute database calls. |
+| Local multi-session concurrency suite | Passed: 14 cases. | Coordinator-run [accepted race output](reconcile-concurrency-tests-accepted.txt). The earlier EPIPE run was unsuccessful and remains recorded. |
+| Migration 013 and both transactional SQL verifiers | Passed. | Runtime evidence: [migration](reconcile-migration-013.txt), [editing/mailbox verifier](reconcile-sql-verification-editing_mailbox.txt) and [resolution verifier](reconcile-sql-verification-resolutions.txt). These are clean disposable local database checks, not hosted deployment. |
+| Final candidate lint, build and documentation build | Passed. | Coordinator-run [lint](pr-candidate-lint-final.txt), [build](pr-candidate-build-final.txt) and [docs](pr-candidate-docs-final.txt). The first candidate build failure is retained in [its output](pr-candidate-build-first-failed.txt). |
+| Rendered interface checks | Passed within the assigned recorded scope. | Other agents' [reconciliation visual review](reconcile-visual-review.md); this backend implementer did not perform browser checks. |
+| Hosted migration, hosted preview and live AI | Not run in this contribution. | Local checks do not establish hosted correctness or user acceptance. |
+
+Coverage measures executed JavaScript decisions; it does not replace SQL permission, rollback or race assertions. [Uncovered locations](reconcile-coverage-locations.md) retain the remaining paths. No UI or guide source was changed by this backend implementer. This summary-only step changes no application code or tests.

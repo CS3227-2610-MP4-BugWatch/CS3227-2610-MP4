@@ -350,6 +350,7 @@ function ReportDetails({ reportRepository, user, reportId, generateTesterQuestio
     </>}
     {report && <>
       <ReportHeader report={report} />
+      {user.role === 'tester' && user.id === report.reporterId && !report.projectArchivedAt && ['Open', 'Accepted', 'In progress', 'Awaiting tester information'].includes(report.state) && <Button component={Link} to={`/reports/${report.id}/edit`} variant="default" disabled={Boolean(pending)}>Edit report</Button>}
       <Group className="report-header-actions" gap="sm" role="group" aria-label="Report actions" aria-busy={Boolean(pending)}>
         {workflowAction && <Button type="button" disabled={mutationBlocked} onClick={() => void act(workflowAction)}>{actionLabels[workflowAction]}</Button>}
         {eligible && assigned && report.state === 'In progress' && !resolutionOpen && <Button type="button" disabled={mutationBlocked} onClick={() => {
@@ -533,7 +534,7 @@ function Comment({ comment, comments, archived, onJump, onReply }: {
 
 function ActivityHistory({ report, history }: { report: Report; history: ReportHistoryEntry[] }) {
   const labels: Record<ReportHistoryEntry['event'], string> = {
-    created: 'created this report', accepted: 'accepted this report', investigation_started: 'started investigation',
+    report_edited: 'edited this report', created: 'created this report', accepted: 'accepted this report', investigation_started: 'started investigation',
     tester_information_requested: 'requested tester information', investigation_resumed: 'resumed investigation',
     resolved: 'resolved this report', duplicate_linked: 'changed the canonical report link',
   }
@@ -549,6 +550,17 @@ function HistoryChanges({ entry, report }: { entry: ReportHistoryEntry; report: 
     <div><dt>Previous canonical report</dt><dd>{entry.changes.canonicalReportId.before ? <CanonicalReportLink id={entry.changes.canonicalReportId.before} /> : 'None'}</dd></div>
     <div><dt>New canonical report</dt><dd><CanonicalReportLink id={entry.changes.canonicalReportId.after} /></dd></div>
   </dl>
+  if (entry.event === 'report_edited') return <dl>{(Object.keys(entry.changes) as (keyof ReportInput)[]).map(field => {
+    const change = entry.changes[field]
+    if (!change) return null
+    const projectNames = entry.projectNames
+    function valueLabel(value: string, side: 'before' | 'after') {
+      if (field === 'projectId') return projectNames?.[side] ?? (value === report.projectId ? report.projectName : value)
+      if (field === 'severity' && Object.hasOwn(REPORT_SEVERITIES, value)) return REPORT_SEVERITIES[value as ReportSeverity]
+      return value || 'Not provided'
+    }
+    return <div key={field}><dt>{historyLabel(field)}</dt><dd className="project-description">{valueLabel(change.before, 'before')} → {valueLabel(change.after, 'after')}</dd></div>
+  })}</dl>
   if (entry.event !== 'created') return <dl>
     <div><dt>State</dt><dd>{entry.changes.state.before} → {entry.changes.state.after}</dd></div>
     {entry.event === 'accepted' && <>
