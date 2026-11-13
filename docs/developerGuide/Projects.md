@@ -17,23 +17,45 @@ Project routes use authentication and `src/features/projects/projectRepository.t
 5. Create a tester and two distinct developer Auth accounts with matching profiles, using real Auth UUIDs. The existing authentication suite's account-without-profile can remain separate.
 6. Run the hosted suite and rollback script below, then the browser checklist. Apply reviewed migrations to production through your release process before deploying the frontend. No hosted migration/deployment is performed automatically.
 
-`src/main.tsx` imports Mantine's core styles, and `src/App.tsx` mounts a single `MantineProvider` with the application theme and automatic system color scheme above both authentication branches. `AuthenticatedApp` owns identity and logout state and mounts a browser data router for an authenticated user. Within it, `ProjectsApp` wraps the existing routes with `src/shared/components/WorkspaceShell.tsx`. The shell renders role-aware navigation and receives logout state; it does not access repositories. Logout state is passed through context so its changes do not recreate the router. Menu state also stays inside the shell rather than remounting the routed page.
+### Application shell and routing
+
+`src/main.tsx` imports Mantine's core styles, and `src/App.tsx` mounts a single `MantineProvider` with the application theme and automatic system color scheme above both authentication branches. `AuthenticatedApp` owns identity and logout state and mounts a browser data router for an authenticated user.
+
+Within it, `ProjectsApp` wraps the existing routes with `src/shared/components/WorkspaceShell.tsx`. The shell renders role-aware navigation and receives logout state; it does not access repositories. Logout state is passed through context so its changes do not recreate the router. Menu state also stays inside the shell rather than remounting the routed page.
+
+### Routes and session handling
 
 The router includes `/projects`, `/projects/new`, `/projects/:projectId`, `/projects/:projectId/edit`, `/drafts`, `/drafts/:draftId`, `/reports/new`, and `/reports/:reportId`. Project details select **Reports** with `?tab=reports` and otherwise show **Overview**. Report forms retain their router navigation blocker for unsaved changes. Logout/session loss unmounts protected content. An unauthenticated repository response requests auth re-resolution; ordinary storage failures retain the session and entered values. Hosting must serve the SPA entry on direct routes.
+
+### Shared identity and history labels
 
 Identity is `src/shared/types/session.ts` SessionUser, supplied by `useAuth()`. History uses the project-scoped `get_project_history` RPC to resolve current display names for referenced actors, while keeping stable actor IDs in the data. Existing own-profile-only SELECT remains unchanged; creator/list metadata retains its prior current-user/UUID label behaviour. Project types and validation are shared by the UI and repository.
 
 ## History display-name correction (additive migration)
 
-After migrations 001 and 002, apply `src/features/projects/database/003_project_history_names.sql` in the **test project SQL editor**. Do not rerun migrations already applied. The `get_project_history(p_project_id uuid)` function returns history columns plus `actor_display_name` for only actors referenced by that project. It checks the authenticated identity/profile and project existence, uses a fixed search path and restricted execution grants, and exposes no email, role, or unrelated profile directory. Existing direct profile reads remain own-only. The adapter maps that field to optional `actorDisplayName`; null/blank labels render as `Unknown user` (or the matching current identity name), with normal React escaping.
+### Apply the display-name migration
+
+After migrations 001 and 002, apply `src/features/projects/database/003_project_history_names.sql` in the **test project SQL editor**. Do not rerun migrations already applied. The `get_project_history(p_project_id uuid)` function returns history columns plus `actor_display_name` for only actors referenced by that project. It checks the authenticated identity/profile and project existence, uses a fixed search path and restricted execution grants, and exposes no email, role, or unrelated profile directory.
+
+Existing direct profile reads remain own-only. The adapter maps that field to optional `actorDisplayName`; null/blank labels render as `Unknown user` (or the matching current identity name), with normal React escaping.
+
+### Display-name semantics
 
 Names are resolved from current profiles at read time, including entries created before this migration. History actor IDs and changed values are not rewritten; names are not immutable snapshots. Creator/list metadata is outside this correction.
+
+### Verify display names
 
 Run `npm run test:project-db` after applying migration 003. Hosted assertions check other users' display names, project-scoped results, tester/developer access, anonymous rejection, missing targets and unchanged own-profile restrictions. View a project edited by a second developer as a tester and a developer; verify the history shows that actor's display name. The user reported the post-003 hosted suite and display-name check passing in the test environment.
 
 ## Repository URL code-point migration
 
-Apply `src/features/projects/database/004_project_url_codepoints.sql` after migration 003 in each environment. The validator permits URL code points plus `%`, `#`, `[` and `]` for percent escapes, fragments and IPv6 syntax. It excludes surrogates and Unicode noncharacters, and rejects malformed `xn--` hostname labels containing non-ASCII characters; the existing HTTP/HTTPS, host, whitespace and length checks still apply. The browser validator uses the same character rule and its URL parser rejects that malformed hostname. These checks narrow accepted input but do not establish full browser/PostgreSQL URL-parser parity.
+### Validation rules
+
+Apply `src/features/projects/database/004_project_url_codepoints.sql` after migration 003 in each environment. The validator permits URL code points plus `%`, `#`, `[` and `]` for percent escapes, fragments and IPv6 syntax. It excludes surrogates and Unicode noncharacters, and rejects malformed `xn--` hostname labels containing non-ASCII characters; the existing HTTP/HTTPS, host, whitespace and length checks still apply.
+
+The browser validator uses the same character rule and its URL parser rejects that malformed hostname. These checks narrow accepted input but do not establish full browser/PostgreSQL URL-parser parity.
+
+### Review existing repository URLs
 
 The new check constraint is initially `NOT VALID`: it applies to new writes, while allowing existing rows to be reviewed. After applying the migration, find stored URLs that fail the new validator and correct them through the administrator's reviewed data process before validating the constraint:
 
@@ -51,6 +73,8 @@ The query must return no rows before validation. A previously stored invalid URL
 
 The shared browser client is initialized once on import in `src/shared/lib/supabaseClient.js`; its companion `.d.ts` provides TypeScript types. Use this instance for future authentication and database adapters instead of creating clients inside components.
 
+### Configure browser environment variables
+
 The installed `@supabase/supabase-js` dependency supplies `createClient`. In the repository-root `.env` file, set:
 
 ```dotenv
@@ -58,7 +82,11 @@ VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
 ```
 
-`.env.example` supplies these placeholder names; `.env` is Git-ignored. MarkBind's `site.json` also excludes `.env` and `.env.*` files from documentation assets so local configuration is not copied into the published site. If `.env` already exists, edit its values rather than copying the example over it. Restart Vite after changing environment variables. Vite reads browser variables through `import.meta.env` using the `VITE_` prefix; `NEXT_PUBLIC_` names are for a different framework and are not used here. Browser-exposed values must use a publishable key, never a Supabase secret or service-role key.
+`.env.example` supplies these placeholder names; `.env` is Git-ignored. MarkBind's `site.json` also excludes `.env` and `.env.*` files from documentation assets so local configuration is not copied into the published site. If `.env` already exists, edit its values rather than copying the example over it.
+
+Restart Vite after changing environment variables. Vite reads browser variables through `import.meta.env` using the `VITE_` prefix; `NEXT_PUBLIC_` names are for a different framework and are not used here. Browser-exposed values must use a publishable key, never a Supabase secret or service-role key.
+
+### Import and initialization
 
 From a feature module, import the shared instance using the appropriate relative path, for example:
 
@@ -66,13 +94,17 @@ From a feature module, import the shared instance using the appropriate relative
 import { supabase } from '../../shared/lib/supabaseClient.js'
 ```
 
-The module trims both values and throws a configuration error before initialization if either is missing or blank. It does not log configuration values. The authentication feature uses this client for login and profile lookup. Its migration must be applied separately before real accounts can enter the application. The project adapter requires the project migrations before use. No additional environment-loading dependency is needed because Vite loads `.env`.
+The module trims both values and throws a configuration error before initialization if either is missing or blank. It does not log configuration values. The authentication feature uses this client for login and profile lookup. Its migration must be applied separately before real accounts can enter the application.
+
+The project adapter requires the project migrations before use. No additional environment-loading dependency is needed because Vite loads `.env`.
 
 This setup follows [Supabase client initialization](https://supabase.com/docs/reference/javascript/initializing), [Supabase API key guidance](https://supabase.com/docs/guides/getting-started/api-keys), and [Vite environment variables](https://vite.dev/guide/env-and-mode).
 
 ## Application contracts
 
 `src/features/projects/types.ts` defines `ProjectInput`, `Project`, `ProjectHistoryEntry`, `ProjectRepository`, and `ProjectError`. It re-exports the shared `SessionUser` contract from `src/shared/types/session.ts`. The authenticated shell supplies the current identity without exposing user-controlled role changes.
+
+### Repository methods and errors
 
 The repository exposes asynchronous `listActiveProjects()`, `getProject(id)`, `listProjectHistory(id)`, `createProject(input)`, and `updateProject(id, expectedRevision, input)`. Missing project reads return null; missing mutation/history targets return `not_found`. Errors have codes `validation`, `duplicate_name`, `conflict`, `unauthenticated`, `forbidden`, `archived`, `not_found`, or `unavailable`. Validation errors can carry field messages.
 
@@ -109,7 +141,11 @@ The authentication migration enables RLS for profiles, permits authenticated use
 | `revision` | Positive integer, initially 1; advance on changed saves | `revision` |
 | `archived_at` | Nullable timestamp with time zone, initially null | `archivedAt` |
 
-The unique index is named `projects_normalized_name_key`, on lowercase names after surrounding-whitespace trimming, covering **all rows**, including archived ones. There is no additional normalized-name column in the row. Preserve capitalization for display; do not fold accents, collapse internal whitespace, or add repository URL uniqueness. SQL uses the project trimming helper; Unicode and URL cases are covered by hosted fixtures, although full browser/PostgreSQL parsing parity is not established.
+#### Name uniqueness and archival state
+
+The unique index is named `projects_normalized_name_key`, on lowercase names after surrounding-whitespace trimming, covering **all rows**, including archived ones. There is no additional normalized-name column in the row. Preserve capitalization for display; do not fold accents, collapse internal whitespace, or add repository URL uniqueness.
+
+SQL uses the project trimming helper; Unicode and URL cases are covered by hosted fixtures, although full browser/PostgreSQL parsing parity is not established.
 
 Archive/restore remains a later feature. The state field supports active-edit checks and archived-name fixture tests only; the application exposes no archive, restore, or delete operation.
 
@@ -124,7 +160,11 @@ Archive/restore remains a later feature. The state field supports active-edit ch
 | `event` | Required `created` or `edited` | `event` |
 | `changes` | JSON object of changed metadata fields | `changes` |
 
-At the persistence boundary use JSON field keys `name`, `description`, and `repository_url`; map the last to application `repositoryUrl`. Each value has `{ "before": null-or-string, "after": "string" }`. Creation records initial values with null `before`; edits record only changed fields. No-op saves add no history or revision. Order history by `occurred_at`, then `id` as tie-breaker. The UI resolves actor IDs to labels; actor ID remains the historical identity if display names later change.
+#### History values and ordering
+
+At the persistence boundary use JSON field keys `name`, `description`, and `repository_url`; map the last to application `repositoryUrl`. Each value has `{ "before": null-or-string, "after": "string" }`. Creation records initial values with null `before`; edits record only changed fields.
+
+No-op saves add no history or revision. Order history by `occurred_at`, then `id` as tie-breaker. The UI resolves actor IDs to labels; actor ID remains the historical identity if display names later change.
 
 ### Database operations
 
@@ -134,7 +174,11 @@ At the persistence boundary use JSON field keys `name`, `description`, and `repo
 | `public.create_project` | `p_name`, `p_description`, `p_repository_url` | Created project row |
 | `public.update_project` | `p_project_id`, `p_expected_revision`, `p_name`, `p_description`, `p_repository_url` | Current project row after update/no-op |
 
+#### Access and concurrency
+
 Reads target `projects` and `project_history` under authenticated access rules. Database operations derive actor/role from trusted Auth/profile state; they do not accept actor IDs, roles, timestamps, or archival state. A changed update requires an active project and matching revision. Reject stale revisions before treating unchanged values as a no-op. A developer may update another developer's active project.
+
+#### Transactions and error mapping
 
 The database enforces validation, global uniqueness, role rules, protected columns, no deletion, and atomic history writes. Ordinary direct project writes and history manipulation are restricted; privileged RPC functions use restricted grants and fixed search paths. Creation/update plus history must be one transaction; browser-side sequential requests are insufficient. The implemented adapter maps SQLSTATE P1001/P1002/P1003/P1004/P1005/P1006 to unauthenticated/forbidden/validation/archived/not_found/conflict, and 23505 to duplicate_name. Unknown failures map to unavailable.
 
@@ -164,6 +208,8 @@ PROJECT_TEST_DEVELOPER_EMAIL=developer-one@example.com
 PROJECT_TEST_SECOND_DEVELOPER_EMAIL=developer-two@example.com
 ```
 
+### Separate test and production configuration
+
 Root `.env` must identify the separate production project; the runner uses its URL as a forbidden target. For **manual browser checks against test**, use `.env.development.local` with the test URL/publishable key and restart Vite. The mode-specific file overrides root `.env`. Never put secret/service-role keys in `VITE_` settings or source control.
 
 Run:
@@ -172,13 +218,33 @@ Run:
 npm run test:project-db
 ```
 
-The Windows runner prompts for the test-project elevated key and each account password, signs in those ordinary accounts and does not save credentials/tokens. The optional email settings avoid email prompts. It sets child-process `PROJECT_TEST_ISOLATED`, `PROJECT_TEST_URL`, `PROJECT_TEST_PRODUCTION_URL`, `PROJECT_TEST_PUBLISHABLE_KEY`, `PROJECT_TEST_SERVICE_ROLE_KEY`, `PROJECT_TEST_TESTER_TOKEN`, `PROJECT_TEST_DEVELOPER_TOKEN`, `PROJECT_TEST_SECOND_DEVELOPER_TOKEN`, then restores prior process values. The suite rejects partial configuration and matching test/production origins. It creates uniquely named fixtures and removes only its returned project UUIDs/history through the privileged setup client. Permission assertions use ordinary accounts, not the elevated client.
+### Runner credentials and environment
+
+The Windows runner prompts for the test-project elevated key and each account password, signs in those ordinary accounts and does not save credentials/tokens. The optional email settings avoid email prompts. It sets child-process `PROJECT_TEST_ISOLATED`, `PROJECT_TEST_URL`, `PROJECT_TEST_PRODUCTION_URL`, `PROJECT_TEST_PUBLISHABLE_KEY`, `PROJECT_TEST_SERVICE_ROLE_KEY`, `PROJECT_TEST_TESTER_TOKEN`, `PROJECT_TEST_DEVELOPER_TOKEN`, `PROJECT_TEST_SECOND_DEVELOPER_TOKEN`, then restores prior process values.
+
+The suite rejects partial configuration and matching test/production origins. It creates uniquely named fixtures and removes only its returned project UUIDs/history through the privileged setup client. Permission assertions use ordinary accounts, not the elevated client.
+
+### Hosted coverage
 
 Hosted cases cover persistence, history/actor attribution, reads, tester/anonymous write denial, editing another developer's project, global name uniqueness/races, stale/concurrent edits, no-op saves, archived restrictions, protected metadata/history/deletion and input boundaries. Ordinary tests keep hosted cases skipped unless explicitly configured; skips are not hosted passes. Run `npm run test:auth-db` separately when authentication/profile provisioning also needs verification.
 
+### Verify rollback behavior
+
 Next run `src/features/projects/database/verify_project_transactions.sql` in the **test project's SQL editor**. It chooses an existing developer profile, creates transaction-local fixtures and a forced history-failure trigger, asserts failed creation/edit leaves no partial change, then rolls everything back. Expect the success notice and final rollback. On error, roll back the failed transaction and report the error; never run this script in production.
 
-Complete the [browser checklist](../userGuide/Projects.md) for the target test environment. SQL URL parsing and Unicode casing are exercised by hosted fixtures; local mocked tests alone cannot prove database behaviour.
+### Browser verification
+
+Use the separate test environment configured by your administrator, not production:
+
+1. As Developer One, create a valid project, reload, and confirm fields/history persist.
+2. Log in separately as Developer Two; edit that project, then view it as Developer One and as the tester. Confirm the history shows Developer Two's display name and the old/new values.
+3. Attempt an equivalent project name on create and rename; confirm duplicate feedback without partial changes.
+4. Open the same project's edit page in two independent browser sessions. Save one, then save the stale second form; confirm conflict, explicit reload and successful re-save using latest values.
+5. As a tester, browse details/history and try a direct new/edit route; confirm write controls/access are denied.
+6. Open **Reports** as both roles; check empty and populated states, title links, newest-first ordering, and retry after a listing failure if practical. Check that **Overview** remains usable if reports fail to load.
+7. Check invalid inputs, cancellation, keyboard navigation, logout with an unsaved form, and a storage failure/retry if practical. Report actual results; database security is also checked separately by the hosted test suite.
+
+SQL URL parsing and Unicode casing are exercised by hosted fixtures; local mocked tests alone cannot prove database behaviour.
 
 ## Release and rollback
 
@@ -186,6 +252,8 @@ For a production rollout, apply the reviewed migrations in order before deployin
 
 ## References
 
-The SQL ContextJ helper follows [RFC 5892 Appendix A](https://www.rfc-editor.org/rfc/rfc5892#appendix-A) to validate ZWJ/ZWNJ hostname contexts. Its static property classes were generated from Python Unicode 15.1 combining classes and the locally installed [python-idna Unicode 16 joining-type data](https://github.com/kjd/idna), under their respective [Unicode data terms](https://www.unicode.org/license.txt) and [idna licence](https://github.com/kjd/idna/blob/master/LICENSE.md). No Python runtime is needed by the migration. Browser/Node Unicode versions can differ; full IDNA/casing parity remains a limitation beyond the covered hosted fixtures.
+The SQL ContextJ helper follows [RFC 5892 Appendix A](https://www.rfc-editor.org/rfc/rfc5892#appendix-A) to validate ZWJ/ZWNJ hostname contexts. Its static property classes were generated from Python Unicode 15.1 combining classes and the locally installed [python-idna Unicode 16 joining-type data](https://github.com/kjd/idna), under their respective [Unicode data terms](https://www.unicode.org/license.txt) and [idna licence](https://github.com/kjd/idna/blob/master/LICENSE.md).
+
+No Python runtime is needed by the migration. Browser/Node Unicode versions can differ; full IDNA/casing parity remains a limitation beyond the covered hosted fixtures.
 
 Behaviour follows the repository's `BugWatch.md`, approved decisions captured in `openspec/changes/create-edit-active-projects/`, and the revision-2 coordinator record.

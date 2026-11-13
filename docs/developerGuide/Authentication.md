@@ -16,6 +16,8 @@ The migration is supplied in the repository. The user reported that the isolated
 2. Once Supabase Auth is available, apply `src/features/auth/database/001_profiles.sql` using the dashboard SQL editor or your reviewed migration process. Apply it before any future project migration that references `public.profiles`.
 3. Configure the existing shared browser client with the project URL and a publishable key as described in the [project development guide](Projects.md). Restart Vite after changing environment variables. Never place a secret or service-role key in browser configuration.
 
+### Profile schema and permissions
+
 The migration creates `public.profiles` with an `id` referencing `auth.users.id`, nonblank `username` and `display_name`, and a role of `tester` or `developer`. A unique index compares usernames using `lower(username)`. Row-level security and grants permit authenticated users to read only their own profile; ordinary clients receive no insert, update, or delete grant. Account and profile provisioning requires an administrator with appropriate dashboard access.
 
 ## Create an account and profile
@@ -33,9 +35,17 @@ Provide the account credentials through your established secure process. The nor
 
 ## Identity and authorization boundary
 
+### Identity resolution
+
 `src/features/auth/authService.ts` uses the shared Supabase client to restore sessions, sign in and out, subscribe to auth events, and read the matching profile. It validates the returned ID and fields before exposing a `SessionUser` from `src/shared/types/session.ts`. `AuthProvider` supplies loading, signed-out, authenticated, incomplete-profile, and unavailable states. A session loss removes the authenticated user and unmounts protected content; a temporary profile lookup failure offers a retry.
 
-The auth service forwards both the Supabase event type and session to the session controller. `TOKEN_REFRESHED` and `SIGNED_IN` events for the currently authenticated user preserve the existing identity and mounted content without repeating the profile lookup. Supabase can emit `SIGNED_IN` when a tab regains focus. A missing session still clears identity immediately, while a session for a different user must pass the trusted profile lookup before protected content is shown.
+### Authentication events
+
+The auth service forwards both the Supabase event type and session to the session controller. `TOKEN_REFRESHED` and `SIGNED_IN` events for the currently authenticated user preserve the existing identity and mounted content without repeating the profile lookup. Supabase can emit `SIGNED_IN` when a tab regains focus.
+
+A missing session still clears identity immediately, while a session for a different user must pass the trusted profile lookup before protected content is shown.
+
+### Database authorization
 
 The browser state is not the authorization boundary. Database operations for later features must derive the actor from `auth.uid()` and look up its role in protected `public.profiles`. Do not accept an actor ID or role supplied by the caller, or rely on editable Auth user metadata. See the [project handoff](Projects.md) for the pending project database contract.
 
@@ -55,6 +65,8 @@ Run these checks with ordinary account tokens as well as administrator setup acc
 
 On Windows, the repository's `npm run test:auth-db` command runs the hosted `src/test/auth-database.test.ts` suite. It keeps the ordinary `npm run test -- --run` independent of Supabase. The command reads the ignored `.env.auth-test.local` file, obtains fresh tester and developer access tokens, sets the `AUTH_TEST_*` variables for the test process, and restores the previous process environment when it finishes. It does not provision accounts or apply the migration.
 
+#### Test configuration
+
 Add these settings to `.env.auth-test.local` after creating the three Auth accounts and the two matching profiles described above:
 
 ```dotenv
@@ -66,10 +78,16 @@ AUTH_TEST_TESTER_EMAIL=tester-account@example.com
 AUTH_TEST_DEVELOPER_EMAIL=developer-account@example.com
 ```
 
-The two email settings are optional; the runner prompts for either one if omitted. It always prompts for account passwords. It also prompts for the test project's secret/service-role key unless `AUTH_TEST_SERVICE_ROLE_KEY` is already set in the terminal environment. Keep that elevated key out of every `VITE_` variable and out of source control. The runner rejects a test URL matching the normal `.env` URL and requires `AUTH_TEST_ISOLATED=true` before making hosted requests. From the repository root, run:
+#### Credentials and isolation
+
+The two email settings are optional; the runner prompts for either one if omitted. It always prompts for account passwords. It also prompts for the test project's secret/service-role key unless `AUTH_TEST_SERVICE_ROLE_KEY` is already set in the terminal environment.
+
+Keep that elevated key out of every `VITE_` variable and out of source control. The runner rejects a test URL matching the normal `.env` URL and requires `AUTH_TEST_ISOLATED=true` before making hosted requests. From the repository root, run:
 
 ```powershell
 npm run test:auth-db
 ```
+
+#### Execution and cleanup
 
 The runner requires PowerShell and the repository's installed npm dependencies. Refresh the account passwords or confirmation status if sign-in fails; access tokens are generated on each invocation and are not saved to a file. The test suite makes temporary profile writes in the isolated project and restores its fixture rows after each check. Run the normal test, lint, build, and documentation commands separately for the full repository verification.
