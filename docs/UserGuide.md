@@ -25,4 +25,4 @@ A Developer resolution is the end of the current release's lifecycle. Tester ret
 - [Bug reports](userGuide/Reports.md) covers submission, validation, private drafts, editing, both AI assistants, discussion, Developer actions and failure recovery.
 - [Mailbox](userGuide/Mailbox.md) explains edit notifications, read/unread views, opening a report and deleting a notification.
 
-The existing [topic index](userGuide/UserGuide.md) remains available. See the [Developer Guide](DeveloperGuide.md) for setup and verification prerequisites.
+See the [Developer Guide](DeveloperGuide.md) for setup and verification prerequisites.

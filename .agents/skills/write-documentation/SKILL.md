@@ -9,7 +9,7 @@ description: Create or update BugWatch user and developer guide content, choosin
 
 - User documentation lives in `docs/userGuide/`.
 - Developer documentation lives in `docs/developerGuide/`.
-- `docs/userGuide/UserGuide.md` and `docs/developerGuide/DeveloperGuide.md` are landing pages. Keep them focused on introductions, orientation, and links; put detailed content in topic Markdown files within the same guide folder.
+- `docs/UserGuide.md` and `docs/DeveloperGuide.md` are the only guide landing pages. Keep introductions and orientation there, and detailed topic pages under `docs/userGuide/` and `docs/developerGuide/`. Do not add duplicate landing pages to the topic folders.
 - Shared navigation is defined in `_markbind/layouts/default.md` (the actual filename uses a period before `md`).
 
 ## Choose where information belongs

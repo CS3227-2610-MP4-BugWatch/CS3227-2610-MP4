@@ -6,7 +6,7 @@ Read before planning, writing, or reviewing guide documentation or documentation
 
 Before writing or updating user or developer guide documentation, read and use the documentation writing skill at `.agents/skills/write-documentation/SKILL.md`.
 
-`docs/userGuide/UserGuide.md` and `docs/developerGuide/DeveloperGuide.md` serve as landing pages. Detailed content belongs in topic Markdown files within the corresponding guide folder. Determine whether the information fits an existing topic page or needs a new page using the skill's placement criteria.
+`docs/UserGuide.md` and `docs/DeveloperGuide.md` are the only guide landing pages. Detailed content belongs in topic Markdown files under `docs/userGuide/` and `docs/developerGuide/`. Do not create additional landing pages inside those topic folders. Determine whether the information fits an existing topic page or needs a new page using the skill's placement criteria.
 
 Whenever creating a new guide Markdown page, add its navigation entry in `_markbind/layouts/default.md` in the same change. Follow the skill's navigation and verification instructions.
 

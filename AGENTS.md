@@ -35,8 +35,10 @@ src/shared/components/                Components used across features
 src/assets/                           Assets imported by the application
 src/test/*.test.ts                    Automated Vitest tests
 public/                               Static assets served directly
-docs/userGuide/                        User Guide landing page and topic pages
-docs/developerGuide/                   Developer Guide landing page and topic pages
+docs/UserGuide.md                      User Guide landing page
+docs/DeveloperGuide.md                 Developer Guide landing page
+docs/userGuide/                        User Guide topic pages
+docs/developerGuide/                   Developer Guide topic pages
 .agents/skills/                       Repository-specific agent skills
 workflow/instructions/                Shared and coordinator instruction references
 .codex/agents/                        Project-scoped agent definitions
