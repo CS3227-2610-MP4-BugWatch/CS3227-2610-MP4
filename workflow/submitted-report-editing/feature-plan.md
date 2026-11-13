@@ -6,6 +6,7 @@
 - **Revision:** 8 (PR10 integration and editing migration014; confirmed product behavior unchanged).
 - **Updated:** 2026-11-13.
 - **Coordinator:** Root chat.
+- **Publication follow-up, 2026-11-13:** User requested PR12 ready for review and evidence cleanup. EVIDENCE-CLEANUP-1 was independently approved and published as `6b12f50`; the PR is now ready, not merged. That head's CI exposed an existing asynchronous test assertion in project creation. CI-PROJECT-WAIT-1 adds a wait for visible history completion before checking the history request, preserving all original assertions and production behavior. Independent reviewer `review_evidence_cleanup` approved the fix and combined cleanup/test state. See [test follow-up](tester-ci-timing-summary.md). Earlier source manifests retain their historical approval scope; they are not rewritten to imply review of a later test revision. Hosted migration and manual preview acceptance remain outstanding.
 - **Requirement sources:** User decisions D1–D10 in [live evidence](workflow-evidence.md); BugWatch.md C-16/C-18/C-21 and T-04; [OpenSpec proposal](../../openspec/changes/edit-submitted-reports/proposal.md), design, report-editing and attention-mailbox deltas, and tasks in the same change. User approved artifacts and explicitly authorized apply, then resumed after reviewing teammate PR9.
 
 ## Confirmed Requirements and Acceptance Criteria

@@ -212,6 +212,7 @@ describe('project create and edit forms', () => {
       name: project.name, description: project.description, repositoryUrl: project.repositoryUrl,
     })
     expect(repo.getProject).toHaveBeenCalledWith(project.id)
+    await screen.findByText('No project history is available.')
     expect(repo.listProjectHistory).toHaveBeenCalledWith(project.id)
   })
 
