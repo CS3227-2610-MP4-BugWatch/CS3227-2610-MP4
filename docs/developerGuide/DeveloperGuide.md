@@ -19,15 +19,16 @@ The main objectives of this guide are to:
 1. Provide a comprehensive reference for the development practices, coding standards, and tools used.
 1. Detail the setup process for a development environment.
 
-
-
 ## Topics
 
+- [Application architecture](Architecture.md): System components, feature modules, request paths, and trust boundaries.
 - [Authentication and account setup](Authentication.md): Identity migration, manual provisioning, and permission checks.
 - [Multi-Agent Workflow](AgentWorkflow.md): Project agent roles, configuration, and coordination.
 - [Project development and Supabase handoff](Projects.md): Project migrations, application contracts, isolated hosted tests, and integration status.
 - [Bug report development](Reports.md): Report migration, permissions, and verification.
 - [Continuous integration](ContinuousIntegration.md): Unit test workflow for pushes to development and master.
+- [Appendix: Use cases](UseCases.md): Actors, main success scenarios, and extensions for implemented application workflows.
+- [Appendix: User stories](UserStories.md): User goals and benefits for implemented application functionality.
 
 ## **Acknowledgements**
 
