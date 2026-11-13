@@ -1,0 +1,53 @@
+{
+  "groups": {
+    "exploration": {
+      "baseline": {
+        "input_tokens": 57314,
+        "cached_input_tokens": 45312,
+        "output_tokens": 613,
+        "uncached_input_tokens": 12002,
+        "total_tokens": 57927,
+        "words": 511,
+        "sumInvocationMs": 37029,
+        "medianInvocationMs": 9362.5,
+        "runs": 4
+      },
+      "candidate": {
+        "input_tokens": 59324,
+        "cached_input_tokens": 42624,
+        "output_tokens": 855,
+        "uncached_input_tokens": 16700,
+        "total_tokens": 60179,
+        "words": 715,
+        "sumInvocationMs": 41623,
+        "medianInvocationMs": 10458.0,
+        "runs": 4
+      }
+    },
+    "handoff": {
+      "baseline": {
+        "input_tokens": 59696,
+        "cached_input_tokens": 19968,
+        "output_tokens": 2069,
+        "uncached_input_tokens": 39728,
+        "total_tokens": 61765,
+        "words": 1257,
+        "sumInvocationMs": 70456,
+        "medianInvocationMs": 17481.5,
+        "runs": 4
+      },
+      "candidate": {
+        "input_tokens": 62002,
+        "cached_input_tokens": 39936,
+        "output_tokens": 2156,
+        "uncached_input_tokens": 22066,
+        "total_tokens": 64158,
+        "words": 1298,
+        "sumInvocationMs": 69194,
+        "medianInvocationMs": 17205.0,
+        "runs": 4
+      }
+    }
+  },
+  "boundary": "Generation invocations only; coordinator/grading/review unmetered. No human/cost/actual coding outcomes measured."
+}

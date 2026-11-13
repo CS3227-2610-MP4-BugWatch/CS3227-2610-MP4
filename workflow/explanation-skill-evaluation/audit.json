@@ -1,0 +1,18 @@
+{
+  "runs": 16,
+  "pairs": 8,
+  "conditions": 2,
+  "repetitionsPerTask": 2,
+  "taskTypes": 4,
+  "studyHashValid": true,
+  "skillHashValid": true,
+  "sourceHashesValid": true,
+  "answerAndPromptHashesValid": true,
+  "usageMatchesCompletionEvents": true,
+  "noToolEvents": true,
+  "counterbalancedPairOrder": true,
+  "blindTextsAndGradeIdsMatch": true,
+  "runnerSyntaxValid": true,
+  "humanComprehensionMeasured": false,
+  "chargesMeasured": false
+}

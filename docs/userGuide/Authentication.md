@@ -20,7 +20,7 @@ When the app renews your session in the background or you return to its browser 
 
 ## Navigate the workspace
 
-The header shows your display name, role, and **Log out**. On wider screens, the sidebar offers **Projects** to both roles and **My drafts** to Testers. On a narrow screen, select **Menu** to open or close those destinations. With focus on **Menu** or its navigation, press Escape to close the menu. The current destination is highlighted. See [Projects](Projects.md) and [Bug reports](Reports.md) for the available workflows.
+The header shows your display name, role, and **Log out**. On wider screens, the sidebar offers **Projects** and **Mailbox** to both roles and **My drafts** to Testers. On a narrow screen, select **Menu** to open or close those destinations. With focus on **Menu** or its navigation, press Escape to close the menu. The current destination is highlighted. See [Projects](Projects.md), [Bug reports](Reports.md), and [Mailbox](Mailbox.md) for the available workflows.
 
 ## Account setup and logout
 

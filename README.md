@@ -1,47 +1,34 @@
 # BugWatch
 
-React + TypeScript with Vite, managed with npm.
+BugWatch is a bug tracker for administrator-provisioned Tester and Developer accounts. Users work with projects and bug reports, including drafts, report discussions and updates in a private mailbox. See the [User Guide](docs/userGuide/UserGuide.md) for workflows.
 
-## Development
+## Local setup
 
-Run these commands from the repository root:
+Use Node.js 24 and npm. From a fresh clone, run `npm ci`. Copy `.env.example` to `.env` only if `.env` does not already exist, then set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` for your Supabase project. Never put secrets or service-role keys in `VITE_` variables or commit credentials.
+
+Apply migrations `001` through `014` in numerical order and provision accounts and profiles as described in [authentication setup](docs/developerGuide/Authentication.md), [project development](docs/developerGuide/Projects.md), and [bug report development](docs/developerGuide/Reports.md). Use a separate isolated project for hosted tests; these instructions do not establish that a hosted environment has been migrated.
+
+The optional assistant endpoints use server-only settings in `.env.example`, including `SUPABASE_SERVICE_ROLE_KEY`, `SOCLAAS_API_KEY`, and `SOCLAAS_MODEL`. Both `TESTER_SUGGESTIONS_ENABLED` and `DEVELOPER_QUESTIONS_ENABLED` default to `false`; enable them only when intentionally configured for use.
+
+Run `npm run dev` and open the URL printed by Vite. The local Vite server wires the assistant API routes; the Vercel CLI is not needed for local development.
+
+## Verification
 
 ```sh
-npm install
-npm run dev
+npm run test -- --run
+npm run lint
+npm run build
+npm run docs:build
 ```
 
-```sh
-npm run build   # Type-check and build into dist/
-npm run lint    # Run ESLint
-npm run preview # Preview the production build
-```
+The ordinary unit suite does not require Supabase credentials. See the developer guides for isolated database tests and their credentials. The project branch policy is to open a pull request to `development`, verify the Vercel preview deployment, and then open a pull request from `development` to `master`.
 
 ## Structure
 
-```text
-./
-  public/               Static assets served directly
-  src/
-    assets/             Assets imported by the application
-    features/           Empty; future features each get their own folder
-    shared/
-      components/       Empty; components used across features
-    App.tsx             Root application component
-    App.css
-    index.css
-    main.tsx            React entry point
-  index.html
-  eslint.config.js
-  tsconfig.json
-  tsconfig.app.json
-  tsconfig.node.json
-  vite.config.ts
-```
-
-Keep feature-specific components inside their feature folder. Place components
-used across features in `src/shared/components/`. The empty directories contain
-`.gitkeep` placeholders so Git preserves them.
-
-The Vite starter screen is retained. Backend and Vercel configuration are not
-part of this frontend setup.
+- `src/features/`: authentication, projects, reports, and mailbox features.
+- `src/shared/`: shared components, services, and types.
+- `src/test/`: automated tests.
+- `api/`: server endpoints and their dependencies.
+- `docs/`: user and developer guides and reflections.
+- `workflow/`: feature records, instructions, and templates.
+- `public/`: static assets.

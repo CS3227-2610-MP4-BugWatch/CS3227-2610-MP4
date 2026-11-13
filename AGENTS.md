@@ -89,10 +89,14 @@ Read the applicable references before starting the corresponding work. Paths are
 | Work or role | Required instructions |
 | --- | --- |
 | Root agent coordinating any task | `workflow/instructions/coordinator.md`; relevant specialist references when planning, performing, or reviewing that work directly |
+| Exploring feature behavior and preparing a decision recap | `workflow/instructions/exploration.md`; use the existing OpenSpec explore skill when applicable |
 | Writing or reviewing application code, tests, architecture, or dependencies | `workflow/instructions/code-standards.md` |
 | Planning, writing, or reviewing tests and coverage | `workflow/instructions/testing.md` |
 | Planning, writing, or reviewing guide documentation and its requirements | `workflow/instructions/documentation.md`; use `.agents/skills/write-documentation/SKILL.md` before guide edits |
 | Coordinating or carrying out delegated work | `workflow/instructions/handoffs.md`; the assigned feature plan and revision when provided |
+| Planning, performing, or reviewing rendered UI checks | `workflow/instructions/ui-evidence.md` |
+| Planning, running, or interpreting an instruction-routing experiment | `workflow/instructions/workflow-evaluation.md` |
+| Writing summaries, artifacts or the individual reflection | Use `.agents/skills/explain-software-changes/SKILL.md` for those written outputs only; do not load or apply it for ordinary chat, exploration questions, quick explanations or progress updates |
 | Explorer investigating specialist conventions | The relevant standards above for the assigned investigation |
 
 Role-specific responsibilities also live in `.codex/agents/*.toml`. Applicable shared constraints continue to apply to every role. When the root agent handles specialist work directly, it must load and follow the same relevant standards.
@@ -146,6 +150,7 @@ Project agents are defined in `.codex/agents/`:
 | `codebase_explorer` | Inspect code paths, dependencies, conventions, and tests; report evidence without editing files. |
 | `implementer` | Make scoped React and TypeScript application changes. |
 | `tester` | Design and implement Vitest tests in `src/test/*.test.ts`. |
+| `ui_mockup_designer` | Create labeled UI mockup images during exploration without editing application code. |
 | `ui_polisher` | Improve visual consistency and responsive presentation after feature implementation. |
 | `documentation_writer` | Update guide topic pages and navigation using the documentation writing skill. |
 | `reviewer` | Independently inspect correctness, regressions, security, tests, and documentation without editing files. |

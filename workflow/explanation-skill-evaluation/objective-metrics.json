@@ -1,0 +1,40 @@
+{
+  "conditions": {
+    "baseline": {
+      "input_tokens": 108188,
+      "cached_input_tokens": 59904,
+      "output_tokens": 1680,
+      "uncached_input_tokens": 48284,
+      "total_tokens": 109868,
+      "runs": 8,
+      "words": 1267,
+      "medianInvocationMs": 10707.5,
+      "sumInvocationMs": 93831
+    },
+    "skill": {
+      "input_tokens": 116512,
+      "cached_input_tokens": 72576,
+      "output_tokens": 1734,
+      "uncached_input_tokens": 43936,
+      "total_tokens": 118246,
+      "runs": 8,
+      "words": 1243,
+      "medianInvocationMs": 10771.5,
+      "sumInvocationMs": 84031
+    }
+  },
+  "skillChangePercent": {
+    "input_tokens": 7.694014123562686,
+    "cached_input_tokens": 21.153846153846153,
+    "output_tokens": 3.214285714285714,
+    "uncached_input_tokens": -9.005053433849723,
+    "total_tokens": 7.625514253467798,
+    "words": -1.8942383583267564,
+    "medianInvocationMs": 0.5977118841933224,
+    "sumInvocationMs": -10.44430944996856
+  },
+  "humanComprehension": null,
+  "activeHumanReviewTime": null,
+  "actualCharges": null,
+  "note": "Measured CLI usage and invocation duration only. Cache, scheduling and harness overhead uncontrolled. No automatic attribution to cost or human understanding."
+}

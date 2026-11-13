@@ -1,0 +1,14 @@
+{
+  "runs": 16,
+  "pairs": 8,
+  "studyHashValid": true,
+  "exactPromptReconstructions": 16,
+  "answerHashesValid": true,
+  "usageMatchesCompletionEvents": true,
+  "noToolEvents": true,
+  "pairOrderCounterbalanced": true,
+  "allInitialOutputsRetained": true,
+  "blindSeed": 32271112,
+  "humanOutcomesMeasured": false,
+  "codingOutcomesMeasured": false
+}

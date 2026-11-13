@@ -1,6 +1,6 @@
 # MP4 Individual Reflection on Engineering My Tester Workflow in BugWatch
 
-Jonathen, first draft, 13 November 2026
+Jonathen, 13 November 2026
 
 **Scope.** This reflection covers my work on BugWatch's Tester features and how I developed the agent workflow around them. It examines the product decisions I made, how I used specifications and specialised agents, and what testing and review revealed. It also evaluates the evidence from our token usage and workflow experiments, including their limitations and the changes I would make next time.
 
@@ -119,7 +119,7 @@ These boundaries matter because model text and user-provided report content are 
 
 Development safety required similar separation. Database fixtures and forced failures ran against isolated local projects with synthetic accounts. Private credentials stayed outside the submitted evidence, and raw network diagnostics required care because exceptions can contain authorization headers. Preview deployment success also did not prove database readiness. The earlier submission preview failed when its schema was missing, despite a successful deployment. This is why I separated local checks, CI, deployment and signed-in preview acceptance. [E1, E2]
 
-At the draft cutoff, editing/mailbox work was published in draft PR12 to development. Its GitHub tests and Vercel deployment had passed. Hosted migration and manual preview acceptance were still unverified in my records. I did not describe it as a completed production release. The development-first policy also does not by itself establish that all submission requirements are on master.
+The editing and mailbox work was published in PR12 to development. At the original evidence cutoff it was still a draft. The PR is now ready for review. The recorded GitHub tests and Vercel deployment passed, while hosted migration and signed-in manual preview acceptance remain unverified in my records. This is not a completed production release. The development-first policy also does not by itself establish that all submission requirements are on master.
 
 ## 7. What I would improve next
 
@@ -131,27 +131,27 @@ My strongest outcome is therefore a more accountable development process. Import
 
 ## AI assistance declaration
 
-I used Codex and specialised AI agents to inspect source code, explore requirements, produce planning artifacts, generate and revise implementation and tests, review changes, collect evidence, prepare presentation material and draft this reflection. I directed product decisions and requested explanations and verification. This is an AI-assisted first draft. I must review the claims and wording before submitting it, and I remain responsible for the final content.
+I used Codex and specialised AI agents to inspect source code, explore requirements, produce planning artifacts, generate and revise implementation and tests, review changes, collect evidence, prepare presentation material and draft this reflection. I directed product decisions and requested explanations and verification. I reviewed this AI-assisted reflection and remain responsible for its final content.
 
 ## Evidence references
 
-- **E1, Earlier Tester delivery and human decisions.** [Submission record](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/blob/3c6a6c4125879c63357e753e95535e809efe7f5f/workflow/2026-11-05-tester-report-submission.md), [drafts record](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/blob/3c6a6c4125879c63357e753e95535e809efe7f5f/workflow/2026-11-06-tester-report-drafts.md), and preview migration failure (local file logs/2026-11-06-triage-pr-3-preview-submission.md). Published feature PRs include [submission #3](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/pull/3), [drafts #4](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/pull/4), [Tester assistant #7](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/pull/7).
+- **E1, Earlier Tester delivery and human decisions.** [Submission record](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/blob/3c6a6c4125879c63357e753e95535e809efe7f5f/workflow/2026-11-05-tester-report-submission.md), [drafts record](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/blob/3c6a6c4125879c63357e753e95535e809efe7f5f/workflow/2026-11-06-tester-report-drafts.md), and [preview migration failure](../logs/2026-11-06-triage-pr-3-preview-submission.md). Published feature PRs include [submission #3](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/pull/3), [drafts #4](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/pull/4), [Tester assistant #7](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/pull/7).
 
-- **E2, Editing/mailbox implementation, review and actual checks.** [Feature plan](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/blob/3c6a6c4125879c63357e753e95535e809efe7f5f/workflow/submitted-report-editing/feature-plan.md), [test summary](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/blob/3c6a6c4125879c63357e753e95535e809efe7f5f/workflow/submitted-report-editing/tester-summary.md), [race summary](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/blob/3c6a6c4125879c63357e753e95535e809efe7f5f/workflow/submitted-report-editing/tester-race-summary.md), [final coverage](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/blob/3c6a6c4125879c63357e753e95535e809efe7f5f/workflow/submitted-report-editing/pr10-coverage-locations.md), [actual browser record](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/blob/3c6a6c4125879c63357e753e95535e809efe7f5f/workflow/submitted-report-editing/pr10-visual-review.md), exact-head CI/deployment status checked for this draft (local file workflow/mp4-presentation/individual-report-publication-check.json), and [draft PR12](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/pull/12).
+- **E2, Editing/mailbox implementation, review and actual checks.** [Feature plan](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/blob/3c6a6c4125879c63357e753e95535e809efe7f5f/workflow/submitted-report-editing/feature-plan.md), [test summary](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/blob/3c6a6c4125879c63357e753e95535e809efe7f5f/workflow/submitted-report-editing/tester-summary.md), [race summary](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/blob/3c6a6c4125879c63357e753e95535e809efe7f5f/workflow/submitted-report-editing/tester-race-summary.md), [final coverage](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/blob/3c6a6c4125879c63357e753e95535e809efe7f5f/workflow/submitted-report-editing/pr10-coverage-locations.md), [actual browser record](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/blob/3c6a6c4125879c63357e753e95535e809efe7f5f/workflow/submitted-report-editing/pr10-visual-review.md), [initial CI and deployment snapshot](../workflow/mp4-presentation/individual-report-publication-check.json), and [PR12](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/pull/12).
 
 - **E3, Specification-first draft workflow.** [Draft proposal](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/blob/3c6a6c4125879c63357e753e95535e809efe7f5f/openspec/changes/tester-report-drafts/proposal.md), [draft specification](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/blob/3c6a6c4125879c63357e753e95535e809efe7f5f/openspec/changes/tester-report-drafts/specs/report-drafts/spec.md), [editing specification](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/blob/3c6a6c4125879c63357e753e95535e809efe7f5f/openspec/changes/edit-submitted-reports/specs/report-editing/spec.md).
 
-- **E4, Coordination and explanation contracts.** Coordinator instructions (local file workflow/instructions/coordinator.md), handoff instructions (local file workflow/instructions/handoffs.md), tester summary template (local file workflow/templates/tester-summary-template.md). Some workflow-engineering changes remain local and are not part of PR12.
+- **E4, Coordination and explanation contracts.** [Coordinator instructions](../workflow/instructions/coordinator.md), [handoff instructions](../workflow/instructions/handoffs.md), [tester summary template](../workflow/templates/tester-summary-template.md). The workflow additions and their supporting instructions are included in PR12.
 
-- **E5, Assistant lifecycle failure and reproduction.** First-save cancellation case study (local file workflow/2026-11-07-assistant-first-save-case-study.md) and [regression tests](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/blob/3c6a6c4125879c63357e753e95535e809efe7f5f/src/test/report-suggestions-ui.test.ts).
+- **E5, Assistant lifecycle failure and reproduction.** [First-save cancellation case study](../workflow/2026-11-07-assistant-first-save-case-study.md) and [regression tests](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/blob/3c6a6c4125879c63357e753e95535e809efe7f5f/src/test/report-suggestions-ui.test.ts).
 
-- **E6, Five context comparisons.** Rate-limit design pilot (local file workflow/2026-11-06-mp4-token-usage-pilot.md), submission/draft replays (local file workflow/2026-11-07-mp4-token-usage-replays.md), quota coding pilot (local file workflow/2026-11-07-mp4-coding-token-pilot.md), and five-comparison summary (local file workflow/mp4-presentation/five-comparison-summary.json).
+- **E6, Five context comparisons.** [Rate-limit design pilot](../workflow/2026-11-06-mp4-token-usage-pilot.md), [submission/draft replays](../workflow/2026-11-07-mp4-token-usage-replays.md), [quota coding pilot](../workflow/2026-11-07-mp4-coding-token-pilot.md), and [five-comparison summary](../workflow/mp4-presentation/context-comparison-results.json).
 
-- **E7, Larger coding comparison including repairs.** Endpoint experiment (local file workflow/2026-11-07-mp4-endpoint-token-experiment.md).
+- **E7, Larger coding comparison including repairs.** [Endpoint experiment](../workflow/2026-11-07-mp4-endpoint-token-experiment.md).
 
-- **E8, Repeated explanation-skill evaluation.** Report, matched results and limitations (local file workflow/explanation-skill-evaluation/report.md).
+- **E8, Repeated explanation-skill evaluation.** [Report, matched results and limitations](../workflow/explanation-skill-evaluation/report.md).
 
-- **E9, Repeated exploration/handoff evaluation.** Report, frozen checks and masked assessment (local file workflow/explore-handoff-improvements/report.md).
+- **E9, Repeated exploration/handoff evaluation.** [Report, frozen checks and masked assessment](../workflow/explore-handoff-improvements/report.md).
 
 - **E10, Partial usage accounting.** [Apply window](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/blob/3c6a6c4125879c63357e753e95535e809efe7f5f/workflow/submitted-report-editing/usage-accounting.md), [reconciliation window](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/blob/3c6a6c4125879c63357e753e95535e809efe7f5f/workflow/submitted-report-editing/usage-accounting-reconciliation.md), and [numeric reconciliation snapshot](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4/blob/3c6a6c4125879c63357e753e95535e809efe7f5f/workflow/submitted-report-editing/usage-observation-03.json). These are observed token records, not invoices or complete lifecycle totals.
 
@@ -174,7 +174,3 @@ These references identify the supplied course PDFs, not public copies of lecture
 - **L9.** CS3227 Lecture 9, pp.4,23–24, context utility under constraints, prompt caching, prefix matching and resource-aware interpretation.
 
 - **L10.** CS3227 Lecture 10, pp.5–8, harness engineering and feedforward/feedback controls.
-
-## Before turning this draft into the submission
-
-Confirm the required length/template, add full student details, and edit the first-person statements so they match my own understanding. Combine this with my teammate's reflection without claiming their work as mine. Ensure cited local evidence is accessible to graders. Recheck PR12/preview status and the required final master release. Include the AI declaration. These are outstanding finalisation steps, not claims that the draft is ready for submission.

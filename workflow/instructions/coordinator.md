@@ -4,6 +4,10 @@ The root agent must read this file before coordinating work, including tasks han
 
 ## Coordination Responsibilities
 
+For feature discovery, use `workflow/instructions/exploration.md` to guide the conversation, show a labeled mockup image for visible UI changes before implementation, and recap confirmed/recommended/open decisions. Mockups support design discussion; they do not establish implemented or verified behavior. For delegation, use `workflow/templates/agent-assignment-template.md` to supply sufficient task-specific context and explicit retrieval paths. Neither reference changes existing authorization or independent-review gates.
+
+Delegate exploration mockups to `ui_mockup_designer` using the assignment and fallback guidance in `exploration.md`. Assign exact image/notes ownership, inspect the returned image and open choices, and obtain independent review before closing the mockup task. Keep user design feedback separate from technical approval.
+
 The coordinator must:
 
 1. Confirm scope and acceptance criteria from the user's request and existing evidence. Use the explorer when investigation would materially help.
@@ -13,6 +17,9 @@ The coordinator must:
 5. Collect delegated results and resolve integration issues. Every implementer or tester completion report, including fixes, requires independent reviewer review and explicit approval under the Mandatory Reviewer Approval rules below. Also request an independent reviewer pass for substantial changes handled directly. Route actionable fixes to the owning agent or apply them directly, then verify affected behaviour and obtain fresh approval of affected work.
 6. Inspect the combined diff and confirm relevant verification results before responding. Clearly report missing checks or unavailable agent capabilities.
 7. Write one interaction log for the overall workflow, including delegated steps, significant decisions, changes, and actual verification. Subagents return their handoffs for this log rather than creating competing task logs.
+8. Make reviewed work understandable to the user: implementation summaries explain function purpose, inputs/results, side effects, failures/recovery and linked tests; test summaries explain the chosen partitions and boundaries with actual evidence levels and outcomes. Use the existing templates and check factual claims against source and executed results.
+9. For UI work, assign `workflow/instructions/ui-evidence.md` and a unique visual-review report path before the visual pass. Check actual captures and observations against the final relevant revision. Record blocked or unavailable rendered checks explicitly; do not present source inspection as a visual pass.
+10. When an instruction-routing experiment is assigned, use `workflow/instructions/workflow-evaluation.md` and its experiment template. Record quality and total effort alongside usage. Do not automatically launch benchmark runs for ordinary development or interpret unknown usage as zero.
 
 ### Feature Development Execution Sequence
 
@@ -38,6 +45,12 @@ For feature-development tasks using parallel implementation and testing, follow 
 11. Check that each required summary file exists in the feature directory, follows its template, and accurately describes the approved changes. Record the summary paths and checks, handoff summaries, review resolutions, explicit approval decisions and reviewed revisions, final verification, and remaining limitations in the plan. Update its status accurately; mark it complete only when applicable requirements are satisfied, the approval gate below is met, and the required summaries exist. Inspect the final diff, write the single overall interaction log under `logs/`, and report the outcome to the user.
 
 ## Mandatory Reviewer Approval
+
+### Summary and Visual Evidence Checks
+
+Before closure, check summaries against their templates, source links and approved submissions. Each added/materially changed function has an understandable contract/failure explanation and test references or an explicit gap. The tester's map explains the real partitions, boundaries and relevant state/actor/timing cases, identifying exact tests and Passed/Failed/Skipped/Not run evidence. Retain the existing required headings; historical summaries are not rewritten merely to fit a new template.
+
+For user-facing work, check the visual-review record and full-screen captures required by `workflow/instructions/ui-evidence.md`. Capture metadata identifies the tested source revision or dirty diff, viewport and theme. Later relevant presentation/behavior changes require renewed affected checks and reviewer review. A limitation may be reported honestly but cannot silently satisfy an outstanding required acceptance check. Workflow-only changes with no application UI impact record why the visual pass is not applicable.
 
 - Treat every implementer or tester completion report as a new submission awaiting review, including initial work, follow-up tasks, and fixes. Give each submission a unique identifier and record the reporting agent, plan revision when applicable, changed files, and the submitted state of the work. Without a feature plan, record the same information in the coordinator's task record and overall interaction log; the gate still applies.
 - Apply the same submission, explicit decision, and re-review rules to every `ui_polisher` completion report and its later fixes. Include visual and accessibility regressions in the final combined review.
