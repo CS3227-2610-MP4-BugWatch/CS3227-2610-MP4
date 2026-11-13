@@ -27,3 +27,4 @@ _site/
 
 #Testing artifacts
 .vitest/
+coverage/

@@ -1,71 +1,19 @@
 ---
   layout: default.md
-  title: "About Us"
+  title: "About BugWatch"
 ---
 
-# About Us
+# About BugWatch
 
-<box type="info">
-This section describes the contributors of your app.
-</box>
+BugWatch is the shared MP4 project developed by Jonathen and Jian Ming. The application supports Tester and Developer workflows for reporting, discussing and resolving bugs.
 
-We are a team based in [Organisation A](#project-team).
+## Contributions
 
-You can reach us at the email `organisationa@gmail.sg`
+| Contributor | Main focus |
+| --- | --- |
+| Jonathen | Tester features, product decisions, workflow improvements and evaluation. |
+| Jian Ming | Developer features and the shared application and agent-workflow foundation. |
 
-## Project team
+The [individual reflection](../docs/Reflections.md) describes Jonathen's decisions, use of AI agents, experiments and limitations. Feature records under `workflow/` retain implementation and verification details.
 
-### John Doe
-
-<box type="tip">
-
-This img uses the `placeholderImage` defined in the `_markbind/variables.md` file.
-</box>
-
-{{ placeholderImage }}
-
-[[homepage](http://www.comp.nus.edu.sg/~damithch)]
-[[github](https://github.com/johndoe)]
-[[contributions](johndoe.md)]
-
-* Role: Project Advisor
-
-### Jane Doe
-
-{{ placeholderImage }}
-
-[[github](http://github.com/johndoe)]
-[[contributions](johndoe.md)]
-
-* Role: Team Lead
-* Responsibilities: UI
-
-### Johnny Doe
-
-{{ placeholderImage }}
-
-[[github](http://github.com/johndoe)]
-[[contributions](johndoe.md)]
-
-* Role: Developer
-* Responsibilities: Data
-
-### Jean Doe
-
-{{ placeholderImage }}
-
-[[github](http://github.com/johndoe)]
-[[contributions](johndoe.md)]
-
-* Role: Developer
-* Responsibilities: Dev Ops + Threading
-
-### James Doe
-
-{{ placeholderImage }}
-
-[[github](http://github.com/johndoe)]
-[[contributions](johndoe.md)]
-
-* Role: Developer
-* Responsibilities: UI
+For project questions, use the [GitHub repository](https://github.com/CS3227-2610-MP4-BugWatch/CS3227-2610-MP4).

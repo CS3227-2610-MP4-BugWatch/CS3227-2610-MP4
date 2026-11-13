@@ -24,6 +24,16 @@ For example, a checkout report could say what was in the cart, the steps to appl
 
 The title allows 1–200 characters; version allows 1–100. Description, reproduction steps, expected results, and actual results each allow 1–5,000 characters. The optional environment allows up to 1,000 characters. Lengths are counted after surrounding whitespace is removed. Choose **Cancel** to leave without submitting.
 
+## Edit a submitted report
+
+The original reporting Tester can edit a report in an active project while it is **Open**, **Accepted**, **In progress**, or **Awaiting tester information**. Open the report and select **Edit report**. Change the prefilled fields and select **Save changes**, or **Cancel** to leave. The submission field limits apply. Unsaved changes prompt you before leaving.
+
+You can select another active project. A successful move keeps the same report link, discussion, activity, state, and assignment; the report appears in the destination project's list. Both projects must still be active when you save. A report with an incoming or outgoing duplicate link, including a canonical target captured at resolution, must stay in its current project. You can still edit its other fields when the report is eligible for editing. A real change appears in **Activity** with changed fields and previous and new values. If assigned, the Developer receives a [mailbox item](Mailbox.md). Saving unchanged values, including whitespace removed by normalization, creates no activity or notification.
+
+If severity changed since you opened the editor, saving stops and shows a notice above the form with the latest severity while keeping your input. Choose the severity you want and explicitly select **Save changes** again. If severity changes again before that save, another warning appears. A connection failure may leave the save outcome uncertain; keep the form open and retry the same save safely. Validation, access, state, or archive errors are shown without discarding input while your session remains valid.
+
+The existing **Generate suggestions** and **Use suggestion** controls also work in the editor. Applying a suggestion changes only the chosen form field; generating or applying suggestions does not save the report. Review the result and save explicitly.
+
 ## Access and errors
 
 Only Testers can create reports. If there are no active projects, a Developer must create one before a report can be submitted. If projects cannot be loaded, select **Retry**. If a field is invalid, correct the displayed feedback. An archived or missing project cannot receive a new report. If the selected project was archived, the form keeps your text and offers **Discard report**. If the bug still needs attention, contact the Developer who created that project outside BugWatch. If you selected the wrong project, you can change the dropdown without losing the rest of your input.
@@ -131,8 +141,8 @@ Fix summary and explanation each require 1–5,000 Unicode code points; affected
 
 Choose **Cancel resolution** to close the form without saving a resolution. Validation feedback keeps your applicable input for correction. Resolution text is temporary: leaving or reloading the page, signing out, or losing your session discards unsaved text. It is not saved as a draft.
 
-After saving, either role can reload and read **Resolution** on the **Conversation** tab, including its outcome, applicable values, author, and time. **Activity** retains the captured values under **Recorded changes**. Fixed outcomes explain that the original Tester must retest before closure; non-fix outcomes require no retest. Tester retesting, closure, and reopening controls are not available yet, and Developers cannot close a report. Discussion remains available on active-project Resolved reports. Archived reports retain readable details, resolution, links, and activity, but have no mutation controls.
+After saving, either role can reload and read **Resolution** on the **Conversation** tab, including its outcome, applicable values, author, and time. **Activity** retains the captured values under **Recorded changes**. Fixed outcomes explain that the original Tester must retest before closure; non-fix outcomes require no retest. Tester retesting, closure, and reopening are planned future features and are not available in this release, and Developers cannot close a report. Discussion remains available on active-project Resolved reports. Archived reports retain readable details, resolution, links, and activity, but have no mutation controls.
 
 Resolution, linking, commenting, and other report actions share a save guard, so only one runs at a time. A state or link conflict refreshes authoritative data before another attempt. If a save or readback cannot be confirmed, it may already have been saved: select **Reload** and inspect the report and **Activity** before trying again. BugWatch does not automatically repeat the mutation. Applicable unsaved resolution text stays available while you remain on the page, though a confirmed Resolved state hides the form.
 
-Releasing or transferring an assignment, report editing, and attachments are not available in this feature.
+Releasing or transferring an assignment and attachments are not available in this feature.

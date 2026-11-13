@@ -1,0 +1,5 @@
+BEGIN
+CREATE FUNCTION
+DO
+ROLLBACK
+NOTICE:  Edit rollback, replay, no-op, ABA and legacy guard structure passed; fixtures roll back

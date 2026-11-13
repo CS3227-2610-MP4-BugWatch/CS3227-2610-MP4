@@ -1,0 +1,189 @@
+{
+  "conditions": {
+    "baseline": {
+      "factChecks": 58,
+      "covered": 57,
+      "omitted": 1,
+      "contradicted": 0,
+      "unsupportedClaims": 0,
+      "clarityPoints": 77,
+      "clarityMax": 80
+    },
+    "skill": {
+      "factChecks": 58,
+      "covered": 58,
+      "omitted": 0,
+      "contradicted": 0,
+      "unsupportedClaims": 0,
+      "clarityPoints": 78,
+      "clarityMax": 80
+    }
+  },
+  "pairs": [
+    {
+      "taskId": "quota",
+      "repetition": 1,
+      "baseline": {
+        "clarity": 9,
+        "covered": 8,
+        "facts": 8,
+        "words": 192,
+        "runId": "quota-r1-baseline"
+      },
+      "skill": {
+        "clarity": 10,
+        "covered": 8,
+        "facts": 8,
+        "words": 192,
+        "runId": "quota-r1-skill"
+      },
+      "clarityDifference": 1
+    },
+    {
+      "taskId": "quota",
+      "repetition": 2,
+      "baseline": {
+        "clarity": 10,
+        "covered": 8,
+        "facts": 8,
+        "words": 192,
+        "runId": "quota-r2-baseline"
+      },
+      "skill": {
+        "clarity": 10,
+        "covered": 8,
+        "facts": 8,
+        "words": 191,
+        "runId": "quota-r2-skill"
+      },
+      "clarityDifference": 0
+    },
+    {
+      "taskId": "draft",
+      "repetition": 1,
+      "baseline": {
+        "clarity": 10,
+        "covered": 8,
+        "facts": 8,
+        "words": 171,
+        "runId": "draft-r1-baseline"
+      },
+      "skill": {
+        "clarity": 10,
+        "covered": 8,
+        "facts": 8,
+        "words": 160,
+        "runId": "draft-r1-skill"
+      },
+      "clarityDifference": 0
+    },
+    {
+      "taskId": "draft",
+      "repetition": 2,
+      "baseline": {
+        "clarity": 10,
+        "covered": 7,
+        "facts": 8,
+        "words": 149,
+        "runId": "draft-r2-baseline"
+      },
+      "skill": {
+        "clarity": 10,
+        "covered": 8,
+        "facts": 8,
+        "words": 151,
+        "runId": "draft-r2-skill"
+      },
+      "clarityDifference": 0
+    },
+    {
+      "taskId": "tests",
+      "repetition": 1,
+      "baseline": {
+        "clarity": 9,
+        "covered": 8,
+        "facts": 8,
+        "words": 224,
+        "runId": "tests-r1-baseline"
+      },
+      "skill": {
+        "clarity": 9,
+        "covered": 8,
+        "facts": 8,
+        "words": 207,
+        "runId": "tests-r1-skill"
+      },
+      "clarityDifference": 0
+    },
+    {
+      "taskId": "tests",
+      "repetition": 2,
+      "baseline": {
+        "clarity": 9,
+        "covered": 8,
+        "facts": 8,
+        "words": 212,
+        "runId": "tests-r2-baseline"
+      },
+      "skill": {
+        "clarity": 9,
+        "covered": 8,
+        "facts": 8,
+        "words": 212,
+        "runId": "tests-r2-skill"
+      },
+      "clarityDifference": 0
+    },
+    {
+      "taskId": "accept",
+      "repetition": 1,
+      "baseline": {
+        "clarity": 10,
+        "covered": 5,
+        "facts": 5,
+        "words": 63,
+        "runId": "accept-r1-baseline"
+      },
+      "skill": {
+        "clarity": 10,
+        "covered": 5,
+        "facts": 5,
+        "words": 65,
+        "runId": "accept-r1-skill"
+      },
+      "clarityDifference": 0
+    },
+    {
+      "taskId": "accept",
+      "repetition": 2,
+      "baseline": {
+        "clarity": 10,
+        "covered": 5,
+        "facts": 5,
+        "words": 64,
+        "runId": "accept-r2-baseline"
+      },
+      "skill": {
+        "clarity": 10,
+        "covered": 5,
+        "facts": 5,
+        "words": 65,
+        "runId": "accept-r2-skill"
+      },
+      "clarityDifference": 0
+    }
+  ],
+  "limitations": [
+    "This is a subjective assessment by one AI grader; no independent second grader or inter-rater agreement is available.",
+    "Opaque labels mask condition identities, but wording and style can still reveal or suggest a condition.",
+    "No actual learner-comprehension evidence was supplied; clarity scores are judgments about text, not measured human understanding.",
+    "Factual judgments use only the frozen supplied checks and explanation texts; cited source paths and UI labels were not treated as evidence of fresh execution.",
+    "A fact combining multiple clauses is marked covered when the explanation supplies the substance of all clauses; a missing explicit execution disclaimer is an omission, not a fabricated test claim.",
+    "For requests without a word limit, withinWordLimit=true means no word-limit requirement was violated; exactlyTwoSentences=null means that constraint was not requested."
+  ],
+  "clarityPairs": {
+    "skillHigher": 1,
+    "baselineHigher": 0,
+    "tied": 7
+  }
+}

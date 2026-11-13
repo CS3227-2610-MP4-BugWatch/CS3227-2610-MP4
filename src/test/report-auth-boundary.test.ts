@@ -6,8 +6,10 @@ import { act, cleanup, fireEvent, render as testingRender, screen, waitFor } fro
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { ReportError, type Report } from '../features/reports/types'
+import { MailboxError } from '../features/mailbox/types'
 
-const { service, projects, reports } = vi.hoisted(() => ({
+const { service, projects, reports, mailbox } = vi.hoisted(() => ({
+  mailbox: { listItems: vi.fn(), markRead: vi.fn(), deleteItem: vi.fn() },
   service: {
     getCurrentSession: vi.fn(), loadIdentity: vi.fn(), signIn: vi.fn(),
     signOut: vi.fn(), onAuthStateChange: vi.fn(),
@@ -16,12 +18,13 @@ const { service, projects, reports } = vi.hoisted(() => ({
     listActiveProjects: vi.fn(), getProject: vi.fn(), listProjectHistory: vi.fn(),
     createProject: vi.fn(), updateProject: vi.fn(),
   },
-  reports: { listProjectReports: vi.fn().mockResolvedValue([]), resolveReport: vi.fn(), linkDuplicate: vi.fn(), awaitTesterInformation: vi.fn(), resumeInvestigation: vi.fn(), listReportComments: vi.fn().mockResolvedValue([]), postReportComment: vi.fn(), acceptReport: vi.fn(), startInvestigation: vi.fn(), createReport: vi.fn(), getReport: vi.fn(), listReportHistory: vi.fn(), saveDraft: vi.fn(), getDraft: vi.fn() },
+  reports: { listProjectReports: vi.fn().mockResolvedValue([]), resolveReport: vi.fn(), linkDuplicate: vi.fn(), awaitTesterInformation: vi.fn(), resumeInvestigation: vi.fn(), listReportComments: vi.fn().mockResolvedValue([]), postReportComment: vi.fn(), acceptReport: vi.fn(), startInvestigation: vi.fn(), editReport: vi.fn(), createReport: vi.fn(), getReport: vi.fn(), listReportHistory: vi.fn(), saveDraft: vi.fn(), getDraft: vi.fn() },
 }))
 
 vi.mock('../shared/lib/supabaseClient.js', () => ({ supabase: {} }))
 vi.mock('../features/projects/projectRepository', () => ({ createProjectRepository: () => projects }))
 vi.mock('../features/reports/reportRepository', () => ({ createReportRepository: () => reports }))
+vi.mock('../features/mailbox/mailboxRepository', () => ({ createMailboxRepository: () => mailbox }))
 vi.mock('../features/auth/authService', async importOriginal => ({
   ...await importOriginal<typeof import('../features/auth/authService')>(),
   createAuthService: () => service,
@@ -50,6 +53,7 @@ beforeEach(() => {
   vi.resetAllMocks()
   reports.listProjectReports.mockResolvedValue([])
   reports.listReportComments.mockResolvedValue([])
+  mailbox.listItems.mockResolvedValue([])
   window.history.replaceState({}, '', '/reports/new')
   service.getCurrentSession.mockResolvedValueOnce(session(testerId)).mockResolvedValue(null)
   service.loadIdentity.mockImplementation(async (id: string) => ({
@@ -236,8 +240,36 @@ it('draftSave_projectReloadFails_keepsSavedFormAndRetriesBeforeWriting', async (
 
 function workflowReport(state: Report['state'] = 'Open'): Report {
   const assigned = state !== 'Open'
-  return { id: reportId, projectId, title: 'Protected workflow report', description: 'Bug', version: '1', reproductionSteps: 'Open', expectedResults: 'Works', actualResults: 'Fails', severity: 'low', testEnvironment: '', reporterId: otherId, reporterUsername: 'tester', reporterDisplayName: 'Tester', projectName: 'Project', projectArchivedAt: null, resolution: null, canonicalReport: null, state, assignedDeveloperId: assigned ? testerId : null, assignedAt: assigned ? '2026-11-07T10:00:00Z' : null, assignedDeveloperUsername: assigned ? 'dev' : null, assignedDeveloperDisplayName: assigned ? 'Developer' : null, createdAt: '2026-11-07T09:00:00Z', updatedAt: '2026-11-07T10:00:00Z' }
+  return { id: reportId, projectId, title: 'Protected workflow report', description: 'Bug', version: '1', reproductionSteps: 'Open', expectedResults: 'Works', actualResults: 'Fails', severity: 'low', testEnvironment: '', severityRevision: 0, reporterId: otherId, reporterUsername: 'tester', reporterDisplayName: 'Tester', projectName: 'Project', projectArchivedAt: null, resolution: null, canonicalReport: null, state, assignedDeveloperId: assigned ? testerId : null, assignedAt: assigned ? '2026-11-07T10:00:00Z' : null, assignedDeveloperUsername: assigned ? 'dev' : null, assignedDeveloperDisplayName: assigned ? 'Developer' : null, createdAt: '2026-11-07T09:00:00Z', updatedAt: '2026-11-07T10:00:00Z' }
 }
+it.each(['listItems', 'markRead', 'deleteItem'] as const)('mailbox_%sExpiredSession_rechecksAuthAndClearsPrivateItems', async method => {
+  window.history.replaceState({}, '', '/mailbox')
+  const item = { id: 'private-item', reportId, actorId: otherId, actorUsername: 'tester', actorDisplayName: 'Editing Tester',
+    reportTitle: 'Private edited report', projectId, projectName: 'Project', changedFields: ['title'],
+    createdAt: '2026-11-12T00:00:00Z', readAt: null }
+  mailbox.listItems.mockResolvedValue([item])
+  mailbox[method].mockRejectedValueOnce(new MailboxError('unauthenticated', 'Session ended'))
+  render(createElement(AuthenticatedApp))
+  if (method !== 'listItems') {
+    fireEvent.click(await screen.findByRole('button', { name: method === 'markRead' ? 'Mark as read' : 'Delete' }))
+  }
+  await screen.findByRole('button', { name: 'Log in' })
+  expect(service.getCurrentSession).toHaveBeenCalledTimes(2)
+  expect(screen.queryByRole('heading', { name: item.reportTitle })).toBeNull()
+  expect(screen.queryByRole('navigation', { name: 'Workspace navigation' })).toBeNull()
+})
+it('reportEdit_expiredSaveSession_rechecksAuthAndClearsManualInput', async () => {
+  window.history.replaceState({}, '', `/reports/${reportId}/edit`)
+  reports.getReport.mockResolvedValue({ ...workflowReport(), reporterId: testerId })
+  reports.editReport.mockRejectedValueOnce(new ReportError('unauthenticated', 'Session ended'))
+  render(createElement(AuthenticatedApp))
+  fireEvent.change(await screen.findByLabelText('Title'), { target: { value: 'Private edited title' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+  await screen.findByRole('button', { name: 'Log in' })
+  expect(reports.editReport).toHaveBeenCalledTimes(1)
+  expect(service.getCurrentSession).toHaveBeenCalledTimes(2)
+  expect(screen.queryByLabelText('Title')).toBeNull()
+})
 async function openWorkflow(state: Report['state'] = 'Open') {
   window.history.replaceState({}, '', `/reports/${reportId}`)
   service.loadIdentity.mockImplementation(async (id: string) => ({ id, role: 'developer', username: id === testerId ? 'first' : 'second', displayName: id === testerId ? 'First Developer' : 'Second Developer' }))

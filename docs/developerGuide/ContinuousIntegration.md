@@ -10,6 +10,11 @@ The unit test workflow at `.github/workflows/unit-tests.yml` runs on every push 
 
 The ordinary suite does not require Supabase credentials. Hosted authentication and project database tests are skipped unless their isolated test settings are supplied. Run those suites separately against an isolated Supabase project using the instructions in [authentication setup](Authentication.md) and [project development](Projects.md).
 
+## Documentation deployment
+
+The documentation workflow at `.github/workflows/docs-pages.yml` runs on pushes to `master`. It installs dependencies, builds the MarkBind site with the GitHub Pages base path, and deploys the generated site to GitHub Pages.
+
+The unit-test and documentation workflows do not run ESLint, the application production build or hosted database tests. The separate hosted database workflow below runs selected database suites. Run lint and the application build separately; workflow definitions alone do not establish the state of any hosted environment.
 ## Hosted database workflow
 
 `.github/workflows/hosted-db-tests.yml` runs separately on pushes to `development` and `master`, pull requests targeting either branch, and manual runs. It selects the authentication, project, report, report workflow, and report discussion database suites. Both Docker quota suites are excluded. The existing interactive PowerShell runners remain available for local use.

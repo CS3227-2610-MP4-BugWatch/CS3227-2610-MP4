@@ -27,7 +27,7 @@ function setup(path = '/projects', user = tester, signOutState = { signOutPendin
   } satisfies ProjectRepository
   const reportRepository = {
     resolveReport: vi.fn(), linkDuplicate: vi.fn(), awaitTesterInformation: vi.fn(), resumeInvestigation: vi.fn(), listReportComments: vi.fn().mockResolvedValue([]), postReportComment: vi.fn(), acceptReport: vi.fn(), startInvestigation: vi.fn(), listDrafts: vi.fn().mockResolvedValue([]), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(),
-    submitDraft: vi.fn(), createReport: vi.fn(), getReport: vi.fn().mockResolvedValue(null),
+    submitDraft: vi.fn(), editReport: vi.fn(), createReport: vi.fn(), getReport: vi.fn().mockResolvedValue(null),
     listReportHistory: vi.fn().mockResolvedValue([]), listProjectReports: vi.fn().mockResolvedValue([]),
   } satisfies ReportRepository
   const onSignOut = vi.fn()
@@ -45,7 +45,8 @@ it.each(['tester', 'developer'] as const)('workspace_%s_showsIdentityAndOnlyAvai
   const navigation = within(screen.getByRole('navigation', { name: 'Workspace navigation' }))
   expect(navigation.getByRole('link', { name: 'Projects' }).getAttribute('href')).toBe('/projects')
   expect(Boolean(navigation.queryByRole('link', { name: 'My drafts' }))).toBe(role === 'tester')
-  expect(navigation.getAllByRole('link')).toHaveLength(role === 'tester' ? 2 : 1)
+  expect(navigation.getByRole('link', { name: 'Mailbox' }).getAttribute('href')).toBe('/mailbox')
+  expect(navigation.getAllByRole('link')).toHaveLength(role === 'tester' ? 3 : 2)
   expect(screen.getByText(tester.displayName)).toBeTruthy()
   expect(screen.getByText(new RegExp(`^${role}$`, 'i'))).toBeTruthy()
   expect(await screen.findByRole('heading', { name: 'Active projects' })).toBeTruthy()

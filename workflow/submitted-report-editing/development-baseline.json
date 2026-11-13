@@ -1,0 +1,13 @@
+{
+  "checkedAt": "2026-11-11T15:48:41.092Z",
+  "localHead": "5b8d605b95ab00942a19943f49a76f6798454fad",
+  "developmentHead": "50d6c30984b3693afbb122a382d61cd6fba6d2fe",
+  "mergedPr": 8,
+  "status": "Merged; fetched remote reference only. Working tree not merged or checked out.",
+  "integrationNotes": [
+    "Development adds Awaiting tester information and discussion/comments.",
+    "Report page navigation and history changed; preserve current development architecture during editing integration.",
+    "No mailbox or developer severity editor found in inspected PR8 migration; developer severity changes remain a future collaborating operation.",
+    "Previous coverage baseline applies to local pre-PR8 tree, not current development."
+  ]
+}

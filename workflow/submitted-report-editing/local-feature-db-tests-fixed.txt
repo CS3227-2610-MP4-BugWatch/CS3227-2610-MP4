@@ -1,0 +1,38 @@
+
+ RUN  v5.0.5 E:/CS3227-2610-MP4
+
+ ❯ src/test/report-edit-database.test.ts (30 tests | 30 skipped) 74ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/test/report-edit-database.test.ts > isolated submitted report editing persistence
+AssertionError: expected AuthSessionMissingError: Auth session mis… { …(3) } to be null
+
+- Expected:
+null
+
++ Received:
+AuthSessionMissingError {
+  "message": "Auth session missing!",
+  "__isAuthError": true,
+  "name": "AuthSessionMissingError",
+  "status": 400,
+  "code": undefined,
+}
+
+ ❯ src/test/report-edit-database.test.ts:33:26
+     31|     for (const [token, role] of [[import.meta.env.PROJECT_TEST_TESTER_…
+     32|       const auth = await anonymous.auth.getUser(token)
+     33|       expect(auth.error).toBeNull()
+       |                          ^
+     34|       const profile = await admin.from('profiles').select('role').eq('…
+     35|       expect(profile.error).toBeNull()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  5 passed | 30 skipped (35)
+   Start at  12:36:11
+   Duration  2.04s (tests 83%, import 12%, transform 4%, worker 1%)
+

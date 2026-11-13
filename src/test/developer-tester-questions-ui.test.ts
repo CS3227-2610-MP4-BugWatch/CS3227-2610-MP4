@@ -19,7 +19,7 @@ const developer: SessionUser = { id: '10000000-0000-4000-8000-000000000001', rol
 const tester: SessionUser = { ...developer, id: '10000000-0000-4000-8000-000000000002', role: 'tester' }
 const id = '20000000-0000-4000-8000-000000000001'
 const time = '2026-11-07T10:00:00Z'
-const report: Report = { resolution: null, canonicalReport: null, id, projectId: '30000000-0000-4000-8000-000000000001', title: 'Question report', description: 'Current report description', version: '1', reproductionSteps: 'Open', expectedResults: 'Works', actualResults: 'Fails', severity: 'high', testEnvironment: 'Chrome', reporterId: tester.id, reporterUsername: 'tester', reporterDisplayName: 'Tester', projectName: 'Project', projectArchivedAt: null, state: 'In progress', assignedDeveloperId: developer.id, assignedAt: time, assignedDeveloperUsername: 'dev', assignedDeveloperDisplayName: 'Developer', createdAt: time, updatedAt: time }
+const report: Report = { severityRevision: 0, resolution: null, canonicalReport: null, id, projectId: '30000000-0000-4000-8000-000000000001', title: 'Question report', description: 'Current report description', version: '1', reproductionSteps: 'Open', expectedResults: 'Works', actualResults: 'Fails', severity: 'high', testEnvironment: 'Chrome', reporterId: tester.id, reporterUsername: 'tester', reporterDisplayName: 'Tester', projectName: 'Project', projectArchivedAt: null, state: 'In progress', assignedDeveloperId: developer.id, assignedAt: time, assignedDeveloperUsername: 'dev', assignedDeveloperDisplayName: 'Developer', createdAt: time, updatedAt: time }
 const first: ReportComment = { id: '40000000-0000-4000-8000-000000000001', reportId: id, authorId: developer.id, authorUsername: 'dev', authorDisplayName: 'Question author', body: 'Which browser?', replyToCommentId: null, createdAt: time }
 const answer: ReportComment = { ...first, id: '40000000-0000-4000-8000-000000000002', authorId: tester.id, body: 'Chrome 130', replyToCommentId: first.id }
 const question = 'Does this happen in a clean browser profile?'
@@ -34,7 +34,7 @@ function setup(initial = report, user = developer, discussion: ReportComment[] =
     listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn(), createReport: vi.fn(),
     getReport: vi.fn().mockResolvedValue(initial), listReportHistory: vi.fn().mockResolvedValue([]), listProjectReports: vi.fn().mockResolvedValue([]),
     acceptReport: vi.fn(), startInvestigation: vi.fn(), awaitTesterInformation: vi.fn().mockResolvedValue({ ...initial, state: 'Awaiting tester information' }), resumeInvestigation: vi.fn(),
-    resolveReport: vi.fn(), linkDuplicate: vi.fn(),
+    resolveReport: vi.fn(), linkDuplicate: vi.fn(), editReport: vi.fn(),
     listReportComments: vi.fn().mockResolvedValue(discussion), postReportComment: vi.fn().mockResolvedValue(answer),
   } satisfies ReportRepository
   const result: TesterQuestionResult = { questions: [question], contextVersion: questionContextVersion({ report: initial, discussion }) }

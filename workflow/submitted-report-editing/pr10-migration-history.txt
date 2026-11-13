@@ -1,0 +1,18 @@
+ version |              name               
+---------+---------------------------------
+ 001     | profiles
+ 002     | projects
+ 003     | project_history_names
+ 004     | project_url_codepoints
+ 005     | reports
+ 006     | project_report_listing
+ 007     | report_drafts
+ 008     | report_workflow
+ 009     | tester_suggestion_quota
+ 010     | tester_suggestion_quota_five
+ 011     | report_clarification_discussion
+ 012     | report_resolutions
+ 013     | developer_question_quota
+ 014     | report_editing_mailbox
+(14 rows)
+

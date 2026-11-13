@@ -156,3 +156,20 @@
   .report-resolution-form, .report-resolution { padding: 1rem; }
 }
 @media (max-width: 25em) { .report-facts { grid-template-columns: 1fr; } }
+
+.report-edit-page .severity-conflict { border: 2px solid var(--mantine-color-orange-6); }
+#severity-conflict:focus { outline: 2px solid var(--mantine-color-orange-4); outline-offset: 4px; }
+.mailbox-items { list-style: none; padding: 0; display: grid; gap: 1rem; }
+.mailbox-item { border: 1px solid var(--mantine-color-dark-4); border-radius: 8px; padding: 1rem; overflow-wrap: anywhere; }
+.mailbox-item h3 { margin-block: .5rem; }
+.mailbox-page .project-toolbar { justify-content: flex-start; gap: .65rem; }
+.mailbox-page button[aria-pressed="true"] { background: var(--accent-bg); border-color: var(--accent); color: var(--mantine-primary-color-light-color); font-weight: 700; }
+.mailbox-item { border-color: var(--border); padding: 1.25rem; }
+.mailbox-item > p { margin-block: .65rem; }
+.mailbox-item .project-toolbar { margin-top: 1rem; margin-bottom: 0; }
+.report-edit-page .project-form > .project-toolbar { justify-content: flex-start; margin-top: 1.25rem; }
+.report-edit-page .severity-conflict { border-radius: .65rem; padding: 0 1rem 1rem; }
+@media (max-width: 47.99em) {
+  .project-workspace { padding-inline: var(--mantine-spacing-md); }
+  .mailbox-item { padding: 1rem; }
+}

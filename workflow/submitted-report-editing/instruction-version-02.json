@@ -1,0 +1,92 @@
+{
+  "version": "editing-exploration-workflow-v2",
+  "recordedAt": "2026-11-11T15:31:53.958Z",
+  "baseCommit": "5b8d605b95ab00942a19943f49a76f6798454fad",
+  "status": "Observation snapshot, uncommitted. Workflow changed during exploration; not one frozen version for the entire earlier interval.",
+  "files": [
+    {
+      "path": ".agents/skills/explain-software-changes/SKILL.md",
+      "sha256": "fbdf4d7a04a1bf23ffc3cb4acebe7ae491a40a2a70b27182511898845c1c891f"
+    },
+    {
+      "path": ".codex/agents/ui_mockup_designer.toml",
+      "sha256": "4546af0d073142f95f96444c12141c91ee3d4eeb3d6b2b6d6b13b9f56044431a"
+    },
+    {
+      "path": "AGENTS.md",
+      "sha256": "6d19901a4a78037159f3ccbe729c8293469267a28cacb72e9fd43e3809eb0223"
+    },
+    {
+      "path": "src/features/reports/ReportDetailsPage.tsx",
+      "sha256": "7abfafe12705dc1642d907f51869491758c190d4c2a78cb69e746559de58cab5"
+    },
+    {
+      "path": "src/features/reports/ReportForm.tsx",
+      "sha256": "9372bbf0f930c3ff693ef8edf10ef325214d4618b6d648262140e1c7fd00deee"
+    },
+    {
+      "path": "src/features/reports/types.ts",
+      "sha256": "68233cdead0795f94ee56096effe5b2291d8b7bd60146dc4c2dd0fb1fb363b79"
+    },
+    {
+      "path": "workflow/instructions/code-standards.md",
+      "sha256": "ca8c5c8fe5921bdd90d058cd53934ff00dc02de3e60eea2cac44d9d15473802a"
+    },
+    {
+      "path": "workflow/instructions/coordinator.md",
+      "sha256": "c94c146e49afb41d362176d41cd31b8b4b55e9e9d99c1011dde134ae518ed893"
+    },
+    {
+      "path": "workflow/instructions/documentation.md",
+      "sha256": "38dc5d633f4d28cc2649f0ae66b71af7faa0ef34267a58f9604cb1e74123ef5b"
+    },
+    {
+      "path": "workflow/instructions/exploration.md",
+      "sha256": "727cea9278c732373ed0c458a644913212fb77d1148660a51c3cd2a8b8183f3d"
+    },
+    {
+      "path": "workflow/instructions/handoffs.md",
+      "sha256": "6906b894728d71b46780d136f4316278c691ebf9231670cc1335d465d3c9f77d"
+    },
+    {
+      "path": "workflow/instructions/testing.md",
+      "sha256": "549b3d94b82303c6d78b81d5b5e0eef2776ed439d8a1973f5d5003ccbb043024"
+    },
+    {
+      "path": "workflow/instructions/ui-evidence.md",
+      "sha256": "d8864bb9ac44509bc863cda147bc984254cb8f52b22dd87de69672cfe3918396"
+    },
+    {
+      "path": "workflow/instructions/workflow-evaluation.md",
+      "sha256": "9dc188896e4c0bf54de32d9dadf5448f481a6fd552541783e47e19e8eef3e554"
+    },
+    {
+      "path": "workflow/templates/agent-assignment-template.md",
+      "sha256": "b95850f8da14a725c78caf70e240fa2ad1271ebead9e7d3cc0fb13bb5ffcf4eb"
+    },
+    {
+      "path": "workflow/templates/exploration-recap-template.md",
+      "sha256": "ebae5d922299ae80233981ee40580a2b2a482e6e1a113d70c8fea64ced1ff868"
+    },
+    {
+      "path": "workflow/templates/feature-plan-template.md",
+      "sha256": "14a0c22d0392c278b39f5c70b3cd846f8c1bb36e61c4cd0a020dce716d86a4d8"
+    },
+    {
+      "path": "workflow/templates/implementer-summary-template.md",
+      "sha256": "aa9592d3377d9b320953d983f31610a173c2da27d6d60dea237570dc0ee5f2b1"
+    },
+    {
+      "path": "workflow/templates/tester-summary-template.md",
+      "sha256": "41252a8acb8ea303ce9efa57fcc002ce3f8d7fcbe8efc6ae42b8a7a6f7428e60"
+    },
+    {
+      "path": "workflow/templates/visual-review-template.md",
+      "sha256": "0eef13331c18d71a95d0a55f1436760b751d3546034e1f9276130ad5a9dffafd"
+    },
+    {
+      "path": "workflow/templates/workflow-experiment-template.md",
+      "sha256": "308fb2bad52c27317e0bec163d65f27f7a3fe936821b790b344c54df383b39eb"
+    }
+  ]
+}

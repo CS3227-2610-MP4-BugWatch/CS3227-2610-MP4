@@ -1,12 +1,14 @@
 {
   "baseUrl": "",
   "titlePrefix": "",
-  "titleSuffix": "ProjectEx",
+  "titleSuffix": "BugWatch",
   "faviconPath": "images/SeEduLogo.png",
   "style": {
     "codeTheme": "light"
   },
   "ignore": [
+    "workflow/submitted-report-editing/runtime.local/**",
+    "workflow/mp4-presentation/.capture-runtime/**",
     "_markbind/layouts/*",
     "_markbind/logs/*",
     "_site/*",
@@ -16,12 +18,31 @@
     ".git/*",
     ".env",
     ".env.*",
-    "node_modules/*"
+    "node_modules/*",
+    "node_modules/**",
+    "workflow/explanation-skill-evaluation/raw/**",
+    "workflow/explanation-skill-evaluation/source-snapshots/**",
+    "workflow/explore-handoff-improvements/study/raw/**",
+    "workflow/explore-handoff-improvements/study/baseline-snapshots/**",
+    "workflow/explore-handoff-improvements/study/candidate-snapshots/**"
   ],
-  "pagesExclude": ["node_modules/*"],
+  "pagesExclude": [
+    "node_modules/*",
+    "workflow/submitted-report-editing/runtime.local/**",
+    "workflow/mp4-presentation/.capture-runtime/**",
+    "node_modules/**",
+    "workflow/explanation-skill-evaluation/raw/**",
+    "workflow/explanation-skill-evaluation/source-snapshots/**",
+    "workflow/explore-handoff-improvements/study/raw/**",
+    "workflow/explore-handoff-improvements/study/baseline-snapshots/**",
+    "workflow/explore-handoff-improvements/study/candidate-snapshots/**"
+  ],
   "pages": [
     {
-      "glob": ["**/index.md", "**/*.md"]
+      "glob": [
+        "**/index.md",
+        "**/*.md"
+      ]
     }
   ],
   "deploy": {

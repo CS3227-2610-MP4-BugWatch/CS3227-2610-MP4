@@ -31,7 +31,7 @@ const input = {
   severity: 'high' as const, testEnvironment: '',
 }
 const saved: Report = {
-  ...input, id: reportId, reporterId: user.id, createdAt: time, updatedAt: time,
+  ...input, id: reportId, severityRevision: 0, reporterId: user.id, createdAt: time, updatedAt: time,
   resolution: null, canonicalReport: null, state: 'Open', assignedDeveloperId: null, assignedAt: null, assignedDeveloperUsername: null, assignedDeveloperDisplayName: null, projectName: 'Test project', projectArchivedAt: null,
   reporterDisplayName: user.displayName, reporterUsername: user.username,
 }
@@ -53,7 +53,7 @@ function setup() {
   const reportRepository = {
     resolveReport: vi.fn(), linkDuplicate: vi.fn(), awaitTesterInformation: vi.fn(), resumeInvestigation: vi.fn(), listReportComments: vi.fn().mockResolvedValue([]), postReportComment: vi.fn(), acceptReport: vi.fn(), startInvestigation: vi.fn(), listDrafts: vi.fn(), getDraft: vi.fn(), saveDraft: vi.fn(), deleteDraft: vi.fn(), submitDraft: vi.fn().mockResolvedValue(saved),
     listProjectReports: vi.fn().mockResolvedValue([]),
-    createReport: vi.fn().mockResolvedValue(saved), getReport: vi.fn().mockResolvedValue(saved),
+    editReport: vi.fn(), createReport: vi.fn().mockResolvedValue(saved), getReport: vi.fn().mockResolvedValue(saved),
     listReportHistory: vi.fn().mockResolvedValue([{
       id: 'history', reportId, actorId: user.id, actorDisplayName: 'Named history actor', occurredAt: time,
       event: 'created', changes: { description: { before: null, after: input.description } },
@@ -298,6 +298,26 @@ it('reportDetails_failedHistoryLoad_retriesWithoutShowingMissingReport', async (
   expect(screen.queryByText(/report not found/i)).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: /retry/i }))
   await waitFor(() => expect(screen.getByText(/Named history actor/i)).toBeTruthy())
+})
+
+it('reportDetails_editedHistory_displaysChangedFieldsAndTrustedProjectNamesLiterally', async () => {
+  const { show, reportRepository } = setup()
+  reportRepository.listReportHistory.mockResolvedValueOnce([{
+    id: 'edit-history', reportId, actorId: user.id, actorDisplayName: 'Editing Tester', occurredAt: time,
+    event: 'report_edited', projectNames: { before: 'Previous project', after: 'Current project' },
+    changes: { title: { before: '<script>old title</script>', after: 'Corrected title' },
+      projectId: { before: projectId, after: otherProjectId }, severity: { before: 'low', after: 'high' } },
+  }])
+  const view = show(`/reports/${reportId}`)
+  await screen.findByRole('heading', { name: saved.title })
+  fireEvent.click(screen.getByRole('tab', { name: 'Activity' }))
+  await screen.findByText('Editing Tester')
+  expect(screen.getByText(/edited this report/)).toBeTruthy()
+  expect(screen.getByText('Previous project', { exact: false })).toBeTruthy()
+  expect(screen.getByText('Current project', { exact: false })).toBeTruthy()
+  expect(screen.getByText('<script>old title</script>', { exact: false })).toBeTruthy()
+  expect(screen.getByText('Corrected title', { exact: false })).toBeTruthy()
+  expect(view.container.querySelector('script')).toBeNull()
 })
 
 

@@ -1,0 +1,51 @@
+
+ RUN  v5.0.5 E:/CS3227-2610-MP4
+
+ ❯ src/test/report-edit-database.test.ts (36 tests | 1 failed) 8424ms
+   ❯ isolated submitted report editing persistence (36)
+     × editReport_normalizedNoop_changesNoReportTimestampHistoryOrMailboxAndReplaysOneReceipt 212ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+
+ FAIL  src/test/report-edit-database.test.ts > isolated submitted report editing persistence > editReport_normalizedNoop_changesNoReportTimestampHistoryOrMailboxAndReplaysOneReceipt
+AssertionError: expected { …(5) } to match object { …(5) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,17 +1,12 @@
+  {
+    "actor_id": "8af5acd6-4794-4194-9c1b-8cac7ed66a7f",
+    "payload": {
+      "expectedSeverityRevision": 0,
+      "input": {
+-       "actualResults": "Fails",
+        "description": "Description",
+-       "expectedResults": "Works",
+-       "projectId": "d068f454-6a90-4bcd-af7b-03d75777546b",
+-       "reproductionSteps": "Open",
+        "severity": "low",
+-       "testEnvironment": "",
+        "title": "Original title",
+        "version": "1",
+      },
+    },
+    "report_id": "ea0e9687-9ed2-4501-b90c-ada6e0ad02a5",
+
+ ❯ src/test/report-edit-database.test.ts:200:21
+    198|     expect(after.receipts).toEqual(expect.arrayContaining(before.recei…
+    199|     const receipt = after.receipts.find(item => item.request_id === re…
+    200|     expect(receipt).toMatchObject({ actor_id: before.report.reporter_i…
+       |                     ^
+    201|       report_id: report.id, payload: { input: report.input, expectedSe…
+    202|       result: { outcome: 'unchanged', report: { id: report.id, severit…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+ Test Files  1 failed | 5 passed (6)
+      Tests  1 failed | 151 passed (152)
+   Start at  23:44:52
+   Duration  39.73s (tests 97%, import 2%)
+
