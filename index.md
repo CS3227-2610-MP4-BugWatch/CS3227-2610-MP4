@@ -9,19 +9,10 @@
 is the starting point for learning about the application and contributing to its
 development.
 
-<box type="info">
-
-BugWatch is in early development. The application currently displays a landing
-page; bug-tracking functionality has not yet been implemented. The guides are
-being adapted from the documentation template and may still contain placeholder
-content.
-
-</box>
-
 ## Explore the documentation
 
-* [**User Guide**](docs/userGuide/UserGuide.html): documentation for people using BugWatch, including [Quick Start](docs/userGuide/QuickStart.html), [Features](docs/userGuide/Features.html), and [FAQ](docs/userGuide/FAQ.html).
-* [**Developer Guide**](docs/developerGuide/DeveloperGuide.html): documentation for contributors, including [Setting Up](docs/developerGuide/SettingUp.html), [Design](docs/developerGuide/Design.html), and [Testing](docs/developerGuide/Testing.html).
+* [**User Guide**](docs/userGuide/UserGuide.html): documentation for people using BugWatch
+* [**Developer Guide**](docs/developerGuide/DeveloperGuide.html): documentation for contributors
 
 ## Run BugWatch locally
 
