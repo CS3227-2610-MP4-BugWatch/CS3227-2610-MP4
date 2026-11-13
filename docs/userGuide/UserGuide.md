@@ -24,3 +24,5 @@ This guide aims to:
 ## Topics
 
 - [Authentication](Authentication.md): Log in, log out, and resolve account setup issues.
+- [Projects](Projects.md): Browse, create, edit, and inspect project history; includes the test-environment checklist.
+- [Bug reports](Reports.md): Submit a report and open its saved details and history.

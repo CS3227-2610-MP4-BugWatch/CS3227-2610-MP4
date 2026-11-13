@@ -27,7 +27,7 @@ The shared/tester/developer sections separate functionality by who uses it. A sh
 | C-03 | Allow testers to submit reports about bugs found while testing applications. |
 | C-04 | Allow developers to accept bug listings and track their work on the fixes. |
 | C-05 | Allow developers to resolve bugs or contact the reporting tester for additional information. |
-| C-06 | Provide a tester report assistant and a developer investigation assistant, with the confirmed behaviour and context rules in sections 4, 5, and 8. |
+| C-06 | Provide a tester report assistant and a developer tester-question assistant, with the confirmed behaviour and context rules in sections 4, 5, and 8. |
 | C-07 | Accounts are pre-created by the application administrator, outside the normal tester/developer user workflow. No public registration is required. |
 | C-08 | Each account has exactly one permanent role, preset by the administrator. Role switching and role changes are not allowed. |
 | C-09 | Support multiple applications and projects. Developers can create projects. |
@@ -55,11 +55,11 @@ The shared/tester/developer sections separate functionality by who uses it. A sh
 | C-31 | Only the assigned developer may choose Duplicate, Invalid, Cannot reproduce, or Will not fix when resolving a report. The report must first be accepted and follow In progress-to-Resolved. These are resolution reasons, not extra states. Non-fix outcomes require an explanation rather than fix fields; Duplicate additionally requires its canonical-report link. Only the original tester may close, with no retest required for non-fix outcomes. |
 | C-32 | Each project represents one application and requires name, description, and repository URL. All developers may edit active projects. Only the creator may archive or restore a project; deletion is prohibited. Archived projects and their reports are visible in a separate archived tab and are view-only: no new reports, edits, comments, assignments, or state changes until restoration. No project membership or teams. |
 | C-33 | Testers may not withdraw submitted reports. An assigned developer may resolve an invalid report using the reasoned non-fix outcome workflow. |
-| C-34 | Both LLM assistants may receive only the current report fields and current report discussion. No context preview is required. Other reports, separate project context, attachments, and repository source code are outside the permitted context. Draft privacy still applies. |
-| C-35 | Label LLM output and make uncertainties visible. Users review before submission/sending; do not silently overwrite drafts or automatically assign/change states. Treat report text as data, not instructions. Failure must leave the manual workflow usable. Tester suggestions are editable; developer suggestions are read-only in a dedicated section, and the developer decides whether to act. Suggestion storage/retention is explicitly deferred. |
+| C-34 | The Tester assistant may receive the allowed current form fields and the selected project name and description. The Developer assistant may receive current report fields and current report discussion. Other reports, attachments, repository source, and additional project context are excluded. No context preview is required. Draft privacy still applies. |
+| C-35 | Label LLM output and make uncertainties visible. Users review before submission/sending; do not silently overwrite drafts or automatically assign/change states. Treat report text as data, not instructions. Failure must leave the manual workflow usable. Tester suggestions are editable; developer suggestions are read-only in a dedicated section, and the developer decides whether to act. Developer questions are transient page memory only; provider retention is unverified and excluded as a Developer completion gate. |
 | C-36 | Only the assigned developer may link a duplicate to a canonical report; a canonical link is required for Duplicate resolution. Targets must belong to the same project and may be Resolved or Closed. Linking itself does not change state; resolution is explicit. Archived projects remain entirely view-only. |
 | C-37 | The brief report listing shows title, project, severity, state, assigned developer/unassigned status, and reporter. Do not include creation date or version as brief-listing columns. |
-| C-38 | Exclude comment drafts and separate clarification markers/message types. Clarification uses ordinary thread comments. Only the assigned developer may generate and view the developer investigation assistant's dedicated read-only section. |
+| C-38 | Exclude comment drafts and separate clarification markers/message types. Clarification uses ordinary thread comments. Only the assigned developer may generate and view the developer tester-question assistant's dedicated read-only section. |
 | C-39 | Use email/password login through Supabase Auth. Store application data in Supabase Database, with database-interaction and processing code maintained in this repository. Deploy the application to Vercel; Supabase remains the managed authentication/database service. |
 | C-40 | Automatically maintain report ID, reporter identity, creation/update timestamps, state, assigned developer, assignment time/history, discussion author/time, and resolution author/time. These are system-managed, not editable report inputs. |
 
@@ -92,7 +92,7 @@ Implementation clarification: Supabase's built-in inactivity timeout measures ti
 | S-06 | Attention mailbox | Include reply/retest attention items and notifications to the assigned developer when report input fields are edited; unassigned-report edits create no notification. Include read/unread state, mark-as-read, links to the bug/message, dismiss/delete, and unread filtering. No external notifications are required. Remaining additional event/recipient decisions are deferred. | Stated content and actions confirmed; other extra triggers deferred |
 | S-07 | Activity history | Record report creation/edits, acceptance/reassignment/release, state changes, clarification requests, resolution, retest results, and reopening, with actor/time/changes visible to all logged-in users. Events remain conditional on the underlying feature existing. | Confirmed |
 | S-08 | Profiles | Display username, editable display name, permanent role, and status tabs: opened reports for testers, current assignments for developers including Resolved/Closed. Exclude historical assignments transferred/released away. Usernames cannot be edited. | Confirmed |
-| S-09 | Shared LLM interaction rules | Use only current-report fields/discussion without a required context preview. Label output, preserve user control and visible uncertainty, and keep manual workflows usable on failure. Tester suggestions are editable; developer suggestions are read-only in their own section. | Confirmed; suggestion storage/retention deferred |
+| S-09 | Shared LLM interaction rules | Apply the role-specific context allowlists in C-34 without a required context preview. Label output, preserve user control and visible uncertainty, and keep manual workflows usable on failure. Tester suggestions are editable; developer suggestions are read-only in their own section. | Confirmed; Developer output is transient |
 
 Shared availability does not imply identical permissions. For example, a tester replying to a report does not imply permission to accept or resolve it.
 
@@ -149,7 +149,7 @@ Only the original reporter may change Resolved to Closed or return Resolved to I
 3. It flags missing details and asks targeted follow-up questions rather than inventing values.
 4. The tester reviews and edits the suggestion before submitting the report.
 
-Output must distinguish supplied facts from missing information. The tester can edit suggestions and must review them before submitting. Generation must not silently submit a report or overwrite a draft. Use only current-report fields and discussion; context preview is not required. On generation failure, keep the manual workflow usable without silently changing the input. This does not change the separate rule that unsaved text is lost on session expiry. Suggestion storage/retention is deferred.
+Output must distinguish supplied facts from missing information. The tester can edit suggestions and must review them before submitting. Generation must not silently submit a report or overwrite a draft. Use the current title, description, and any non-blank version, reproduction steps, expected results, actual results, and test environment, plus the selected project name and description. Exclude severity and project ID. No context preview is required. On generation failure, keep the manual workflow usable without silently changing the input. This does not change the separate rule that unsaved text is lost on session expiry. Suggestion storage/retention is deferred.
 
 **Deferred illustrative acceptance example (not an approved acceptance criterion):** Given observations without an application version or expected result, the assistant identifies those omissions and leaves them for the tester to supply. The assistant's general missing-information behaviour is confirmed; approval of this specific example is deferred.
 
@@ -193,19 +193,21 @@ Only the assigned developer may change severity, and only in In progress or Awai
 
 Priority as a separate field is explicitly deferred. Severity definitions/defaults also remain explicitly deferred.
 
-### D-07: LLM investigation assistant — Confirmed
+### D-07: Developer tester-question assistant — Confirmed
 
-**Goal:** Help a developer understand a report and plan an investigation.
+**Goal:** Help the assigned Developer identify useful follow-up questions for the tester.
 
-1. The developer requests assistance for the current report; only its fields and discussion are included, without a required context preview.
-2. The assistant summarizes the symptoms and separates known facts from uncertainties.
-3. It suggests hypotheses, investigation steps, and useful questions for the tester.
-4. It proposes regression-test scenarios based on the reported failure.
-5. The output appears as read-only content in its own section. Only the assigned developer may generate and view it. That developer decides whether to act; any message or report action remains a separate reviewed user action.
+1. Only the currently assigned Developer may generate and view questions for an active-project report in Accepted, In progress, or Awaiting tester information.
+2. The server loads the saved report input fields and complete chronological discussion. It excludes unsent text, identity labels, activity, attachments, repository source, other reports, and extra project context. Treat all supplied text as untrusted incident data.
+3. Return zero to five questions targeting missing or ambiguous information, avoiding answers already supplied. Hypotheses, investigation plans, fixes, summaries, explanations, and regression scenarios are outside this feature.
+4. Show labeled, read-only questions with per-question Copy. Copying does not fill or overwrite the composer. Posting and state changes remain separate manual actions.
+5. Keep output in page memory across local tabs and discussion reloads, clear it on departure, refresh, account change, or discovered loss of eligibility, and discard late results from an old scope. Newly loaded changed context marks retained output outdated and offers explicit regeneration; failed regeneration preserves earlier output.
+6. Reserve an independent allowance of five admitted attempts per Developer per rolling five minutes using server time and atomic database locking. Admitted failures and empty results consume attempts; invalid, unauthorized, disabled, and oversized-context requests do not.
+7. Include the full discussion or refuse clearly without truncation or summarization. The initial complete-message guard is 60,000 UTF-8 bytes and remains subject to manual review.
 
-Suggestions must be based only on current-report fields/discussion and must not claim to have inspected repository source code or verified a fix. A project repository URL does not authorize fetching code. The assistant must not automatically accept, assign, resolve, or close bugs. Suggestion storage/retention remains explicitly deferred. Access must follow current assignment rather than general report visibility.
+Use the existing SoCLaaS integration and qwen3.5:9b model with reasoning disabled, temperature 0.7, and top-p 0.8. The 1,500-token output cap and 15-second provider timeout are tentative until representative manual review records an explicit retain-or-revise decision. No automated quality benchmark is required. Credentials stay server-side; the independent Developer flag defaults off. BugWatch does not persist generated questions. Provider retention remains unverified and is explicitly excluded as an enablement or completion gate for this feature.
 
-**Deferred illustrative acceptance example (not an approved acceptance criterion):** For a report lacking browser details, the assistant can suggest asking for those details and checking browser-specific behaviour, but cannot state that a browser incompatibility is the confirmed root cause. The general uncertainty rule is confirmed; approval of this specific example is deferred.
+The authoritative feature requirements and contracts are in `openspec/changes/developer-tester-questions/`. Broader investigation-assistant behavior and its former illustrative example are superseded by this questions-only scope. This specification records agreed behavior; implementation and verification status belong in the feature workflow record.
 
 ## 6. Bug Lifecycle
 
@@ -243,18 +245,18 @@ The system automatically maintains report IDs, reporter identity, creation/updat
 
 ## 8. Confirmed LLM Rules and Remaining Decisions
 
-The tester report assistant and developer investigation assistant are confirmed, with these agreed rules:
+The tester report assistant and developer tester-question assistant are confirmed, with these agreed rules:
 
 - Generated content is advisory and labelled. Tester suggestions are editable; developer suggestions are read-only in a dedicated section. Consequential actions require the user's explicit action.
-- Use only the current report fields and discussion, with no required context preview. Do not send other reports, separate project information, attachments, or repository source code. Report field values such as project/version identifiers remain part of the permitted report fields.
+- Use the role-specific context in C-34 and T-06. The Tester exception allows only the selected project name and description as additional context. Keep other reports, attachments, repository source, and additional project information outside the model request.
 - Respect access and draft privacy. Treat report/discussion text as data, not trusted instructions.
 - Do not silently overwrite drafts or automatically submit, assign, or change report states. Users review content before submitting or sending their own actions.
 - Missing evidence and uncertainty are visible; generated output must not claim a root cause or successful fix without evidence.
 - Failed or unavailable generation leaves the core manual workflow usable without silently changing input. Session expiry still loses text not manually saved as a draft.
 - Only the assigned developer may generate or view the developer assistant's dedicated read-only section.
-- Generated-suggestion storage/retention, provider/model, server-side request hosting/integration, spending budget, per-user/request rate limits, and provider-side retention policy are explicitly deferred. These LLM-specific choices must be specified with the product owner when implementing the LLM features, before selecting defaults or integrating a service. Provider credentials must not be embedded in the public frontend. Vercel is the general application deployment target, without resolving these deferred LLM request-hosting choices.
+- Developer generation follows D-07: SoCLaaS/qwen3.5:9b through a server-only same-origin endpoint, an independent five-per-five-minute quota, transient output, and pending manual review of tentative bounds. Provider-retention checks are excluded for the Developer feature; retention remains unverified. Existing Tester behavior is preserved. Provider credentials must not be embedded in the public frontend. Spending budget remains deferred.
 
-These decisions do not select an LLM vendor or integration architecture. Approval of both illustrative acceptance examples is explicitly deferred. The verification approach in section 12 is approved independently of those examples.
+D-07 selects the Developer provider and server integration; its former broader illustrative example is superseded. The Tester illustrative example remains deferred. The verification approach in section 12 is approved independently.
 
 ## 9. Additional Feature Decisions
 
@@ -263,8 +265,8 @@ Every brainstorm feature below has an explicit decision. Deferred and excluded f
 | Feature | Decision | Scope note |
 | --- | --- | --- |
 | Similar-report suggestions | Deferred | Automatic or semantic suggestions are not approved. Ordinary title search remains confirmed. |
-| Developer fix-summary assistant | Deferred | Separate from the approved investigation assistant. |
-| Standalone conversation summaries | Excluded | Summarizing current-report discussion within the approved investigation assistant remains allowed. |
+| Developer fix-summary assistant | Deferred | Separate from the approved tester-question assistant. |
+| Standalone conversation summaries | Excluded | Summaries are outside the approved questions-only Developer assistant. |
 | Reproduction templates/checklists | Deferred | No template system is selected. |
 | Verification checklists | Excluded | Fixed-bug retesting is still required; necessary retest details remain deferred. |
 | Private test-session notes | Excluded | Saved bug-report drafts remain confirmed. |
@@ -305,15 +307,15 @@ Every original proposed feature or product decision has been confirmed, excluded
 | Separate priority field | Severity is confirmed; priority is not selected. |
 | Necessary retest details | Original tester retests fixed bugs before closing; non-fix outcomes do not require retesting. |
 | Additional mailbox events/recipients | Reply items, ready-for-retesting items, and assigned-report edit notifications are approved, as are all specified mailbox actions. |
-| LLM provider/model | Both assistant behaviours and permitted context are approved. |
-| LLM server-side request hosting/integration | General application target is Vercel; request execution architecture remains deferred. |
-| LLM spending budget and per-user/request rate limits | No numerical budgets or limits selected. |
-| Provider-side retention policy | Only current-report fields/discussion may be sent. |
-| Generated-suggestion storage/retention in BugWatch | No persistence, visibility history, or retention lifetime for generated output selected. |
+| LLM provider/model | Developer: existing SoCLaaS/qwen3.5:9b; see D-07. Existing Tester integration is preserved. |
+| LLM server-side request hosting/integration | Developer uses a same-origin server endpoint on Vercel and local Vite middleware; credentials remain server-only. |
+| LLM spending budget and per-user/request rate limits | Spending budget remains deferred. Developer quota is five attempts per rolling five minutes, independent of Tester allowance. |
+| Provider-side retention policy | Retention remains unverified; explicitly excluded as a Developer enablement/completion gate. Context allowlists still apply. |
+| Generated-suggestion storage/retention in BugWatch | Developer questions remain only in current-page memory; no persistent output or history. |
 | Tester illustrative LLM acceptance example | General missing-information behaviour is approved; the particular example in T-06 is deferred. |
-| Developer illustrative LLM acceptance example | General uncertainty/hypothesis behaviour is approved; the particular example in D-07 is deferred. |
+| Developer illustrative LLM acceptance example | Former investigation example superseded by the questions-only D-07 scope. |
 | Similar-report suggestions | Ordinary case-insensitive title search remains approved. |
-| Developer fix-summary assistant | Investigation assistant remains approved. |
+| Developer fix-summary assistant | Questions-only assistant remains approved. |
 | Reproduction templates/checklists | Structured report fields remain approved. |
 | Related-bug links | Duplicate linking remains approved. |
 | Labels/tags | Existing project/state/assignment/severity filters remain approved. |
@@ -322,7 +324,7 @@ Every original proposed feature or product decision has been confirmed, excluded
 | Separate developer work queue | Developer current-assignment status tabs remain approved. |
 | Workload/ageing dashboard | No metrics dashboard selected. |
 
-LLM provider/model, request hosting/integration, budget/rate limits, provider retention, and generated-suggestion storage must be specified with the product owner when implementing the LLM features. Do not integrate a service or select defaults first.
+Use the agreed Developer settings, quota, transient storage and manual-review gate in D-07. Spending budget remains deferred; provider retention remains unverified and is excluded as a Developer completion gate. Do not infer authorization for additional assistant capabilities.
 
 ## 12. Verification Approach — Approved
 
@@ -340,4 +342,4 @@ When implementing the confirmed requirements, cover:
 
 Use equivalence partitions, boundary values, and separate negative cases where relevant. Deferred acceptance examples and detail fields must not be treated as approved test expectations.
 
-For LLM features, use controlled-response tests for success/failure, service unavailability, missing context, user control, no silent overwrites or automatic consequential actions, editable tester output, and read-only developer output. Separately evaluate generated content against representative reports for usefulness, unsupported claims, and access boundaries. Do not treat exact generated wording as deterministic or a passing UI test as proof of LLM quality. This verification approach is approved; the two illustrative acceptance examples remain deferred.
+For LLM features, use controlled-response tests for success/failure, service unavailability, missing context, user control, no silent overwrites or automatic consequential actions, editable tester output, and read-only developer output. Separately evaluate generated content against representative reports for usefulness, unsupported claims, and access boundaries. Do not treat exact generated wording as deterministic or a passing UI test as proof of LLM quality. This verification approach is approved; the Tester illustrative example remains deferred and the former Developer investigation example is superseded.

@@ -1,3 +1,4 @@
+import { Button, Paper, Text, Title } from '@mantine/core'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { AuthError } from './authService'
@@ -25,9 +26,9 @@ export function LoginPage() {
   }
 
   return (
-    <main className="project-workspace">
-      <h1>BugWatch</h1>
-      <section className="project-panel" aria-labelledby="login-title">
+    <main className="auth-page">
+      <div className="auth-brand"><Title order={1}>BugWatch</Title><Text c="dimmed">A clearer path from bug to resolution.</Text></div>
+      <Paper component="section" className="project-panel" withBorder shadow="xs" aria-labelledby="login-title">
         <h2 id="login-title">Log in</h2>
         <p>Use the account provided by your administrator.</p>
         <form onSubmit={submit}>
@@ -42,9 +43,9 @@ export function LoginPage() {
               onChange={event => setPassword(event.target.value)} disabled={pending} />
           </div>
           {error && <p role="alert">{error}</p>}
-          <button type="submit" disabled={pending}>{pending ? 'Logging in…' : 'Log in'}</button>
+          <Button type="submit" fullWidth disabled={pending}>{pending ? 'Logging in…' : 'Log in'}</Button>
         </form>
-      </section>
+      </Paper>
     </main>
   )
 }

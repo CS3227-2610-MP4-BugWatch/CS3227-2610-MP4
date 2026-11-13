@@ -187,6 +187,26 @@ describe('shared authentication lifecycle', () => {
     controller.stop()
   })
 
+  it('authEvent_sameUserSignedInOnRefocus_preservesAuthenticatedSnapshotWithoutLookupOrNotifications', async () => {
+    const { controller, service, emit } = setup()
+    controller.start()
+    await expectState(controller, 'authenticated')
+    const snapshot = controller.getSnapshot()
+    const listener = vi.fn()
+    const unsubscribe = controller.subscribe(listener)
+
+    emit('SIGNED_IN', session)
+    expect(controller.getSnapshot()).toBe(snapshot)
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(controller.getSnapshot()).toBe(snapshot)
+    expect(service.loadIdentity).toHaveBeenCalledExactlyOnceWith(user.id)
+    expect(listener).not.toHaveBeenCalled()
+    unsubscribe()
+    controller.stop()
+  })
+
   it('authEvent_tokenRefreshWithoutSession_removesIdentitySynchronouslyWithoutLookup', async () => {
     const { controller, service, emit } = setup()
     controller.start()
