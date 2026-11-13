@@ -2,7 +2,7 @@
 
 ## Status and Revision
 
-- **Status:** In progress. Local revision8 implementation, verification, renewed independent review and summaries are accepted. Draft PR12 is open to development; hosted migration and preview acceptance remain outstanding.
+- **Status:** In progress. Local revision8 implementation, verification, renewed independent review and summaries are accepted. PR12 targets development; hosted migration and preview acceptance remain outstanding. The user has requested evidence cleanup and opening the PR for review.
 - **Revision:** 8 (PR10 integration and editing migration014; confirmed product behavior unchanged).
 - **Updated:** 2026-11-13.
 - **Coordinator:** Root chat.
@@ -36,7 +36,7 @@ Detailed scenarios are authoritative in the delta specs; this table is a coordin
 - **Related tests:** Existing report validation/repository/UI/workflow/discussion/auth/suggestions and local-API tests. Add feature-specific tests listed below; preserve their current behavior and meaningful assertions.
 - **Test environment:** Vitest src/test/*.test.ts with existing jsdom directives/mocks; isolated guarded Supabase/database suites are separate. No live database access or migration was performed by planning.
 - **Visual evidence:** Current ordinary/conflict/mailbox/AI mockups v1–v4 are proposals, with source/feedback notes. Later actual dark desktop and narrow captures plus keyboard/error states go in `visual-review.md` and `screenshots/`, linked to tested commit/diff. No fake rendered pass.
-- **Evaluation scope:** Observational feature evaluation in workflow-evidence.md, existing usage-observation-01.json and instruction-version-02.json. Retain previous snapshots; create a new apply kickoff boundary. No controlled instruction/caching benchmark assigned; do not reuse old experiment results as evidence of this feature's benefit.
+- **Evaluation scope:** Observational feature evaluation in workflow-evidence.md, existing usage-observation-01.json.gz and instruction-version-02.json. Retain previous snapshots; create a new apply kickoff boundary. No controlled instruction/caching benchmark assigned; do not reuse old experiment results as evidence of this feature's benefit.
 
 ## File Ownership
 

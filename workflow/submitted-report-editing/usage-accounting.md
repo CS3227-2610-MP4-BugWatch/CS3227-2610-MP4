@@ -1,5 +1,7 @@
 # Submitted-report editing usage observation
 
+The numeric snapshots are now lossless gzip downloads. Their JSON records and hash chain are unchanged after decompression. See [retention and extraction details](evidence-retention.md). Historical filename references inside the snapshots identify the original JSON bytes.
+
 The apply window contains **62,693,806 observed tokens** across **440 response records in 13 sessions**. Input is 62,530,041 tokens, including 60,501,120 cached tokens; uncached input is 2,028,921. Output is 163,765 tokens, including 38,368 reasoning tokens. Cache-write input is recorded as zero. These observations do not establish credit or currency savings. Actual charges and separate tool, system and image-model usage are unknown.
 
 ## Window and scope
@@ -30,7 +32,7 @@ Collection itself contributes **315,066 tokens in 8 records** from /root/editing
 
 ## Recovery and checks
 
-[usage-observation-02.json](usage-observation-02.json) contains the numeric evidence. The collector reads local session files, uses session_meta to select the root and its direct subagent children, and selects token_usage_record events only when payload.thread_id matches the owning session ID. It takes each event's response-level usage, deduplicates by owning session plus response ID, and hashes response IDs. No duplicate owned responses or mismatched-thread records were encountered in the selected files/window. Older direct sessions were also searched; only those with numeric records inside this window appear. Managed guardian sessions are excluded and their resources remain unknown.
+[usage-observation-02.json.gz](usage-observation-02.json.gz) contains the numeric evidence. The collector reads local session files, uses session_meta to select the root and its direct subagent children, and selects token_usage_record events only when payload.thread_id matches the owning session ID. It takes each event's response-level usage, deduplicates by owning session plus response ID, and hashes response IDs. No duplicate owned responses or mismatched-thread records were encountered in the selected files/window. Older direct sessions were also searched; only those with numeric records inside this window appear. Managed guardian sessions are excluded and their resources remain unknown.
 
 Each included count is a nonnegative safe integer. Checks confirm cached input does not exceed input, reasoning does not exceed output, total equals input plus output, and per-session sums equal the aggregate. Input and output are added once. Cached input and reasoning are subsets, so neither is added again.
 
@@ -40,6 +42,6 @@ Each source has its filename, byte-prefix length and SHA-256 digest. To verify a
 
 ## Earlier snapshot and interpretation limits
 
-[usage-observation-01.json](usage-observation-01.json) remains unchanged. Its exploration window ends at 2026-11-11T15:29:28.553Z, before this apply window begins. The gap is unmeasured here. These windows do not overlap; neither snapshot is a final full-lifecycle total. Do not silently fill the gap, add cumulative snapshots, or describe these counts as unique words.
+[usage-observation-01.json.gz](usage-observation-01.json.gz) remains unchanged. Its exploration window ends at 2026-11-11T15:29:28.553Z, before this apply window begins. The gap is unmeasured here. These windows do not overlap; neither snapshot is a final full-lifecycle total. Do not silently fill the gap, add cumulative snapshots, or describe these counts as unique words.
 
 No before/after control, model comparison, provider invoice or controlled prompt-cache test exists for this observation. Long inherited context, cache availability, interruptions and task changes limit attribution. Unknown resources and unflushed usage are not zero. The figures support a presentation of observed effort and overhead, with these boundaries, rather than claims of workflow efficiency or savings.
