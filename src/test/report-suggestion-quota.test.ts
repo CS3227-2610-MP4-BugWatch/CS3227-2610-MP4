@@ -34,7 +34,9 @@ describe.skipIf(!enabled)('isolated Docker suggestion quota integration', () => 
     started = true
     let ready = false
     for (let attempt = 0; attempt < 30; attempt++) {
-      try { docker(['exec', container, 'pg_isready', '-U', 'postgres']); ready = true; break }
+      // Initialization starts a socket-only server that stops before the final server.
+      // Probe TCP so that temporary server cannot prematurely satisfy readiness.
+      try { docker(['exec', container, 'pg_isready', '-h', '127.0.0.1', '-U', 'postgres']); ready = true; break }
       catch { await new Promise(resolve => setTimeout(resolve, 200)) }
     }
     if (!ready) throw new Error('Disposable PostgreSQL did not become ready')

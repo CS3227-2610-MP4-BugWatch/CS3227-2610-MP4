@@ -377,15 +377,28 @@ it('draftSubmit_rejected_preservesCurrentValues', async () => {
   expect(reportRepository.getReport).not.toHaveBeenCalled()
 })
 
-it('draftSave_normalizedSavedValues_leavesWithoutFalseUnsavedWarning', async () => {
-  const { show, reportRepository } = setup()
+it.each([false, true])('draftSave_normalizedSavedValues_leavesWithoutFalseUnsavedWarning_projectsDelayed%s', async projectsDelayed => {
+  const { show, reportRepository, projectRepository } = setup()
+  const projects = await projectRepository.listActiveProjects()
+  let completeProjects = () => {}
+  if (projectsDelayed) projectRepository.listActiveProjects.mockReturnValueOnce(new Promise(resolve => {
+    completeProjects = () => resolve(projects)
+  }))
   const draft = { ...input, id: reportId, projectName: 'Test project', projectArchivedAt: null, updatedAt: time }
   reportRepository.getDraft.mockResolvedValue(draft)
   reportRepository.saveDraft.mockResolvedValue({ ...draft, title: 'Edited title' })
   show(`/drafts/${reportId}`)
   fireEvent.change(await screen.findByLabelText(/^Title\b/i), { target: { value: '  Edited title  ' } })
-  fireEvent.click(screen.getByRole('button', { name: 'Save draft' }))
+  const save = screen.getByRole('button', { name: 'Save draft' }) as HTMLButtonElement
+  if (projectsDelayed) {
+    expect(save.disabled).toBe(true)
+    expect(reportRepository.saveDraft).not.toHaveBeenCalled()
+    await act(async () => completeProjects())
+  }
+  await waitFor(() => expect(save.disabled).toBe(false))
+  fireEvent.click(save)
   await screen.findByText('Draft saved')
+  expect(reportRepository.saveDraft).toHaveBeenCalledExactlyOnceWith({ ...input, title: 'Edited title' }, reportId)
   expect((screen.getByLabelText(/^Title\b/i) as HTMLInputElement).value).toBe('Edited title')
   fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
   expect(await screen.findByRole('heading', { name: 'Selected project details' })).toBeTruthy()
